@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: 'postgres:17'
+    environment:
+      - 'POSTGRES_DB=grind'
+      - 'POSTGRES_PASSWORD=grind'
+      - 'POSTGRES_USER=grind'
+    ports:
+      - '5432:5432'
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.5
+    depends_on:
+      - postgres
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_DATABASE: grind
+      KC_DB_USERNAME: grind
+      KC_DB_PASSWORD: grind
+      KC_HOSTNAME: localhost
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8085:8080"
+    command: [ "start-dev" ]
