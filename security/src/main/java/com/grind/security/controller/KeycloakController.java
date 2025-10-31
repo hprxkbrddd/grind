@@ -1,6 +1,7 @@
 package com.grind.security.controller;
 
 import com.grind.security.dto.AuthDTO;
+import com.grind.security.dto.RegistrationDTO;
 import com.grind.security.dto.TokenIntrospectionResponse;
 import com.grind.security.dto.TokenResponseDTO;
 import com.grind.security.service.KeycloakService;
@@ -18,7 +19,7 @@ public class KeycloakController {
     private final KeycloakService keycloakService;
 
     @PostMapping("/token")
-    public ResponseEntity<TokenResponseDTO> getToken(@RequestBody AuthDTO dto){
+    public ResponseEntity<TokenResponseDTO> getToken(@RequestBody AuthDTO dto) {
         return ResponseEntity.ok(
                 keycloakService.getToken(dto.username(), dto.password())
                         .block()
@@ -26,15 +27,20 @@ public class KeycloakController {
     }
 
     @PostMapping("/introspect")
-    public ResponseEntity<TokenIntrospectionResponse> introspectToken(@RequestHeader("Authorization") String header){
+    public ResponseEntity<TokenIntrospectionResponse> introspectToken(@RequestHeader("Authorization") String header) {
         return ResponseEntity.ok(
                 keycloakService.introspectToken(header.substring(7))
                         .block()
         );
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@RequestBody RegistrationDTO dto) {
+        return keycloakService.register(dto).block();
+    }
+
     @GetMapping("/security-context")
-    public ResponseEntity<Authentication> inspectSecurityContext(){
+    public ResponseEntity<Authentication> inspectSecurityContext() {
         return ResponseEntity.ok(SecurityContextHolder.getContext().getAuthentication());
     }
 

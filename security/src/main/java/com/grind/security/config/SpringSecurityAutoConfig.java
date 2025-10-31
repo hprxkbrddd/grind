@@ -40,7 +40,7 @@ public class SpringSecurityAutoConfig {
         return http
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/grind/keycloak/token").permitAll()
+                        .requestMatchers("/grind/keycloak/token", "/grind/keycloak/register").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

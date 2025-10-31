@@ -27,7 +27,7 @@ keycloak:
   url:
     public: http://localhost:8085/realms/grind/protocol/openid-connect
     admin: http://localhost:8085/admin/realms/grind
-  admin-username: superAdmin
+  admin-username: administrator
   admin-password: admin
 
 
