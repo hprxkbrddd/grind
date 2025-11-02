@@ -9,7 +9,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +18,7 @@ import java.util.stream.Collectors;
 public class JwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
     @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
     private String clientId;
+
     /**
      * Convert the source object of type {@code S} to target type {@code T}.
      * <br>
@@ -33,7 +33,7 @@ public class JwtConverter implements Converter<Jwt, AbstractAuthenticationToken>
         Map<String, Map<String, List<String>>> resourceAccess = source.getClaim("resource_access");
         List<String> roles = resourceAccess.get(clientId).get("roles");
         Set<GrantedAuthority> grantedAuthorities = roles
-                .stream().map(role -> new SimpleGrantedAuthority("ROLE_"+role))
+                .stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .collect(Collectors.toSet());
         return new JwtAuthenticationToken(source, grantedAuthorities, source.getSubject());
     }

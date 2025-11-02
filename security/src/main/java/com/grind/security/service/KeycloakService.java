@@ -4,7 +4,6 @@ import com.grind.security.dto.RegistrationDTO;
 import com.grind.security.dto.TokenIntrospectionResponse;
 import com.grind.security.dto.TokenResponseDTO;
 import com.grind.security.exception.KeycloakException;
-//import com.grind.security.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.representations.idm.CredentialRepresentation;
@@ -32,14 +31,13 @@ public class KeycloakService {
     @Value("${keycloak.url.admin}")
     private String keycloakAdminUrl;
 
-//    private final UserRepository userRepository;
     @Autowired
     private final JwtDecoder jwtDecoder;
     private WebClient webClientPublic;
     private WebClient webClientAdmin;
 
     @PostConstruct
-    public void init(){
+    public void init() {
         this.webClientPublic = WebClient.builder()
                 .baseUrl(keycloakPublicUrl)
                 .build();
@@ -61,9 +59,9 @@ public class KeycloakService {
         return getToken(adminUsername, adminPassword);
     }
 
-    public Mono<ResponseEntity<String>> register(RegistrationDTO dto){
+    public Mono<ResponseEntity<String>> register(RegistrationDTO dto) {
         return getAdminToken()
-                .flatMap(token ->{
+                .flatMap(token -> {
                     UserRepresentation user = new UserRepresentation();
                     user.setUsername(dto.username());
                     user.setEmail(dto.email());

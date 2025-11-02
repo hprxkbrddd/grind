@@ -13,15 +13,15 @@ public class JwtUtils {
 
     private final JwtDecoder jwtDecoder;
 
-    public Jwt parseJwt(String jwt){
+    public Jwt parseJwt(String jwt) {
         return jwtDecoder.decode(jwt);
     }
 
-    public String getSub(String jwt){
+    public String getSub(String jwt) {
         return parseJwt(jwt).getSubject();
     }
 
-    public boolean isExpired(String jwt){
+    public boolean isExpired(String jwt) {
         Instant expiration = parseJwt(jwt).getExpiresAt();
         assert expiration != null;
         return expiration.isBefore(Instant.now());

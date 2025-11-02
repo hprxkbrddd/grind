@@ -1,11 +1,12 @@
 spring:
-  application.name: security-library
+  application:
+    name: security-library
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8085/realms/grind
-          jwk-set-uri: http://localhost:8085/realms/grind/protocol/openid-connect/certs
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/grind}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8085/realms/grind/protocol/openid-connect/certs}
       client:
         registration:
           keycloak:
@@ -16,20 +17,15 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/keycloak"
         provider:
           keycloak:
-            issuer-uri: http://localhost:8085/realms/grind
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/grind}
             user-name-attribute: preferred_username
-  datasource:
-    url: jdbc:postgresql://localhost:5432/grind
-    username: grind
-    password: grind
 
 keycloak:
   url:
-    public: http://localhost:8085/realms/grind/protocol/openid-connect
-    admin: http://localhost:8085/admin/realms/grind
-  admin-username: administrator
-  admin-password: admin
-
+    public: ${KEYCLOAK_LOGIN_URL:http://localhost:8085/realms/grind/protocol/openid-connect}
+    admin: ${KEYCLOAK_ADMIN_URL:http://localhost:8085/admin/realms/grind}
+  admin-username: ${KEYCLOAK_CLIENT_ADMIN:administrator}
+  admin-password: ${KEYCLOAK_CLIENT_PASSWORD:admin}
 
 server:
   port: 8081
