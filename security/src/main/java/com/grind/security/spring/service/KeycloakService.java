@@ -1,15 +1,17 @@
-package com.grind.security.service;
+package com.grind.security.spring.service;
 
-import com.grind.security.dto.RegistrationDTO;
-import com.grind.security.dto.TokenIntrospectionResponse;
-import com.grind.security.dto.TokenResponseDTO;
-import com.grind.security.exception.KeycloakException;
+import com.grind.security.core.RegistrationDTO;
+import com.grind.security.core.TokenIntrospectionResponse;
+import com.grind.security.core.TokenResponseDTO;
+import com.grind.security.core.KeycloakException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -24,6 +26,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnMissingClass
 public class KeycloakService {
 
     @Value("${keycloak.url.public}")
@@ -85,7 +88,7 @@ public class KeycloakService {
                             .toBodilessEntity()
                             .map(response -> {
                                 if (response.getStatusCode().is2xxSuccessful())
-                                    return ResponseEntity.ok("User registered successfully");
+                                    return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
                                 return ResponseEntity.status(response.getStatusCode())
                                         .body("Failed to register user");
                             });
@@ -96,7 +99,7 @@ public class KeycloakService {
     public Mono<TokenResponseDTO> getToken(String username, String password) {
         System.out.println("get JWT endpoint: call");
         System.out.println("get JWT endpoint: preparing body");
-        if (username.isBlank() || password.isBlank())
+        if (username==null || password==null || username.isBlank() || password.isBlank())
             throw new KeycloakException("Username or password are empty");
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "password");
@@ -118,6 +121,9 @@ public class KeycloakService {
     }
 
     public Mono<TokenIntrospectionResponse> introspectToken(String token) {
+        if (token==null || token.isBlank()){
+            throw new KeycloakException("Token is either null or empty");
+        }
         return webClientPublic.post()
                 .uri("/token/introspect")
                 .header("Content-Type", "application/x-www-form-urlencoded")

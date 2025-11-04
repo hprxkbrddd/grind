@@ -1,11 +1,12 @@
-package com.grind.security.controller;
+package com.grind.security.spring.controller;
 
-import com.grind.security.dto.AuthDTO;
-import com.grind.security.dto.RegistrationDTO;
-import com.grind.security.dto.TokenIntrospectionResponse;
-import com.grind.security.dto.TokenResponseDTO;
-import com.grind.security.service.KeycloakService;
+import com.grind.security.core.AuthDTO;
+import com.grind.security.core.RegistrationDTO;
+import com.grind.security.core.TokenIntrospectionResponse;
+import com.grind.security.core.TokenResponseDTO;
+import com.grind.security.spring.service.KeycloakService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/grind/keycloak")
+@ConditionalOnMissingClass
 public class KeycloakController {
     private final KeycloakService keycloakService;
 

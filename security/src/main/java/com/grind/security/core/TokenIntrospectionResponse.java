@@ -1,4 +1,4 @@
-package com.grind.security.dto;
+package com.grind.security.core;
 
 public record TokenIntrospectionResponse(
          boolean active,

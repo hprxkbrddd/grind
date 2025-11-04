@@ -1,9 +1,10 @@
-package com.grind.security.config;
+package com.grind.security.autoconfiguration;
 
-import com.grind.security.component.JwtConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,7 +15,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
 
-
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class SpringSecurityAutoConfig {
     private String issuerUri;
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(JwtDecoder.class)
     public JwtDecoder jwtDecoder() {
         return JwtDecoders.fromIssuerLocation(issuerUri);
     }
@@ -32,7 +32,7 @@ public class SpringSecurityAutoConfig {
     private final JwtConverter jwtConverter;
 
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(SecurityFilterChain.class)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(AbstractHttpConfigurer::disable)

@@ -1,3 +1,5 @@
+package com.grind.security.starter
+
 import org.gradle.kotlin.dsl.dependencies
 
 plugins {
