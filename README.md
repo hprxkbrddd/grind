@@ -3,7 +3,7 @@
 каждый микросервис должен крутиться на указанном порту
 
 - **gateway** - 8080
-- **security** - 8081
+- **security** - built-in
 - **database** - 8082
 - **core** - 8083
 - **statistics** - 8084
