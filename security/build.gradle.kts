@@ -1,46 +1,20 @@
 import org.gradle.kotlin.dsl.dependencies
 
 plugins {
-    id("java-library")
-//    id("org.springframework.boot") version "3.5.7"
+    `java-library`
+    `maven-publish`
+    id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.7")
-    }
-}
-
 group = "com.grind"
-version = "0.0.2-SNAPSHOT"
+version = "0.0.3-SNAPSHOT"
 description = "Security microservice for Grind app"
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
-}
-
-
-//tasks {
-//    val cleanJar by registering(Jar::class) {
-//        ->
-//        archiveBaseName.set("security-lib-clean")
-//        from(sourceSets.main.get().output)
-//        exclude("META-INF/*.SF")
-//        exclude("META-INF/*.DSA")
-//        exclude("META-INF/*.RSA")
-//        exclude("META-INF/*.MF")
-//    }
-//}
-
-// Или проще - настройка основного task jar
-tasks.jar {
-    exclude("META-INF/*.SF")
-    exclude("META-INF/*.DSA")
-    exclude("META-INF/*.RSA")
-    exclude("META-INF/*.MF")
 }
 
 configurations {
@@ -59,6 +33,7 @@ dependencies {
     api("org.springframework.boot:spring-boot-starter-webflux")
     compileOnly("org.projectlombok:lombok")
 //	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.keycloak:keycloak-spring-boot-starter:25.0.3")
@@ -72,4 +47,77 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar"){
+    enabled = false
+}
+
+tasks.getByName<Jar>("jar"){
+    enabled = true
+    archiveClassifier.set("")
+}
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-parameters")
+}
+
+// Публикация в Maven Local (или репозиторий)
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            versionMapping {
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name.set("Security grind library")
+                description.set("Security beans provider")
+                url.set("https://github.com/hprxkbrddd/grind/tree/main/security")
+                licenses {
+                    license {
+                        name.set("Apache License 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("developer")
+                        name.set("Your Name")
+                        email.set("developer@example.com")
+                    }
+                }
+            }
+        }
+    }
+    repositories{
+        mavenLocal()
+    }
+}
+
+// Генерация источников JAR
+tasks.register<Jar>("sourcesJar") {
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allJava)
+}
+
+//// Генерация javadoc JAR
+//tasks.register<Jar>("javadocJar") {
+//    archiveClassifier.set("javadoc")
+//    from(tasks.javadoc)
+//}
+
+// Добавляем дополнительные артефакты в публикацию
+publishing {
+    publications {
+        named<MavenPublication>("mavenJava") {
+            artifact(tasks["sourcesJar"])
+//            artifact(tasks["javadocJar"])
+        }
+    }
 }

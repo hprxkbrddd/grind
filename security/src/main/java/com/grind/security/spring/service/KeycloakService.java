@@ -1,20 +1,17 @@
 package com.grind.security.spring.service;
 
+import com.grind.security.autoconfiguration.LibraryProperties;
 import com.grind.security.core.RegistrationDTO;
 import com.grind.security.core.TokenIntrospectionResponse;
 import com.grind.security.core.TokenResponseDTO;
 import com.grind.security.core.KeycloakException;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -25,17 +22,27 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 @ConditionalOnMissingClass
 public class KeycloakService {
 
-    @Value("${keycloak.url.public}")
-    private String keycloakPublicUrl;
-    @Value("${keycloak.url.admin}")
-    private String keycloakAdminUrl;
+    public KeycloakService() {
+        LibraryProperties props = new LibraryProperties();
+        this.keycloakAdminUrl = props.keycloak.url.adminUrl;
+        this.keycloakPublicUrl = props.keycloak.url.publicUrl;
 
-    @Autowired
-    private final JwtDecoder jwtDecoder;
+        this.clientId = props.oauth2.client.registration.keycloak.clientId;
+
+        this.clientSecret = props.oauth2.client.registration.keycloak.clientSecret;
+
+
+        this.adminUsername = props.keycloak.adminUsername;
+        this.adminPassword = props.keycloak.adminPassword;
+    }
+
+    private final String keycloakPublicUrl;
+    private final String keycloakAdminUrl;
+
+    //    private final JwtDecoder jwtDecoder;
     private WebClient webClientPublic;
     private WebClient webClientAdmin;
 
@@ -49,14 +56,10 @@ public class KeycloakService {
                 .build();
     }
 
-    @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
-    private String clientId;
-    @Value("${spring.security.oauth2.client.registration.keycloak.client-secret}")
-    private String clientSecret;
-    @Value("${keycloak.admin-username}")
-    private String adminUsername;
-    @Value("${keycloak.admin-password}")
-    private String adminPassword;
+    private final String clientId;
+    private final String clientSecret;
+    private final String adminUsername;
+    private final String adminPassword;
 
     private Mono<TokenResponseDTO> getAdminToken() {
         return getToken(adminUsername, adminPassword);
@@ -99,7 +102,7 @@ public class KeycloakService {
     public Mono<TokenResponseDTO> getToken(String username, String password) {
         System.out.println("get JWT endpoint: call");
         System.out.println("get JWT endpoint: preparing body");
-        if (username==null || password==null || username.isBlank() || password.isBlank())
+        if (username == null || password == null || username.isBlank() || password.isBlank())
             throw new KeycloakException("Username or password are empty");
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "password");
@@ -121,7 +124,7 @@ public class KeycloakService {
     }
 
     public Mono<TokenIntrospectionResponse> introspectToken(String token) {
-        if (token==null || token.isBlank()){
+        if (token == null || token.isBlank()) {
             throw new KeycloakException("Token is either null or empty");
         }
         return webClientPublic.post()

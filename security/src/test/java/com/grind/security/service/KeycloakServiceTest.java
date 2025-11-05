@@ -53,7 +53,7 @@ class KeycloakServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        keycloakService = new KeycloakService(jwtDecoder);
+        keycloakService = new KeycloakService();
 
         // Устанавливаем значения через reflection
         String clientId = "test-client";

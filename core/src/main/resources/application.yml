@@ -1,6 +1,7 @@
 spring:
+  jmx.enabled: false
   application:
-    name: security-library
+    name: core
   security:
     oauth2:
       resourceserver:
@@ -19,6 +20,10 @@ spring:
           keycloak:
             issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/grind}
             user-name-attribute: preferred_username
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/grind}
+    username: ${DATABASE_USER:grind}
+    password: ${DATABASE_PASSWORD:grind}
 
 keycloak:
   url:
@@ -28,4 +33,13 @@ keycloak:
   admin-password: ${KEYCLOAK_CLIENT_PASSWORD:admin}
 
 server:
-  port: 8081
+  port: 8083
+
+management:
+  endpoints.web.exposure.include: beans,health,info,metrics
+  endpoint:
+    beans:
+      enabled: true
+      show-values: ALWAYS
+      show-uninitialized: true
+    conditions.enabled: true
