@@ -1,5 +1,6 @@
 package com.grind.security.autoconfiguration;
 
+import com.grind.security.spring.component.JwtConverter;
 import com.grind.security.spring.controller.KeycloakController;
 import com.grind.security.spring.exception.SecurityExceptionHandler;
 import com.grind.security.spring.service.KeycloakService;
@@ -16,7 +17,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
-import com.grind.security.spring.component.JwtConverter;
 
 @Configuration
 @ConditionalOnClass(SecurityFilterChain.class)
@@ -49,6 +49,7 @@ public class GrindSecurityAutoConfig {
      *     <li>/grind/keycloak/token</li>
      *     <li>/grind/keycloak/register</li>
      * </ul>
+     *
      * @return SecurityFilterChain
      */
     @Bean
@@ -57,7 +58,11 @@ public class GrindSecurityAutoConfig {
         return http
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/grind/keycloak/token", "/grind/keycloak/register").permitAll()
+                        .requestMatchers(
+                                "/grind/keycloak/token",
+                                "/grind/keycloak/register",
+                                "/actuator/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -76,29 +81,31 @@ public class GrindSecurityAutoConfig {
      *      <li>connection to Keycloak</li>
      *      <li>authorization operations</li>
      * </ul>
+     *
      * @return KeycloakService
      */
     @Bean
     @ConditionalOnMissingBean(KeycloakService.class)
-    public KeycloakService keycloakService(){
+    public KeycloakService keycloakService() {
         return new KeycloakService();
     }
 
     /**
      * <h1>Keycloak Controller</h1>
      * Creates bean, whoch exposes KeycloakService functionality through REST
+     *
      * @param keycloakService
      * @return
      */
     @Bean
     @ConditionalOnMissingBean(KeycloakController.class)
-    public KeycloakController keycloakController(KeycloakService keycloakService){
+    public KeycloakController keycloakController(KeycloakService keycloakService) {
         return new KeycloakController(keycloakService);
     }
 
     @Bean
     @ConditionalOnMissingBean(SecurityExceptionHandler.class)
-    public SecurityExceptionHandler securityExceptionHandler(){
+    public SecurityExceptionHandler securityExceptionHandler() {
         return new SecurityExceptionHandler();
     }
 }

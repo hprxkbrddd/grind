@@ -1,8 +1,8 @@
 package com.grind.security.service;
 
+import com.grind.security.core.KeycloakException;
 import com.grind.security.core.TokenIntrospectionResponse;
 import com.grind.security.core.TokenResponseDTO;
-import com.grind.security.core.KeycloakException;
 import com.grind.security.spring.service.KeycloakService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

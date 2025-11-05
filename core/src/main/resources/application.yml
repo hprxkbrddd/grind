@@ -1,45 +1,6 @@
 spring:
-  jmx.enabled: false
   application:
     name: core
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/grind}
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8085/realms/grind/protocol/openid-connect/certs}
-      client:
-        registration:
-          keycloak:
-            client-id: ${CLIENT_ID:grind_client}
-            client-secret: ${CLIENT_SECRET:b5fk9Hdmxn7kFgJDao2SFFkfVoypa60g}
-            authorization-grant-type: authorization_code
-            scope: openid,profile,email
-            redirect-uri: "{baseUrl}/login/oauth2/keycloak"
-        provider:
-          keycloak:
-            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8085/realms/grind}
-            user-name-attribute: preferred_username
-  datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/grind}
-    username: ${DATABASE_USER:grind}
-    password: ${DATABASE_PASSWORD:grind}
-
-keycloak:
-  url:
-    public: ${KEYCLOAK_LOGIN_URL:http://localhost:8085/realms/grind/protocol/openid-connect}
-    admin: ${KEYCLOAK_ADMIN_URL:http://localhost:8085/admin/realms/grind}
-  admin-username: ${KEYCLOAK_CLIENT_ADMIN:administrator}
-  admin-password: ${KEYCLOAK_CLIENT_PASSWORD:admin}
 
 server:
   port: 8083
-
-management:
-  endpoints.web.exposure.include: beans,health,info,metrics
-  endpoint:
-    beans:
-      enabled: true
-      show-values: ALWAYS
-      show-uninitialized: true
-    conditions.enabled: true

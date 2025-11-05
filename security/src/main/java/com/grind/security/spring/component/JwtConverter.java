@@ -1,6 +1,7 @@
 package com.grind.security.spring.component;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.grind.security.autoconfiguration.LibraryProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,9 +16,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class JwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
-    @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
-    private String clientId;
+
+    private final LibraryProperties props;
 
     /**
      * Convert the source object of type {@code S} to target type {@code T}.
@@ -31,6 +33,7 @@ public class JwtConverter implements Converter<Jwt, AbstractAuthenticationToken>
     @Override
     public AbstractAuthenticationToken convert(Jwt source) {
         Map<String, Map<String, List<String>>> resourceAccess = source.getClaim("resource_access");
+        String clientId = props.oauth2.client.registration.keycloak.clientId;
         List<String> roles = resourceAccess.get(clientId).get("roles");
         Set<GrantedAuthority> grantedAuthorities = roles
                 .stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role))

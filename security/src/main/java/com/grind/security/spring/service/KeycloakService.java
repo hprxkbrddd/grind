@@ -1,10 +1,10 @@
 package com.grind.security.spring.service;
 
 import com.grind.security.autoconfiguration.LibraryProperties;
+import com.grind.security.core.KeycloakException;
 import com.grind.security.core.RegistrationDTO;
 import com.grind.security.core.TokenIntrospectionResponse;
 import com.grind.security.core.TokenResponseDTO;
-import com.grind.security.core.KeycloakException;
 import jakarta.annotation.PostConstruct;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
