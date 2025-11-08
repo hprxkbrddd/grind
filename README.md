@@ -24,3 +24,47 @@ docker run -d --name grind-db -e POSTGRES_DB=grind -e POSTGRES_USER=grind -e POS
 - **имя пользователя** - `grind`
 - **пароль** - `grind`
 - **название контейнера** - `grind-db`
+
+# Эндпоинты Security
+
+## Получение токена
+- Эндпоинт
+  - `/grind/keycloak/token`
+- Поля тела запроса JSON
+  - `username`
+  - `password`
+- Поля ответа JSON
+  - `access_token` - сам JWT
+  - `expires_in` - когда истекает 
+  - `refresh_expires_in`
+  - `refresh_token`
+  - `id_token`
+  - `not-before-policy`
+  - `session_state`
+
+## Проверка токена
+- Эндпоинт
+  - `/grind/keycloak/instrospect`
+- Поля тела запроса
+  - заголовок `Authorization` с токеном
+- Поля тела ответа JSON
+  - `active` - активен ли токен
+  - `sub` - id владельца
+  - `username` - имя владельца
+  - `exp` - момент истечения токена
+  - `iat` - момент запроса токена
+  - `email`
+  - `scope`
+  - `token-type`
+  - `client-id`
+
+## Регистрация
+- Эндпоинт
+  - `/grind/keycloak/register`
+- Поля тела запроса JSON
+  - `username`
+  - `password`
+  - `email`
+  - `firstName`
+  - `lastName`
+  - `isEnabled`
