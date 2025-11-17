@@ -1,6 +1,21 @@
 spring:
   application:
     name: core
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9094
+      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+
+# Consumer settings
+#spring:
+#  kafka:
+#    consumer:
+#      bootstrap-servers: localhost:9092
+#      group-id: core-consumer-group
+#      auto-offset-reset: earliest
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 server:
   port: 8083
