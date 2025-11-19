@@ -22,7 +22,6 @@ configurations {
 
 repositories {
 	mavenCentral()
-    mavenLocal()
 }
 
 dependencies {
@@ -30,7 +29,8 @@ dependencies {
 	compileOnly("org.projectlombok:lombok")
 //	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     implementation("org.springframework.kafka:spring-kafka")
-    implementation("com.grind:security-library:0.0.3-SNAPSHOT")
+//    implementation("com.grind:security-library:0.0.3-SNAPSHOT")
+    implementation("io.github.hprxkbrddd:security-autoconfiguration:0.0.1")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
