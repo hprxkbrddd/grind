@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * <h1>Security Exception Handler</h1>
+ * Security Exception Handler
  * Global exception handler for security-related errors thrown during Keycloak
  * authentication or communication.
  *
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class SecurityExceptionHandler {
 
     /**
-     * <h2>Handle KeycloakException</h2>
+     * Handle KeycloakException
      * Converts a {@link KeycloakException} into an HTTP 400 Bad Request response.
      *
      * <p>Triggered when any part of the authentication/authorization flow throws

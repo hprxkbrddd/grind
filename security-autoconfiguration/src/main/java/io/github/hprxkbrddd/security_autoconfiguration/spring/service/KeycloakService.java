@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * <h1>Keycloak Service</h1>
- * Service responsible for communication with a Keycloak server using
+ * Keycloak Service
+ * Responsible for communication with a Keycloak server using
  * reactive {@link WebClient} calls.
  *
  * <p><b>Main responsibilities:</b></p>
@@ -46,7 +46,6 @@ public class KeycloakService {
     private final String keycloakPublicUrl;
     private final String keycloakAdminUrl;
 
-    //    private final JwtDecoder jwtDecoder;
     private WebClient webClientPublic;
     private WebClient webClientAdmin;
 
@@ -56,7 +55,7 @@ public class KeycloakService {
     private final String adminPassword;
 
     /**
-     * <h2>Construct KeycloakService</h2>
+     * Construct KeycloakService
      * Initializes Keycloak URLs, client credentials and admin credentials
      * using {@link LibraryProperties} default values.
      *
@@ -77,7 +76,7 @@ public class KeycloakService {
     }
 
     /**
-     * <h2>Initialize WebClient Instances</h2>
+     * Initialize WebClient Instances
      * Called after construction to create and configure two {@link WebClient}
      * instances:
      * <ul>
@@ -96,7 +95,7 @@ public class KeycloakService {
     }
 
     /**
-     * <h2>Get Admin Token</h2>
+     * Get Admin Token
      * Obtains a Keycloak access token using admin credentials configured in
      * {@link LibraryProperties}.
      *
@@ -107,7 +106,7 @@ public class KeycloakService {
     }
 
     /**
-     * <h2>Register New User</h2>
+     * Register New User
      * Registers a new user in Keycloak using admin privileges.
      *
      * <p>Steps:</p>
@@ -157,7 +156,7 @@ public class KeycloakService {
     }
 
     /**
-     * <h2>Obtain Token (Password Grant)</h2>
+     * Obtain Token (Password Grant)
      * Performs Resource Owner Password Credentials flow against Keycloak token
      * endpoint to retrieve an access token for the given user credentials.
      *
@@ -196,7 +195,7 @@ public class KeycloakService {
     }
 
     /**
-     * <h2>Introspect Access Token</h2>
+     * Introspect Access Token
      * Uses Keycloak token introspection endpoint to validate token and retrieve
      * its metadata.
      *
@@ -218,7 +217,7 @@ public class KeycloakService {
     }
 
     /**
-     * <h2>Create Introspection Form Data</h2>
+     * Create Introspection Form Data
      * Builds a URL-encoded form string for Keycloak introspection endpoint,
      * containing token and client credentials.
      *

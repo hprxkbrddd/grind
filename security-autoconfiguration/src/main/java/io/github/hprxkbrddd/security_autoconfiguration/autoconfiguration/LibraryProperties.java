@@ -3,7 +3,7 @@ package io.github.hprxkbrddd.security_autoconfiguration.autoconfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * <h1>Security Library Properties</h1>
+ * Security Library Properties
  * Root configuration class for properties used by Grind Security Auto Configuration.
  * <p>
  * Loaded automatically via Spring Boot's {@link ConfigurationProperties} mechanism.
@@ -27,7 +27,7 @@ public class LibraryProperties {
 
 
     /**
-     * <h2>Keycloak Properties</h2>
+     * Keycloak Properties
      * Contains configuration for Keycloak authentication server.
      *
      * <p>Prefix: <b>security-library.keycloak</b></p>
@@ -46,7 +46,7 @@ public class LibraryProperties {
 
 
         /**
-         * <h3>Keycloak URL Properties</h3>
+         * Keycloak URL Properties
          * Contains endpoint URLs for Keycloak Realm and AdminAPI.
          *
          * <p>Prefix: <b>security-library.keycloak.url</b></p>
@@ -71,7 +71,7 @@ public class LibraryProperties {
 
 
     /**
-     * <h2>OAuth2 Configuration</h2>
+     * OAuth2 Configuration
      * Contains properties for Spring Security OAuth2:
      * <ul>
      *     <li>resource server (JWT validation)</li>
@@ -91,7 +91,7 @@ public class LibraryProperties {
 
 
         /**
-         * <h3>Resource Server Properties</h3>
+         * Resource Server Properties
          * Settings related to JWT validation when acting as OAuth2 Resource Server.
          *
          * <p>Prefix: <b>security-library.oauth2.resourceserver</b></p>
@@ -104,7 +104,7 @@ public class LibraryProperties {
 
 
             /**
-             * <h4>JWT Properties</h4>
+             * JWT Properties
              * Defines issuer and JWK endpoints used to validate incoming tokens.
              *
              * <p>Prefix: <b>security-library.oauth2.resourceserver.jwt</b></p>
@@ -128,7 +128,7 @@ public class LibraryProperties {
 
 
         /**
-         * <h3>OAuth2 Client Properties</h3>
+         * OAuth2 Client Properties
          * Settings for Spring Security OAuth2 Client configuration.
          *
          * <p>Prefix: <b>security-library.oauth2.client</b></p>
@@ -144,7 +144,7 @@ public class LibraryProperties {
 
 
             /**
-             * <h4>Client Registration</h4>
+             * Client Registration
              * Contains client credentials, scopes, redirect URIs, etc.
              *
              * <p>Prefix: <b>security-library.oauth2.client.registration</b></p>
@@ -157,7 +157,7 @@ public class LibraryProperties {
 
 
                 /**
-                 * <h5>Keycloak Client Registration</h5>
+                 * Keycloak Client Registration
                  * Defines properties required for OAuth2 client to authenticate with Keycloak.
                  *
                  * <p>Prefix: <b>security-library.oauth2.client.registration.keycloak</b></p>
@@ -186,7 +186,7 @@ public class LibraryProperties {
 
 
             /**
-             * <h4>OAuth2 Provider Properties</h4>
+             * OAuth2 Provider Properties
              * Defines where the metadata for OAuth2/OpenID provider is loaded from.
              *
              * <p>Prefix: <b>security-library.oauth2.client.provider</b></p>
@@ -199,7 +199,7 @@ public class LibraryProperties {
 
 
                 /**
-                 * <h5>Keycloak Provider Metadata</h5>
+                 * Keycloak Provider Metadata
                  * Defines issuer information and identity claim mapping.
                  *
                  * <p>Prefix: <b>security-library.oauth2.client.provider.keycloak</b></p>

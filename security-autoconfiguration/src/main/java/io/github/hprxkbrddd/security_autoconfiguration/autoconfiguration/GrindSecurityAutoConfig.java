@@ -30,7 +30,7 @@ public class GrindSecurityAutoConfig {
     // ----------------------------------------
 
     /**
-     * <h1>JWT Decoder</h1>
+     * JWT Decoder
      * Creates a {@link JwtDecoder} bean if none is already defined in the application context.
      * <p>
      * Decoder is initialized using issuer URI defined in {@link LibraryProperties}.
@@ -57,7 +57,7 @@ public class GrindSecurityAutoConfig {
     // ----------------------------------------
 
     /**
-     * <h1>Spring Security Filter Chain</h1>
+     * Spring Security Filter Chain
      * Configures the default {@link SecurityFilterChain} for the application,
      * unless one is already declared by the user.
      *
@@ -105,7 +105,7 @@ public class GrindSecurityAutoConfig {
     }
 
     /**
-     * <h1>Keycloak Service</h1>
+     * Keycloak Service
      * Creates a {@link KeycloakService} bean if the application has not already provided one.
      *
      * <p><b>Service responsibilities include:</b></p>
@@ -124,7 +124,7 @@ public class GrindSecurityAutoConfig {
     }
 
     /**
-     * <h1>Keycloak Controller</h1>
+     * Keycloak Controller
      * Creates a REST controller for exposing authentication endpoints
      * implemented by {@link KeycloakService}, unless such bean already exists.
      *
@@ -145,7 +145,7 @@ public class GrindSecurityAutoConfig {
     }
 
     /**
-     * <h1>Security Exception Handler</h1>
+     * Security Exception Handler
      * Registers a global {@link SecurityExceptionHandler} bean if one is not already present.
      *
      * <p><b>Responsibilities:</b></p>

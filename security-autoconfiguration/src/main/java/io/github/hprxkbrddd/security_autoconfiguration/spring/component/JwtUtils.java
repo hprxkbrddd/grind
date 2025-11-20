@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 
 /**
- * <h1>JWT Utility Component</h1>
+ * JWT Utility Component
  * Helper component providing convenient methods for working with JWT tokens.
  * <p>
  * Uses Spring Security's {@link JwtDecoder} to decode and inspect tokens.

@@ -1,7 +1,7 @@
 package io.github.hprxkbrddd.security_autoconfiguration.core;
 
 /**
- * <h1>User Registration DTO</h1>
+ * User Registration DTO
  * Represents a request payload for creating a new Keycloak user.
  *
  * @param username   unique username for the account

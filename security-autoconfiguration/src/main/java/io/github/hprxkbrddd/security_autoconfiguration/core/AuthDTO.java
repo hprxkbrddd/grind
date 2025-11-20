@@ -1,7 +1,7 @@
 package io.github.hprxkbrddd.security_autoconfiguration.core;
 
 /**
- * <h1>Authentication DTO</h1>
+ * Authentication DTO
  * Simple data transfer object used to pass user credentials (username, password)
  * to authentication endpoints (e.g., Keycloak login).
  *

@@ -1,7 +1,7 @@
 package io.github.hprxkbrddd.security_autoconfiguration.core;
 
 /**
- * <h1>Token Introspection Response</h1>
+ * Token Introspection Response
  * Represents a response structure from Keycloak's
  * <code>/token/introspect</code> endpoint.
  *

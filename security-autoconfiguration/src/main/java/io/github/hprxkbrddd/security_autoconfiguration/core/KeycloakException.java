@@ -1,7 +1,7 @@
 package io.github.hprxkbrddd.security_autoconfiguration.core;
 
 /**
- * <h1>Keycloak Exception</h1>
+ * Keycloak Exception
  * Runtime exception used for wrapping and propagating errors
  * that occur during interaction with the Keycloak server.
  *
