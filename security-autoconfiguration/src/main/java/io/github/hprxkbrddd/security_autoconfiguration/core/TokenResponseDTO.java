@@ -3,7 +3,7 @@ package io.github.hprxkbrddd.security_autoconfiguration.core;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * <h1>Token Response DTO</h1>
+ * Token Response DTO
  * Represents a standard Keycloak OAuth2 token response obtained from:
  * <ul>
  *     <li>/protocol/openid-connect/token</li>

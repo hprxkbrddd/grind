@@ -1,7 +1,7 @@
 package io.github.hprxkbrddd.security_autoconfiguration.core;
 
 /**
- * <h1>User Entity DTO</h1>
+ * User Entity DTO
  * Lightweight representation of a Keycloak user.
  * Used for responses where only minimal user data is required.
  *

@@ -14,7 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * <h1>Keycloak Controller</h1>
+ * Keycloak Controller
  * REST controller exposing authentication and user-management operations
  * provided by {@link KeycloakService}.
  *
@@ -43,7 +43,7 @@ public class KeycloakController {
     private final KeycloakService keycloakService;
 
     /**
-     * <h2>Obtain Token</h2>
+     * Obtain Token
      * Issues a Keycloak token using username and password.
      *
      * <p>Endpoint: <code>POST /grind/keycloak/token</code></p>
@@ -60,7 +60,7 @@ public class KeycloakController {
     }
 
     /**
-     * <h2>Introspect Token</h2>
+     * Introspect Token
      * Validates the token and retrieves its metadata.
      *
      * <p>Endpoint: <code>POST /grind/keycloak/introspect</code></p>
@@ -84,7 +84,7 @@ public class KeycloakController {
     }
 
     /**
-     * <h2>Register New User</h2>
+     * Register New User
      * Creates a new Keycloak user with provided credentials and profile data.
      *
      * <p>Endpoint: <code>POST /grind/keycloak/register</code></p>
@@ -98,7 +98,7 @@ public class KeycloakController {
     }
 
     /**
-     * <h2>Inspect Security Context</h2>
+     * Inspect Security Context
      * Returns the current authenticated {@link Authentication} object.
      *
      * <p>Endpoint: <code>GET /grind/keycloak/security-context</code></p>
@@ -115,7 +115,7 @@ public class KeycloakController {
     }
 
     /**
-     * <h2>Admin-Only Test Endpoint</h2>
+     * Admin-Only Test Endpoint
      * Demonstrates method-level security using {@link PreAuthorize}.
      *
      * <p>Endpoint: <code>GET /grind/keycloak/admin</code></p>
