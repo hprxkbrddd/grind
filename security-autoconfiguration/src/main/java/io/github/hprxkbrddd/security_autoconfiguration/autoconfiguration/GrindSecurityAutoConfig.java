@@ -5,7 +5,6 @@ import io.github.hprxkbrddd.security_autoconfiguration.spring.controller.Keycloa
 import io.github.hprxkbrddd.security_autoconfiguration.spring.exception.SecurityExceptionHandler;
 import io.github.hprxkbrddd.security_autoconfiguration.spring.service.KeycloakService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -24,7 +23,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class GrindSecurityAutoConfig {
 
-    private final LibraryProperties props = new LibraryProperties();
+    private final LibraryProperties props;
 
     // JWT beans
     // ----------------------------------------
@@ -52,8 +51,11 @@ public class GrindSecurityAutoConfig {
         );
     }
 
-    @Autowired
-    private JwtConverter jwtConverter;
+    @Bean
+    @ConditionalOnMissingBean(JwtConverter.class)
+    public JwtConverter jwtConverter() {
+        return new JwtConverter(props);
+    }
     // ----------------------------------------
 
     /**
@@ -84,12 +86,15 @@ public class GrindSecurityAutoConfig {
      */
     @Bean
     @ConditionalOnMissingBean(SecurityFilterChain.class)
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain defaultSecurityFilterChain(
+            HttpSecurity http,
+            JwtConverter jwtConverter) throws Exception {
+        System.out.println(">>> GrindSecurityAutoConfig SecurityFilterChain ACTIVE");
         return http
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(
-                                "/grind/keycloak/token",
+                                "/grind/keycloak/**",
                                 "/grind/keycloak/register",
                                 "/actuator/**"
                         ).permitAll()

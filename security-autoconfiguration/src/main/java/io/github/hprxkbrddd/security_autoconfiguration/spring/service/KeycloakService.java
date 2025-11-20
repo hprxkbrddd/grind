@@ -8,11 +8,9 @@ import io.github.hprxkbrddd.security_autoconfiguration.core.TokenResponseDTO;
 import jakarta.annotation.PostConstruct;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -39,8 +37,6 @@ import java.util.Objects;
  * {@link #init()}.
  * </p>
  */
-@Service
-@ConditionalOnMissingClass
 public class KeycloakService {
 
     private final String keycloakPublicUrl;

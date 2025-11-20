@@ -7,7 +7,18 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringSerializer
       value-deserializer: org.apache.kafka.common.serialization.StringSerializer
 
-# Consumer settings
+management:
+  endpoints:
+    web:
+      exposure:
+        include: beans, health, info, mappings
+  endpoint:
+    beans:
+      enabled: true
+    health:
+      enabled: true
+    info:
+      enabled: true
 #spring:
 #  kafka:
 #    consumer:
