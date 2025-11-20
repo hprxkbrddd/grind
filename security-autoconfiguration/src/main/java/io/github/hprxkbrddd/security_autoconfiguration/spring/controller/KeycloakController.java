@@ -33,10 +33,9 @@ import org.springframework.web.bind.annotation.*;
  * Loaded only if required conditions are met (via {@link ConditionalOnMissingClass}).
  * </p>
  */
-@RestController
 @RequiredArgsConstructor
 @RequestMapping("/grind/keycloak")
-@ConditionalOnMissingClass
+@RestController
 public class KeycloakController {
 
     /** Service handling all Keycloak-related operations. */
