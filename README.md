@@ -3,20 +3,10 @@
 каждый микросервис должен крутиться на указанном порту
 
 - **gateway** - 8080
-- **auth (в rest конфигурации)** - 8086
-- **notification** - 8082
+- **security** - built-in
+- **database** - 8082
 - **core** - 8083
 - **statistics** - 8084
-
-# Порты Docker контейнеров
-
-- **Postgres** - 5432
-- **Keycloak** - 8085
-- **Kafka** - 9092
-- **Kafdrop (UI для кафки)** - 9000
-- **Clickhouse HTTP** - 8123
-- **Clickhouse TCP** - 9001
-- **Redis** - 6379
 
 # Docker compose
 
@@ -26,17 +16,20 @@
 
 # Команда для стягивания образа бд с заданием нужных параметров контейнера через докер 
 
-```
+```bash
 docker run -d --name grind-db -e POSTGRES_DB=grind -e POSTGRES_USER=grind -e POSTGRES_PASSWORD=grind -p 5432:5432 postgres:17
 ```
-или запускайте все нужные контейнеры через `compose.yaml` в корне проекта
 
 - **адрес бд** - `localhost:5432/grind`
 - **имя пользователя** - `grind`
 - **пароль** - `grind`
 - **название контейнера** - `grind-db`
 
-# Эндпоинты Security
+# Security library
+
+Библиотека автоконфигурации, создающая бины Spring Security защиты от
+несанкционированного доступа к данным. Также содержит эндпоинты для выдачи
+и проверки JWT токена.
 
 ## Получение токена
 - Эндпоинт
@@ -79,3 +72,22 @@ docker run -d --name grind-db -e POSTGRES_DB=grind -e POSTGRES_USER=grind -e POS
   - `firstName`
   - `lastName`
   - `isEnabled`
+
+# Поднятие Kafka через Docker
+
+Для поднятия контейнера 
+1. перейти в корень проекта
+2. выполнить в терминале команду (или запустить `compose.yaml` другим способом)
+
+```bash
+docker compose up -d
+# для запуска с логами в терминале убрать флаг -d
+```
+
+Поднимется 2 контейнера
+- **Kafka** - сам брокер (базовый образ) `localhost:9092`
+- **Kafdrop** - UI для взаимодействия с брокером (просмотр сообщений, топиков партиций) `localhost:9000`
+
+Есть образ Kafka от Confluent с предустановленной UI, 
+но он тянет много фич, которые в проекте не будут использоваться, 
+но сожрут место на диске

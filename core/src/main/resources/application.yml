@@ -3,7 +3,7 @@ spring:
     name: core
   kafka:
     producer:
-      bootstrap-servers: localhost:9094
+      bootstrap-servers: localhost:9092
       key-deserializer: org.apache.kafka.common.serialization.StringSerializer
       value-deserializer: org.apache.kafka.common.serialization.StringSerializer
 
@@ -27,6 +27,8 @@ management:
 #      auto-offset-reset: earliest
 #      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 #      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+kafka.topic.core-events: 'core.events'
 
 server:
   port: 8083
