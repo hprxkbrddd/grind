@@ -1,5 +1,6 @@
 package com.grind.core.model;
 
+import com.grind.core.dto.TrackDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,11 @@ public class Track {
 
     private String description;
 
-    private Long petId;
+    private String petId;
 
     private String messagePolicy;
+
+    public TrackDTO mapDTO(){
+        return new TrackDTO(id, name, description, petId, messagePolicy);
+    }
 }
