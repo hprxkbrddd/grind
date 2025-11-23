@@ -2,29 +2,69 @@ package com.grind.core.controller;
 
 import com.grind.core.model.Task;
 import com.grind.core.dto.TaskDTO;
+import com.grind.core.request.Task.ChangeTaskDescriptionRequest;
+import com.grind.core.request.Task.ChangeTaskNameRequest;
+import com.grind.core.request.Task.CreateTaskRequest;
 import com.grind.core.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/v1/Task")
+@RequestMapping("core/v1/task")
 public class TaskController {
 
     private final TaskService taskService;
 
-    @PostMapping("/create")
-    public ResponseEntity<Task> createTask(@RequestBody TaskDTO taskDTO){
-        Task task = taskService.createTask(taskDTO);
+    @GetMapping("/get-all")
+    public ResponseEntity<List<TaskDTO>> taskIndex(){
+        List<Task> tasks = taskService.getAllTasks();
+        List<TaskDTO> taskDTOS = tasks.stream().map(Task::mapDTO).collect(Collectors.toList());
 
-        return new ResponseEntity<>(task, HttpStatus.CREATED);
+        return new ResponseEntity<>(taskDTOS,
+                taskDTOS.isEmpty()?
+                        HttpStatus.NO_CONTENT : HttpStatus.FOUND);
     }
 
-    //public ResponseEntity<Task> setCompleted(@PathVariable Long id){}
+    @GetMapping("/get-task/{id}")
+    public ResponseEntity<TaskDTO> getById(@PathVariable String id){
+        return new ResponseEntity<>(taskService.getById(id).mapDTO(), HttpStatus.OK);
+    }
 
-    //public ResponseEntity<Task> setExpired(@PathVariable Long id){}
+    @PostMapping("/create")
+    public ResponseEntity<TaskDTO> createTask(@RequestBody CreateTaskRequest createTaskRequest){
+        Task task = taskService.createTask(createTaskRequest);
 
-    //public ResponseEntity<Task> deleteTask(@PathVariable Long id){}
+        return new ResponseEntity<>(task.mapDTO(), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/set-completed-task/{id}")
+    public void setCompleted(@PathVariable String id){
+        taskService.completeTask(id);
+    }
+
+    @PutMapping("/set-expired-task/{id}")
+    public void setExpired(@PathVariable String id){
+        taskService.expireTask(id);
+    }
+
+    @PutMapping("/change-name")
+    public void changeName(@RequestBody ChangeTaskNameRequest changeTaskNameRequest){
+        taskService.changeName(changeTaskNameRequest);
+    }
+
+    @PutMapping("/change-description")
+    public void changeDescription(@RequestBody ChangeTaskDescriptionRequest changeTaskDescriptionRequest){
+        taskService.changeDescription(changeTaskDescriptionRequest);
+    }
+
+    @DeleteMapping("/delete-task/{id}")
+    public void deleteTask(@PathVariable String id){
+        taskService.deleteTask(id);
+    }
 }

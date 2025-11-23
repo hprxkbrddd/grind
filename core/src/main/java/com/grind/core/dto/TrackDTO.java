@@ -1,18 +1,13 @@
 package com.grind.core.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+public record TrackDTO(
+        Long id,
 
-@AllArgsConstructor
-@Setter
-@Getter
-public class TrackDTO {
-    private String name;
+        String name,
 
-    private String description;
+        String description,
 
-    private Long petId;
+        String petId,
 
-    private String messagePolicy;
+        String messagePolicy) {
 }
