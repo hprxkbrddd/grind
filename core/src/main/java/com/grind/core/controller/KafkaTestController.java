@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  * <h1>Тестовый контроллер</h1>
- *
  */
 @RestController
 @RequiredArgsConstructor
