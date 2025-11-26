@@ -31,7 +31,8 @@ dependencies {
 //	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-actuator:3.5.7")
-    implementation("io.github.hprxkbrddd:security-autoconfiguration:0.0.4") // v0.0.4 has NO endpoint protection, v0.0.5 HAS endpoint protection
+    // v0.0.4 has NO endpoint protection, v0.0.5 HAS endpoint protection, v0.0.6 has disableable controller
+    implementation("io.github.hprxkbrddd:security-autoconfiguration:0.0.6")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
