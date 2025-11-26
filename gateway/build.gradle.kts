@@ -29,6 +29,8 @@ extra["springCloudVersion"] = "2025.0.0"
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.kafka:spring-kafka")
+    // v0.0.4 has NO endpoint protection, v0.0.5 HAS endpoint protection, v0.0.6 has disableable controller
+    implementation("io.github.hprxkbrddd:security-autoconfiguration:0.0.6")
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
