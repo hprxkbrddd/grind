@@ -26,7 +26,11 @@ management:
     info:
       enabled: true
 
-kafka.topic.core-events: 'core.events'
+kafka.topic:
+  core-events: 'core.events'
+  statistics:
+    response: 'statistics.response'
+    request: 'statistics.request'
 
 server:
   port: 8084
