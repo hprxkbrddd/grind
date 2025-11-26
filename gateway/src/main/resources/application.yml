@@ -23,6 +23,10 @@ spring:
               uri: http://localhost:8084
               predicates:
                 - Path=/database/**
+            - id: auth
+              uri: http://localhost:8086
+              predicates:
+                - Path=/grind/keycloak/**
 
 server:
   port: 8080

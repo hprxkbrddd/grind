@@ -7,6 +7,10 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringSerializer
       value-deserializer: org.apache.kafka.common.serialization.StringSerializer
 
+#grind:
+#  auth:
+#    token-endpoint-enabled: true
+
 management:
   endpoints:
     web:
