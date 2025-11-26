@@ -1,15 +1,54 @@
 services:
   postgres:
-    image: 'postgres:17'
+    image: postgres:18
+    container_name: postgres-1
     environment:
-      - 'POSTGRES_DB=grind'
-      - 'POSTGRES_PASSWORD=grind'
-      - 'POSTGRES_USER=grind'
+      POSTGRES_DB: grind
+      POSTGRES_USER: grind
+      POSTGRES_PASSWORD: grind
     ports:
-      - '5432:5432'
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
 
+  # KAFKA
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"   # внешний для хоста
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_DOCKER://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_DOCKER://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      CMD_ARGS: "--server.port=9000"
+    depends_on:
+      - kafka
+
+  # SECURITY
   keycloak:
-    image: quay.io/keycloak/keycloak:26.2.5
+    image: quay.io/keycloak/keycloak:latest
     depends_on:
       - postgres
     environment:
@@ -19,8 +58,40 @@ services:
       KC_DB_USERNAME: grind
       KC_DB_PASSWORD: grind
       KC_HOSTNAME: localhost
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: administrator
+      KC_BOOTSTRAP_ADMIN_PASSWORD: administrator
+
+    #      KC_DB_URL: jdbc:postgresql://postgres:5432/grind
     ports:
       - "8085:8080"
     command: [ "start-dev" ]
+
+
+  # STATISTICS
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"   # HTTP
+      - "9001:9000"   # TCP (для клиентов и драйверов)
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 32768
+        hard: 32768
+      nproc:
+        soft: 2048
+        hard: 2048
+
+    environment:
+      CLICKHOUSE_USER: grind
+      CLICKHOUSE_PASSWORD: grind
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+      CLICKHOUSE_MAX_SERVER_MEMORY_USAGE: "1073741824"      # 1ГБ
+      CLICKHOUSE_MAX_SERVER_MEMORY_USAGE_TO_RAM_RATIO: "0.5"
+
+volumes:
+  kafka_data:
+  clickhouse_data:
+  postgres_data:

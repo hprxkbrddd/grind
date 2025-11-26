@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: statistics
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: core-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: beans, health, info, mappings
+  endpoint:
+    beans:
+      enabled: true
+    health:
+      enabled: true
+    info:
+      enabled: true
+
+kafka.topic.core-events: 'core.events'
+
+server:
+  port: 8084

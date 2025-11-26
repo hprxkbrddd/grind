@@ -26,11 +26,12 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("com.clickhouse:clickhouse-jdbc:0.9.4")
+    implementation("org.springframework.kafka:spring-kafka")
 	compileOnly("org.projectlombok:lombok")
 //	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-    implementation("com.grind:security-library:0.0.3-SNAPSHOT")
+    implementation("io.github.hprxkbrddd:security-autoconfiguration:0.1.0") // v0.0.4 has NO endpoint protection, v0.0.5 HAS endpoint protection
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
