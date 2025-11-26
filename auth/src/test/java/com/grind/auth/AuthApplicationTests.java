@@ -1,10 +1,10 @@
-package com.grind.database;
+package com.grind.auth;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DatabaseApplicationTests {
+class AuthApplicationTests {
 
 	@Test
 	void contextLoads() {
