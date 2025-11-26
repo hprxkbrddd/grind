@@ -1,9 +1,7 @@
 package io.github.hprxkbrddd.security_autoconfiguration.autoconfiguration;
 
 import io.github.hprxkbrddd.security_autoconfiguration.spring.component.JwtConverter;
-import io.github.hprxkbrddd.security_autoconfiguration.spring.controller.KeycloakController;
 import io.github.hprxkbrddd.security_autoconfiguration.spring.exception.SecurityExceptionHandler;
-import io.github.hprxkbrddd.security_autoconfiguration.spring.service.KeycloakService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -79,9 +77,7 @@ public class GrindSecurityAutoConfig {
      * </ul>
      *
      * @param http instance of {@link HttpSecurity} used to build the chain
-     *
      * @return fully configured {@link SecurityFilterChain}
-     *
      * @throws Exception if Spring Security fails to build the configuration
      */
     @Bean
@@ -107,46 +103,6 @@ public class GrindSecurityAutoConfig {
                         oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))
                 .csrf(AbstractHttpConfigurer::disable)
                 .build();
-    }
-
-    /**
-     * Keycloak Service
-     * Creates a {@link KeycloakService} bean if the application has not already provided one.
-     *
-     * <p><b>Service responsibilities include:</b></p>
-     * <ul>
-     *     <li>communicating with Keycloak instance</li>
-     *     <li>managing token operations</li>
-     *     <li>handling user registration / authentication</li>
-     * </ul>
-     *
-     * @return new instance of {@link KeycloakService}
-     */
-    @Bean
-    @ConditionalOnMissingBean(KeycloakService.class)
-    public KeycloakService keycloakService() {
-        return new KeycloakService();
-    }
-
-    /**
-     * Keycloak Controller
-     * Creates a REST controller for exposing authentication endpoints
-     * implemented by {@link KeycloakService}, unless such bean already exists.
-     *
-     * <p><b>Exposes endpoints for:</b></p>
-     * <ul>
-     *     <li>retrieving JWT token</li>
-     *     <li>registering new users</li>
-     * </ul>
-     *
-     * @param keycloakService service used internally by the controller
-     *
-     * @return new instance of {@link KeycloakController}
-     */
-    @Bean
-    @ConditionalOnMissingBean(KeycloakController.class)
-    public KeycloakController keycloakController(KeycloakService keycloakService) {
-        return new KeycloakController(keycloakService);
     }
 
     /**
