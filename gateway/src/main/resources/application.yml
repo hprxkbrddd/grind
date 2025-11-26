@@ -1,8 +1,18 @@
 spring:
-  main:
-    web-application-type: reactive
   application:
     name: api-gateway
+
+grind:
+  auth:
+    token-endpoint-enabled: true
+
+kafka.topic:
+  core:
+    events: 'core.events'
+    request: 'core.request'
+  statistics:
+    request: 'statistics.request'
+  response: 'response'
 
 server:
   port: 8080
