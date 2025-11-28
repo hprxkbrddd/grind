@@ -28,7 +28,9 @@ management:
 #      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 #      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
-kafka.topic.core-events: 'core.events'
+kafka.topic.core:
+  events: 'core.events'
+  request: 'core.request'
 
 server:
   port: 8083

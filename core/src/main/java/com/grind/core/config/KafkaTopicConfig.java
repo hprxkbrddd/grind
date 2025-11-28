@@ -9,13 +9,23 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 public class KafkaTopicConfig {
 
-    @Value("${kafka.topic.core-events}")
-    private String coreTopic;
+    @Value("${kafka.topic.core.events}")
+    private String coreEventTopic;
+    @Value("${kafka.topic.core.request}")
+    private String coreReqTopic;
 
     @Bean
     public NewTopic coreEventTopic(){
         return TopicBuilder
-                .name(coreTopic)
+                .name(coreEventTopic)
+                .partitions(3)
+                .build();
+    }
+
+    @Bean
+    public NewTopic coreReqTopic(){
+        return TopicBuilder
+                .name(coreReqTopic)
                 .partitions(3)
                 .build();
     }

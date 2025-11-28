@@ -19,22 +19,22 @@ public class KafkaTestController {
 
     @GetMapping("/ping")
     public void ping(){
-        kafkaProducer.publish("pong");
+        kafkaProducer.publish("pong", null);
     }
 
     @GetMapping("/pingOrdered")
     public void pingOrdered(){
-        kafkaProducer.publish("pongOrdered", "to the same partition plzzzz");
+        kafkaProducer.publish("pongOrdered", "to the same partition plzzzz", null);
     }
 
 
     @GetMapping("/megaping")
     public void megaPing(){
-        kafkaProducer.publishOrdered(List.of("megapong", "megapong", "megapong", "megapong", "megapong", "megapong", "megapong", "megapong", "megapong"));
+        kafkaProducer.publishOrdered(List.of("megapong", "megapong", "megapong", "megapong", "megapong", "megapong", "megapong", "megapong", "megapong"), null);
     }
 
     @GetMapping("/pingxtimes")
     public void pingXtimes(){
-        kafkaProducer.publish(List.of("ping for x times", "ping for x times", "ping for x times", "ping for x times", "ping for x times", "ping for x times"));
+        kafkaProducer.publish(List.of("ping for x times", "ping for x times", "ping for x times", "ping for x times", "ping for x times", "ping for x times"), null);
     }
 }

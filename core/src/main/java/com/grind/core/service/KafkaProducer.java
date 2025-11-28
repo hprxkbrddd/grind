@@ -2,6 +2,8 @@ package com.grind.core.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.core.dto.CoreMessageDTO;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class KafkaProducer {
 
-    @Value("${kafka.topic.core-events}")
+    @Value("${kafka.topic.core.events}")
     private String coreTopic;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -35,19 +37,14 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String key) {
+    public void publish(Object value, String key, String traceId) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
-        String traceId = null; // to identify request for all microservices
         String jsonValue;
 
-        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
-        if (requestAttributes != null) {
-            traceId = requestAttributes.getRequest().getHeader("X-Trace-Id");
-        }
+        System.out.println(">>>>> Trace id: " + traceId);
 
         if (auth instanceof JwtAuthenticationToken jwtAuth) {
             userId = jwtAuth.getToken().getSubject();
@@ -63,27 +60,48 @@ public class KafkaProducer {
             jsonValue = value.toString();
         }
 
-        MessageBuilder<String> builder = MessageBuilder
-                .withPayload(jsonValue)
-                .setHeader(KafkaHeaders.TOPIC, coreTopic);
+        kafkaTemplate.send(
+                formMessage(
+                        jsonValue,
+                        coreTopic,
+                        key,
+                        traceId,
+                        userId,
+                        roles,
+                        null
+                )
+        );
+    }
 
-        if (key!= null && !key.isBlank())
+    private Message<String> formMessage(
+            String payload,
+            String topic,
+            String key,
+            String traceId,
+            String userId,
+            String roles,
+            String correlationId
+    ) {
+        MessageBuilder<String> builder = MessageBuilder
+                .withPayload(payload)
+                .setHeader(KafkaHeaders.TOPIC, topic);
+
+        if (key != null && !key.isBlank())
             builder.setHeader(KafkaHeaders.KEY, key);
 
         if (traceId != null && !traceId.isBlank())
             builder.setHeader("X-Trace-Id", traceId);
-        else
-            builder.setHeader("X-Trace-Id", UUID.randomUUID().toString());
 
-        if (userId!=null && !userId.isBlank())
+        if (userId != null && !userId.isBlank())
             builder.setHeader("X-User-Id", userId);
 
-        if (roles!=null && !roles.isBlank())
+        if (roles != null && !roles.isBlank())
             builder.setHeader("X-Roles", roles);
 
-        Message<String> message = builder.build();
+        if (correlationId != null && !correlationId.isBlank())
+            builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
 
-        kafkaTemplate.send(message);
+        return builder.build();
     }
 
     /**
@@ -91,9 +109,11 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publish(List<Object> values) {
+    public void publish(List<Object> values, String traceId) {
+        String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
+
         for (Object value : values) {
-            publish(value);
+            publish(value, trId);
         }
     }
 
@@ -102,8 +122,10 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value) {
-        publish(value, null);
+    public void publish(Object value, String traceId) {
+        publish(value, null,
+                traceId == null ? UUID.randomUUID().toString() : traceId
+        );
     }
 
     /**
@@ -112,10 +134,33 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publishOrdered(List<Object> values) {
+    public void publishOrdered(List<Object> values, String traceId) {
         String key = UUID.randomUUID().toString();
+        String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
         for (Object value : values) {
-            publish(value, key);
+            publish(value, key, trId);
         }
+    }
+
+    public void reply(Object value, String correlationId, String traceId) {
+        String jsonValue;
+
+        try {
+            jsonValue = objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            jsonValue = value.toString();
+        }
+
+        kafkaTemplate.send(
+                formMessage(
+                        jsonValue,
+                        "response",
+                        null,
+                        traceId,
+                        null,
+                        null,
+                        correlationId
+                )
+        );
     }
 }

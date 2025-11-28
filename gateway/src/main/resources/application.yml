@@ -1,6 +1,12 @@
 spring:
   application:
     name: api-gateway
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+
 
 grind:
   auth:
