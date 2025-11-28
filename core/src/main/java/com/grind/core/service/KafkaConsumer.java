@@ -11,7 +11,15 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +31,24 @@ public class KafkaConsumer {
     public void listen(
             @Payload String payload,
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId,
-            @Header("X-Trace-Id") String traceId
+            @Header("X-Trace-Id") String traceId,
+            @Header("X-User-Id") String userId,
+            @Header(value = "X-Roles", required = false) String roles
     ) {
+        List<SimpleGrantedAuthority> authorities = Arrays.stream(
+                        roles != null ? roles.split(",") : new String[0]
+                )
+                .map(String::trim)
+                .filter(r -> !r.isBlank())
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(userId, null, authorities);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         CoreMessageDTO msg;
         try {
             ObjectMapper objectMapper = new ObjectMapper();

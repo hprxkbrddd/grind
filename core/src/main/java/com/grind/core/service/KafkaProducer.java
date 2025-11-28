@@ -10,6 +10,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -46,11 +47,12 @@ public class KafkaProducer {
 
         System.out.println(">>>>> Trace id: " + traceId);
 
-        if (auth instanceof JwtAuthenticationToken jwtAuth) {
-            userId = jwtAuth.getToken().getSubject();
-            roles = jwtAuth
-                    .getAuthorities()
-                    .stream().map(GrantedAuthority::getAuthority)
+        if (auth instanceof UsernamePasswordAuthenticationToken upAuth) {
+            userId = (String) upAuth.getPrincipal();
+
+            roles = upAuth.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.joining(","));
         }
 
