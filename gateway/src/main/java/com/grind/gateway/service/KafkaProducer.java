@@ -30,44 +30,41 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class KafkaProducer {
 
-    private final ReplyingKafkaTemplate<String, String, String> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${kafka.topic.core.request}")
-    private String coreReqTopic;
-
-    private final ReplyingKafkaTemplate<String, Object, Object> replyingKafkaTemplate;
-
-    public Object callWithTimeout(Object request, String correlationId, String topic) {
-
-        // формируем ProducerRecord, чтобы добавить заголовки
-        ProducerRecord<String, Object> record =
-                new ProducerRecord<>(coreReqTopic, null, request);
-
-        record.headers().add(KafkaHeaders.CORRELATION_ID,
-                correlationId.getBytes(StandardCharsets.UTF_8));
-
-        try {
-            // отправляем и ждём ответ
-            RequestReplyFuture<String, Object, Object> future =
-                    replyingKafkaTemplate.sendAndReceive(record);
-
-            // можно отдельно подождать отправку, если важно
-            // future.getSendFuture().get(500, TimeUnit.MILLISECONDS);
-
-            // ждём сам ответ максимум 500 мс
-            ConsumerRecord<String, Object> responseRecord =
-                    future.get(500, TimeUnit.MILLISECONDS);
-
-            return responseRecord.value();
-
-        } catch (TimeoutException e) {
-            throw new RuntimeException(
-                    "Не дождались ответа для correlationId = " + correlationId, e);
-        } catch (Exception e) {
-            throw new RuntimeException("Ошибка при запросе через Kafka RPC", e);
-        }
-    }
+//    private final ReplyingKafkaTemplate<String, Object, Object> replyingKafkaTemplate;
+//
+//    public Object callWithTimeout(Object request, String correlationId, String topic) {
+//
+//        // формируем ProducerRecord, чтобы добавить заголовки
+//        ProducerRecord<String, Object> record =
+//                new ProducerRecord<>(coreReqTopic, null, request);
+//
+//        record.headers().add(KafkaHeaders.CORRELATION_ID,
+//                correlationId.getBytes(StandardCharsets.UTF_8));
+//
+//        try {
+//            // отправляем и ждём ответ
+//            RequestReplyFuture<String, Object, Object> future =
+//                    replyingKafkaTemplate.sendAndReceive(record);
+//
+//            // можно отдельно подождать отправку, если важно
+//            // future.getSendFuture().get(500, TimeUnit.MILLISECONDS);
+//
+//            // ждём сам ответ максимум 500 мс
+//            ConsumerRecord<String, Object> responseRecord =
+//                    future.get(500, TimeUnit.MILLISECONDS);
+//
+//            return responseRecord.value();
+//
+//        } catch (TimeoutException e) {
+//            throw new RuntimeException(
+//                    "Не дождались ответа для correlationId = " + correlationId, e);
+//        } catch (Exception e) {
+//            throw new RuntimeException("Ошибка при запросе через Kafka RPC", e);
+//        }
+//    }
 
 
     /**
@@ -77,21 +74,17 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String key, String topic) {
+    public void publish(
+            Object value,
+            String key,
+            String topic,
+            String correlationId
+    ) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
-        String traceId = null; // to identify request for all microservices
-        String correlationId = null;
         String jsonValue;
-
-        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
-        if (requestAttributes != null) {
-            traceId = requestAttributes.getRequest().getHeader("X-Trace-Id");
-            correlationId = requestAttributes.getRequest().getHeader(KafkaHeaders.CORRELATION_ID);
-        }
 
         if (auth instanceof JwtAuthenticationToken jwtAuth) {
             userId = jwtAuth.getToken().getSubject();
@@ -114,15 +107,9 @@ public class KafkaProducer {
         if (key!= null && !key.isBlank())
             builder.setHeader(KafkaHeaders.KEY, key);
 
-        if (traceId != null && !traceId.isBlank())
-            builder.setHeader("X-Trace-Id", traceId);
-        else
-            builder.setHeader("X-Trace-Id", UUID.randomUUID().toString());
+        builder.setHeader("X-Trace-Id", UUID.randomUUID().toString());
 
-        if (correlationId != null && !correlationId.isBlank())
-            builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
-        else
-            builder.setHeader(KafkaHeaders.CORRELATION_ID, UUID.randomUUID().toString());
+        builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
 
         if (userId!=null && !userId.isBlank())
             builder.setHeader("X-User-Id", userId);
@@ -133,8 +120,6 @@ public class KafkaProducer {
         Message<String> message = builder.build();
 
         kafkaTemplate.send(message);
-
-
     }
 
     /**
@@ -142,9 +127,9 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publish(List<Object> values, String topic) {
+    public void publish(List<Object> values, String topic, String correlationId) {
         for (Object value : values) {
-            publish(value, topic);
+            publish(value, topic, correlationId);
         }
     }
 
@@ -153,8 +138,8 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String topic) {
-        publish(value, null, topic);
+    public void publish(Object value, String topic, String correlationId) {
+        publish(value, null, topic, correlationId);
     }
 
     /**
@@ -163,10 +148,10 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publishOrdered(List<Object> values) {
+    public void publishOrdered(List<Object> values, String traceId, String correlationId) {
         String key = UUID.randomUUID().toString();
         for (Object value : values) {
-            publish(value, key);
+            publish(value, key, traceId, correlationId);
         }
     }
 }
