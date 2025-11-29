@@ -3,7 +3,6 @@ package com.grind.statistics.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Service;
 
 @Configuration
 @RequiredArgsConstructor
