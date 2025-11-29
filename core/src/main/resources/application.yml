@@ -6,6 +6,12 @@ spring:
       bootstrap-servers: localhost:9092
       key-deserializer: org.apache.kafka.common.serialization.StringSerializer
       value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: core-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 management:
   endpoints:
@@ -19,18 +25,18 @@ management:
       enabled: true
     info:
       enabled: true
-#spring:
-#  kafka:
-#    consumer:
-#      bootstrap-servers: localhost:9092
-#      group-id: core-consumer-group
-#      auto-offset-reset: earliest
-#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
-kafka.topic.core:
-  events: 'core.events'
-  request: 'core.request'
+kafka.topic:
+  core:
+    request:
+      task: 'core.request.task'
+      track: 'core.request.track'
+    events:
+      task: 'core.event.task'
+      track: 'core.event.track'
+  statistics:
+    request: 'statistics.request'
+  response: 'response'
 
 server:
   port: 8083
