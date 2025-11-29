@@ -1,15 +1,28 @@
 package com.grind.gateway.dto;
 
 public enum CoreMessageType {
-    CREATE_TASK,
-    CREATE_TRACK,
+    // TRACK RELATED
 
-    DELETE_TASK,
+    GET_TRACK,
+    CREATE_TRACK,
+    CHANGE_TRACK,
     DELETE_TRACK,
 
-    TASK_CREATED,
     TRACK_CREATED,
+    TRACK_DELETED,
 
+    // TASK RELATED
+
+    GET_TASKS_OF_TRACK,
+    GET_TASKS_OF_SPRINT,
+    GET_TASK,
+    CREATE_TASK,
+    CHANGE_TASK,
+    DELETE_TASK,
+
+    TASK_CREATED,
     TASK_DELETED,
-    TRACK_DELETED
+    TASK_CHANGED,
+
+    UNDEFINED
 }

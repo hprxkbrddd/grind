@@ -1,7 +1,6 @@
 package com.grind.core.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageDTO;
 import com.grind.core.dto.CoreMessageType;
@@ -13,7 +12,6 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,11 +21,11 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class KafkaConsumer {
+public class KafkaTaskConsumer {
 
     private final KafkaProducer kafkaProducer;
 
-    @KafkaListener(id = "core-server", topics = "core.request")
+    @KafkaListener(id = "core-server", topics = "core.request.task")
     public void listen(
             @Payload String payload,
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId,
