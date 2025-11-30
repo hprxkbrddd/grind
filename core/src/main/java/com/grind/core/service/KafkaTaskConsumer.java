@@ -24,6 +24,7 @@ import java.util.List;
 public class KafkaTaskConsumer {
 
     private final KafkaProducer kafkaProducer;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @KafkaListener(id = "core-server", topics = "core.request.task")
     public void listen(
@@ -32,7 +33,7 @@ public class KafkaTaskConsumer {
             @Header("X-Trace-Id") String traceId,
             @Header("X-User-Id") String userId,
             @Header(value = "X-Roles", required = false) String roles
-    ) {
+    ) throws InterruptedException, JsonProcessingException {
         List<SimpleGrantedAuthority> authorities = Arrays.stream(
                         roles != null ? roles.split(",") : new String[0]
                 )
@@ -49,7 +50,6 @@ public class KafkaTaskConsumer {
 
         CoreMessageDTO msg;
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             msg = objectMapper.readValue(payload, CoreMessageDTO.class);
         } catch (JsonParseException e){
             msg = new CoreMessageDTO(CoreMessageType.UNDEFINED, payload);
@@ -59,32 +59,120 @@ public class KafkaTaskConsumer {
         }
         String response;
         switch (msg.type()){
-            case CREATE_TRACK -> {
-                System.out.println("mocking create track action");
-                response = "create track response. corrId:"+correlationId;
+            case GET_TASKS_OF_TRACK -> {
+                String result;
+                // ---CODE TO REPLACE---
+                System.out.println("fetching all TASKS of TRACK...");
+                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                Thread.sleep(500L);
+                result = "some json as string, or exception";
+                // ---CODE TO REPLACE END---
+                response = objectMapper.writeValueAsString(
+                        new CoreMessageDTO(
+                                CoreMessageType.TASKS_OF_TRACK,
+                                result
+                        )
+                );
+                kafkaProducer.reply(response, correlationId, traceId);
+            }
+            case GET_TASKS_OF_SPRINT -> {
+                String result;
+                // ---CODE TO REPLACE---
+                System.out.println("fetching all TASKS of SPRINT...");
+                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                Thread.sleep(500L);
+                result = "some json as string, or exception";
+                // ---CODE TO REPLACE END---
+                response = objectMapper.writeValueAsString(
+                        new CoreMessageDTO(
+                                CoreMessageType.TASKS_OF_SPRINT,
+                                result
+                        )
+                );
+                kafkaProducer.reply(response, correlationId, traceId);
+            }
+            case GET_TASK -> {
+                String result;
+                // ---CODE TO REPLACE---
+                System.out.println("fetching TASK...");
+                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                Thread.sleep(500L);
+                result = "some json as string, or exception";
+                // ---CODE TO REPLACE END---
+                response = objectMapper.writeValueAsString(
+                        new CoreMessageDTO(
+                                CoreMessageType.TASK,
+                                result
+                        )
+                );
+                kafkaProducer.reply(response, correlationId, traceId);
+            }
+            case CHANGE_TASK -> {
+                String result; // if present
+                // ---CODE TO REPLACE---
+                System.out.println("mocking CHANGE task action");
+                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                Thread.sleep(500L);
+                result = "some json as string, or empty";
+                // ---CODE TO REPLACE END---
+                response = objectMapper.writeValueAsString(
+                        new CoreMessageDTO(
+                                CoreMessageType.TASK_CHANGED,
+                                result
+                        )
+                );
+                kafkaProducer.publish(response, traceId);
             }
             case CREATE_TASK -> {
-                System.out.println("mocking create task action");
-                response = "create task response. corrId:"+correlationId;
-            }
-            case DELETE_TRACK -> {
-                System.out.println("mocking delete track action");
-                response = "delete track response. corrId:"+correlationId;
+                String result; // if present
+                // ---CODE TO REPLACE---
+                System.out.println("mocking CREATE task action");
+                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                Thread.sleep(500L);
+                result = "some json as string, or empty";
+                // ---CODE TO REPLACE END---
+                response = objectMapper.writeValueAsString(
+                        new CoreMessageDTO(
+                                CoreMessageType.TASK_CREATED,
+                                result
+                        )
+                );
+                kafkaProducer.publish(response, traceId);
             }
             case DELETE_TASK -> {
-                System.out.println("mocking delete task action");
-                response = "delete task response. corrId:"+correlationId;
+                String result; // if present
+                // ---CODE TO REPLACE---
+                System.out.println("mocking DELETE task action");
+                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                Thread.sleep(500L);
+                result = "some json as string, or empty";
+                // ---CODE TO REPLACE END---
+                response = objectMapper.writeValueAsString(
+                        new CoreMessageDTO(
+                                CoreMessageType.TASK_DELETED,
+                                result
+                        )
+                );
+                kafkaProducer.publish(response, traceId);
             }
             case UNDEFINED -> {
-                System.out.println("undefined message type");
-                response = "payload: "+msg.payload()+". corrId: "+correlationId;
+                CoreMessageDTO result;
+                // ---CODE TO REPLACE---
+                System.out.println("type is undefined. mocking processing");
+                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                Thread.sleep(500L);
+                result = new CoreMessageDTO(
+                        CoreMessageType.UNDEFINED,
+                        "some json as string, or empty"
+                );
+                // ---CODE TO REPLACE END---
+                response = objectMapper.writeValueAsString(result);
             }
             default -> {
                 System.out.println("unknown type");
-                response = "unknown type in core.request. corrId:"+correlationId;
+                response = "unknown type in core.request.task. corrId:"+correlationId;
             }
         }
-        kafkaProducer.reply(response, correlationId, traceId);
         kafkaProducer.publish(response, traceId);
     }
 }
