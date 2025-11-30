@@ -1,4 +1,4 @@
-package com.grind.gateway.dto;
+package com.grind.gateway.dto.core;
 
 import java.time.LocalDate;
 
