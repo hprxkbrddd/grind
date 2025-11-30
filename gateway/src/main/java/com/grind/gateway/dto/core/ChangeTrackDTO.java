@@ -1,5 +1,6 @@
-package com.grind.gateway.dto;
+package com.grind.gateway.dto.core;
 
+import com.grind.gateway.enums.TrackStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

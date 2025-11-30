@@ -2,10 +2,10 @@ package com.grind.gateway.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.gateway.dto.ChangeTrackDTO;
-import com.grind.gateway.dto.CoreMessageDTO;
-import com.grind.gateway.dto.CoreMessageType;
-import com.grind.gateway.dto.TrackCreationDTO;
+import com.grind.gateway.dto.core.ChangeTrackDTO;
+import com.grind.gateway.dto.core.CoreMessageDTO;
+import com.grind.gateway.enums.CoreMessageType;
+import com.grind.gateway.dto.core.TrackCreationDTO;
 import com.grind.gateway.service.KafkaProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

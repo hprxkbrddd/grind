@@ -1,6 +1,6 @@
-package com.grind.gateway.dto;
+package com.grind.gateway.enums;
 
-enum TaskStatus {
+public enum TaskStatus {
     TODO,           // К выполнению
     IN_PROGRESS,    // В процессе
     DONE,           // Выполнено
