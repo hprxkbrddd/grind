@@ -16,7 +16,7 @@ public class KafkaResponseListener {
 
     KafkaResponseListener(){
         this.webClient = WebClient.builder()
-                .baseUrl("/frontend/response/uri")
+                .baseUrl("http://localhost:3000/frontend/response/uri")
                 .build();
         this.objectMapper = new ObjectMapper();
     }
@@ -27,8 +27,11 @@ public class KafkaResponseListener {
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId
     ) throws JsonProcessingException {
         Object response = objectMapper.readValue(payload, Object.class);
-        webClient.post()
-                .bodyValue(response)
-                .header("X-Correlation-Id", correlationId);
+//        webClient.post()
+//                .bodyValue(response)
+//                .header("X-Correlation-Id", correlationId)
+//                .retrieve()
+//                .toBodilessEntity()
+//                .subscribe();
     }
 }
