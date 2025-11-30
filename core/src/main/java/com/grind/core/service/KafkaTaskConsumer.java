@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageDTO;
 import com.grind.core.dto.CoreMessageType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.json.JsonParseException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -26,7 +27,10 @@ public class KafkaTaskConsumer {
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(id = "core-server", topics = "core.request.task")
+    @Value("${kafka.topic.core.event.task}")
+    private String coreEvTaskTopic;
+
+    @KafkaListener(id = "core-server-task", topics = "core.request.task")
     public void listen(
             @Payload String payload,
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId,
@@ -125,7 +129,7 @@ public class KafkaTaskConsumer {
                                 result
                         )
                 );
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
             case CREATE_TASK -> {
                 String result; // if present
@@ -141,7 +145,7 @@ public class KafkaTaskConsumer {
                                 result
                         )
                 );
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
             case DELETE_TASK -> {
                 String result; // if present
@@ -157,7 +161,7 @@ public class KafkaTaskConsumer {
                                 result
                         )
                 );
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
             case UNDEFINED -> {
                 CoreMessageDTO result;
@@ -171,12 +175,12 @@ public class KafkaTaskConsumer {
                 );
                 // ---CODE TO REPLACE END---
                 response = objectMapper.writeValueAsString(result);
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
             default -> {
                 System.out.println("unknown type");
                 response = "unknown type in core.request.task. corrId:"+correlationId;
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
         }
     }

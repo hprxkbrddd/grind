@@ -27,7 +27,7 @@ public class CoreTrackController {
     @Value("${kafka.topic.core.request.task}")
     private String coreReqTaskTopic;
 
-    @GetMapping("${/{trackId}}")
+    @GetMapping("/{trackId}")
     public ResponseEntity<String> getTrack(@PathVariable String trackId) {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
@@ -58,7 +58,7 @@ public class CoreTrackController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("${/{id}}")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> changeTrack(@RequestBody ChangeTrackDTO dto, @PathVariable String id) throws JsonProcessingException {
         String correlationId = UUID.randomUUID().toString();
         dto.setId(id);
@@ -76,7 +76,7 @@ public class CoreTrackController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @DeleteMapping("${/{id}}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         String correlationId = UUID.randomUUID().toString();
 

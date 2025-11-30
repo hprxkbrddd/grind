@@ -17,7 +17,7 @@ kafka.topic:
     request:
       task: 'core.request.task'
       track: 'core.request.track'
-    events:
+    event:
       task: 'core.event.task'
       track: 'core.event.track'
   statistics:

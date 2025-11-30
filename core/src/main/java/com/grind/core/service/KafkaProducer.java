@@ -20,9 +20,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
-
-    @Value("${kafka.topic.core.events}")
-    private String coreTopic;
     @Value("${kafka.topic.response}")
     private String responseTopic;
 
@@ -36,7 +33,7 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String key, String traceId) {
+    public void publish(Object value, String key, String traceId, String topic) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
@@ -63,7 +60,7 @@ public class KafkaProducer {
         kafkaTemplate.send(
                 formMessage(
                         jsonValue,
-                        coreTopic,
+                        topic,
                         key,
                         traceId,
                         userId,
@@ -109,11 +106,11 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publish(List<Object> values, String traceId) {
+    public void publish(List<Object> values, String traceId, String topic) {
         String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
 
         for (Object value : values) {
-            publish(value, trId);
+            publish(value, trId, topic);
         }
     }
 
@@ -122,9 +119,10 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String traceId) {
+    public void publish(Object value, String traceId, String topic) {
         publish(value, null,
-                traceId == null ? UUID.randomUUID().toString() : traceId
+                traceId == null ? UUID.randomUUID().toString() : traceId,
+                topic
         );
     }
 
@@ -134,7 +132,7 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publishOrdered(List<Object> values, String traceId) {
+    public void publishOrdered(List<Object> values, String traceId, String topic) {
         String key = UUID.randomUUID().toString();
         String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
         for (Object value : values) {
