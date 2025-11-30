@@ -1,7 +1,7 @@
 package com.grind.gateway.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -25,10 +25,10 @@ public class KafkaResponseListener {
     public void sendResponse(
             @Payload String payload,
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId
-    ){
-//        String
-//        try {
-//
-//        }
+    ) throws JsonProcessingException {
+        Object response = objectMapper.readValue(payload, Object.class);
+        webClient.post()
+                .bodyValue(response)
+                .header("X-Correlation-Id", correlationId);
     }
 }
