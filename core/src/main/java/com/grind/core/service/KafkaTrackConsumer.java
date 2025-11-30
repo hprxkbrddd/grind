@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageDTO;
 import com.grind.core.dto.CoreMessageType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.json.JsonParseException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -25,7 +26,10 @@ public class KafkaTrackConsumer {
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(id = "core-server", topics = "core.request.track")
+    @Value("${kafka.topic.core.event.track}")
+    private String coreEvTrackTopic;
+
+    @KafkaListener(id = "core-server-track", topics = "core.request.track")
     public void listen(
             @Payload String payload,
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId,
@@ -111,7 +115,7 @@ public class KafkaTrackConsumer {
                                 result
                         )
                 );
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
             case CREATE_TRACK -> {
                 String result; // if present
@@ -127,7 +131,7 @@ public class KafkaTrackConsumer {
                                 result
                         )
                 );
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
             case DELETE_TRACK -> {
                 String result; // if present
@@ -143,7 +147,7 @@ public class KafkaTrackConsumer {
                                 result
                         )
                 );
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
             case UNDEFINED -> {
                 CoreMessageDTO result;
@@ -157,12 +161,12 @@ public class KafkaTrackConsumer {
                 );
                 // ---CODE TO REPLACE END---
                 response = objectMapper.writeValueAsString(result);
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
             default -> {
                 System.out.println("unknown type");
                 response = "unknown type in core.request.task. corrId:" + correlationId;
-                kafkaProducer.publish(response, traceId);
+                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
         }
     }

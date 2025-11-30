@@ -14,13 +14,13 @@ public class KafkaTopicConfig {
 
     @Value("${kafka.topic.core.request.task}")
     private String coreReqTaskTopic;
-    @Value("${kafka.topic.core.response.task}")
-    private String coreResTaskTopic;
+    @Value("${kafka.topic.core.event.task}")
+    private String coreEvTaskTopic;
 
     @Value("${kafka.topic.core.request.track}")
     private String coreReqTrackTopic;
-    @Value("${kafka.topic.core.response.track}")
-    private String coreResTrackTopic;
+    @Value("${kafka.topic.core.event.track}")
+    private String coreEvTrackTopic;
 
     @Bean
     public NewTopic response() {
@@ -39,9 +39,9 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic coreResTaskTopic(){
+    public NewTopic coreEvTaskTopic(){
         return TopicBuilder
-                .name(coreResTaskTopic)
+                .name(coreEvTaskTopic)
                 .partitions(3)
                 .build();
     }
@@ -55,9 +55,9 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic coreResTrackTopic(){
+    public NewTopic coreEvTrackTopic(){
         return TopicBuilder
-                .name(coreResTrackTopic)
+                .name(coreEvTrackTopic)
                 .partitions(3)
                 .build();
     }

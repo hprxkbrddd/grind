@@ -27,7 +27,7 @@ public class CoreTaskController {
     @Value("${kafka.topic.core.request.task}")
     private String coreReqTaskTopic;
 
-    @GetMapping("${/{taskId}}")
+    @GetMapping("/{taskId}")
     public ResponseEntity<String> getTask(@PathVariable String taskId) {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
@@ -41,7 +41,7 @@ public class CoreTaskController {
         return ResponseEntity.ok(correlationId);
     }
 
-    @GetMapping("${/track/{trackId}}")
+    @GetMapping("/track/{trackId}")
     public ResponseEntity<String> getTasksOfTrack(@PathVariable String trackId) {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
@@ -55,7 +55,7 @@ public class CoreTaskController {
         return ResponseEntity.ok(correlationId);
     }
 
-    @GetMapping("${/sprint/{sprintId}}")
+    @GetMapping("/sprint/{sprintId}")
     public ResponseEntity<String> getPlanned(@PathVariable String sprintId) {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
@@ -86,7 +86,7 @@ public class CoreTaskController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("${/{id}}")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> changeTask(@RequestBody ChangeTaskDTO dto, @PathVariable String id) throws JsonProcessingException {
         String correlationId = UUID.randomUUID().toString();
         dto.setId(id);
@@ -104,7 +104,7 @@ public class CoreTaskController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @DeleteMapping("${/{id}}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         String correlationId = UUID.randomUUID().toString();
 
