@@ -57,7 +57,7 @@ public class KafkaTaskConsumer {
         CoreMessageDTO msg;
         try {
             msg = objectMapper.readValue(payload, CoreMessageDTO.class);
-        } catch (JsonParseException e){
+        } catch (JsonParseException e) {
             msg = new CoreMessageDTO(CoreMessageType.UNDEFINED, payload);
             System.out.println("could not parse. processing as string");
         } catch (JsonProcessingException e) {
@@ -65,101 +65,89 @@ public class KafkaTaskConsumer {
         }
 
         // HANDLING REQUEST
-        String response;
-        switch (msg.type()){
+        CoreMessageDTO response;
+        switch (msg.type()) {
             case GET_TASKS_OF_TRACK -> {
-                String result;
+                Object result;
                 // ---CODE TO REPLACE---
                 System.out.println("fetching all TASKS of TRACK...");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
                 Thread.sleep(500L);
-                result = "some json as string, or exception";
+                result = "some object as dto, or exception";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASKS_OF_TRACK,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASKS_OF_TRACK,
+                        result
                 );
                 kafkaProducer.reply(response, correlationId, traceId);
             }
             case GET_TASKS_OF_SPRINT -> {
-                String result;
+                Object result;
                 // ---CODE TO REPLACE---
                 System.out.println("fetching all TASKS of SPRINT...");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
                 Thread.sleep(500L);
-                result = "some json as string, or exception";
+                result = "some object as dto, or exception";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASKS_OF_SPRINT,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASKS_OF_SPRINT,
+                        result
                 );
                 kafkaProducer.reply(response, correlationId, traceId);
             }
             case GET_TASK -> {
-                String result;
+                Object result;
                 // ---CODE TO REPLACE---
                 System.out.println("fetching TASK...");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
                 Thread.sleep(500L);
-                result = "some json as string, or exception";
+                result = "some object as dto, or exception";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASK,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASK,
+                        result
                 );
                 kafkaProducer.reply(response, correlationId, traceId);
             }
             case CHANGE_TASK -> {
-                String result; // if present
+                Object result; // if present
                 // ---CODE TO REPLACE---
                 System.out.println("mocking CHANGE task action");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
                 Thread.sleep(500L);
-                result = "some json as string, or empty";
+                result = "some object as dto, or empty";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASK_CHANGED,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASK_CHANGED,
+                        result
                 );
                 kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
             case CREATE_TASK -> {
-                String result; // if present
+                Object result; // if present
                 // ---CODE TO REPLACE---
                 System.out.println("mocking CREATE task action");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
                 Thread.sleep(500L);
-                result = "some json as string, or empty";
+                result = "some object as dto, or empty";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASK_CREATED,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASK_CREATED,
+                        result
                 );
                 kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
             case DELETE_TASK -> {
-                String result; // if present
+                Object result; // if present
                 // ---CODE TO REPLACE---
                 System.out.println("mocking DELETE task action");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
                 Thread.sleep(500L);
-                result = "some json as string, or empty";
+                result = "some object as dto, or empty";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASK_DELETED,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASK_DELETED,
+                        result
                 );
                 kafkaProducer.publish(response, traceId, coreEvTaskTopic);
             }
@@ -167,20 +155,18 @@ public class KafkaTaskConsumer {
                 CoreMessageDTO result;
                 // ---CODE TO REPLACE---
                 System.out.println("type is undefined. mocking processing");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
+                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
                 Thread.sleep(500L);
                 result = new CoreMessageDTO(
                         CoreMessageType.UNDEFINED,
-                        "some json as string, or empty"
+                        "some object as dto, or empty"
                 );
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(result);
-                kafkaProducer.publish(response, traceId, coreEvTaskTopic);
+                kafkaProducer.publish(result, traceId, coreEvTaskTopic);
             }
             default -> {
                 System.out.println("unknown type");
-                response = "unknown type in core.request.task. corrId:"+correlationId;
-                kafkaProducer.publish(response, traceId, coreEvTaskTopic);
+                kafkaProducer.publish("unknown type in core.request.task. corrId:" + correlationId, traceId, coreEvTaskTopic);
             }
         }
     }
