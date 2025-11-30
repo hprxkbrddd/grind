@@ -64,7 +64,7 @@ public class KafkaTrackConsumer {
         }
 
         // HANDLING REQUEST
-        String response;
+        CoreMessageDTO response;
         switch (msg.type()) {
             case GET_TRACKS_OF_USER -> {
                 String result;
@@ -77,11 +77,9 @@ public class KafkaTrackConsumer {
                 Thread.sleep(500L);
                 result = "some json as string, or exception";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASKS_OF_TRACK,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASKS_OF_TRACK,
+                        result
                 );
                 kafkaProducer.reply(response, correlationId, traceId);
             }
@@ -93,11 +91,9 @@ public class KafkaTrackConsumer {
                 Thread.sleep(500L);
                 result = "some json as string, or exception";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TASKS_OF_TRACK,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TASKS_OF_TRACK,
+                        result
                 );
                 kafkaProducer.reply(response, correlationId, traceId);
             }
@@ -109,11 +105,9 @@ public class KafkaTrackConsumer {
                 Thread.sleep(500L);
                 result = "some json as string, or empty";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TRACK_CHANGED,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TRACK_CHANGED,
+                        result
                 );
                 kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
@@ -125,11 +119,9 @@ public class KafkaTrackConsumer {
                 Thread.sleep(500L);
                 result = "some json as string, or empty";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TRACK_CREATED,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TRACK_CREATED,
+                        result
                 );
                 kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
@@ -141,11 +133,9 @@ public class KafkaTrackConsumer {
                 Thread.sleep(500L);
                 result = "some json as string, or empty";
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(
-                        new CoreMessageDTO(
-                                CoreMessageType.TRACK_DELETED,
-                                result
-                        )
+                response = new CoreMessageDTO(
+                        CoreMessageType.TRACK_DELETED,
+                        result
                 );
                 kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
@@ -160,13 +150,11 @@ public class KafkaTrackConsumer {
                         "some json as string, or empty"
                 );
                 // ---CODE TO REPLACE END---
-                response = objectMapper.writeValueAsString(result);
-                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
+                kafkaProducer.publish(result, traceId, coreEvTrackTopic);
             }
             default -> {
                 System.out.println("unknown type");
-                response = "unknown type in core.request.task. corrId:" + correlationId;
-                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
+                kafkaProducer.publish("unknown type in core.request.track. corrId:" + correlationId, traceId, coreEvTrackTopic);
             }
         }
     }
