@@ -3,11 +3,16 @@ package com.grind.core.dto;
 public enum CoreMessageType {
     // TRACK RELATED
 
-    CREATE_TRACK,
+    GET_TRACKS_OF_USER,
     GET_TRACK,
+    CREATE_TRACK,
+    CHANGE_TRACK,
     DELETE_TRACK,
 
+    TRACKS_OF_USER,
+    TRACK,
     TRACK_CREATED,
+    TRACK_CHANGED,
     TRACK_DELETED,
 
     // TASK RELATED
@@ -16,8 +21,8 @@ public enum CoreMessageType {
     GET_TASKS_OF_SPRINT,
     GET_TASK,
     CREATE_TASK,
-    DELETE_TASK,
     CHANGE_TASK,
+    DELETE_TASK,
 
     TASKS_OF_TRACK,
     TASKS_OF_SPRINT,
