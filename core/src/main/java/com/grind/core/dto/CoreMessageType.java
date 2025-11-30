@@ -17,9 +17,13 @@ public enum CoreMessageType {
     GET_TASK,
     CREATE_TASK,
     DELETE_TASK,
-    PLAN_TASK,
+    CHANGE_TASK,
 
+    TASKS_OF_TRACK,
+    TASKS_OF_SPRINT,
+    TASK,
     TASK_CREATED,
+    TASK_CHANGED,
     TASK_DELETED,
 
     UNDEFINED
