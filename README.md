@@ -3,10 +3,20 @@
 каждый микросервис должен крутиться на указанном порту
 
 - **gateway** - 8080
-- **security** - built-in
-- **database** - 8082
+- **auth (в rest конфигурации)** - 8086
+- **notification** - 8082
 - **core** - 8083
 - **statistics** - 8084
+
+# Порты Docker контейнеров
+
+- **Postgres** - 5432
+- **Keycloak** - 8085
+- **Kafka** - 9092
+- **Kafdrop (UI для кафки)** - 9000
+- **Clickhouse HTTP** - 8123
+- **Clickhouse TCP** - 9001
+- **Redis** - 6379
 
 # Docker compose
 
@@ -19,6 +29,7 @@
 ```
 docker run -d --name grind-db -e POSTGRES_DB=grind -e POSTGRES_USER=grind -e POSTGRES_PASSWORD=grind -p 5432:5432 postgres:17
 ```
+или запускайте все нужные контейнеры через `compose.yaml` в корне проекта
 
 - **адрес бд** - `localhost:5432/grind`
 - **имя пользователя** - `grind`
