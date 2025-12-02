@@ -41,6 +41,20 @@ public class CoreTaskController {
         return ResponseEntity.ok(correlationId);
     }
 
+    @GetMapping("/{sprintId}")
+    public ResponseEntity<String> getTasksOfSprint(@PathVariable String sprintId) {
+        String correlationId = UUID.randomUUID().toString();
+        kafkaProducer.publish(
+                new CoreMessageDTO(
+                        CoreMessageType.GET_TASKS_OF_SPRINT,
+                        sprintId
+                ),
+                coreReqTaskTopic,
+                correlationId
+        );
+        return ResponseEntity.ok(correlationId);
+    }
+
     @GetMapping("/track/{trackId}")
     public ResponseEntity<String> getTasksOfTrack(@PathVariable String trackId) {
         String correlationId = UUID.randomUUID().toString();
