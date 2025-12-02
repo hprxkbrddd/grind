@@ -27,6 +27,20 @@ public class CoreTrackController {
     @Value("${kafka.topic.core.request.task}")
     private String coreReqTaskTopic;
 
+    @GetMapping
+    public ResponseEntity<String> getTracksOfUser() {
+        String correlationId = UUID.randomUUID().toString();
+        kafkaProducer.publish(
+                new CoreMessageDTO(
+                        CoreMessageType.GET_TRACKS_OF_USER,
+                        null
+                ),
+                coreReqTaskTopic,
+                correlationId
+        );
+        return ResponseEntity.ok(correlationId);
+    }
+
     @GetMapping("/{trackId}")
     public ResponseEntity<String> getTrack(@PathVariable String trackId) {
         String correlationId = UUID.randomUUID().toString();
@@ -48,7 +62,7 @@ public class CoreTrackController {
 
         kafkaProducer.publish(
                 new CoreMessageDTO(
-                        CoreMessageType.CREATE_TASK,
+                        CoreMessageType.CREATE_TRACK,
                         payload
                 ),
                 coreReqTaskTopic,
@@ -66,7 +80,7 @@ public class CoreTrackController {
 
         kafkaProducer.publish(
                 new CoreMessageDTO(
-                        CoreMessageType.CHANGE_TASK,
+                        CoreMessageType.CHANGE_TRACK,
                         payload
                 ),
                 coreReqTaskTopic,
@@ -82,7 +96,7 @@ public class CoreTrackController {
 
         kafkaProducer.publish(
                 new CoreMessageDTO(
-                        CoreMessageType.DELETE_TASK,
+                        CoreMessageType.DELETE_TRACK,
                         id
                 ),
                 coreReqTaskTopic,

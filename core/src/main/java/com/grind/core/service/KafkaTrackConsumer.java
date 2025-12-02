@@ -78,7 +78,7 @@ public class KafkaTrackConsumer {
                 result = "some json as string, or exception";
                 // ---CODE TO REPLACE END---
                 response = new CoreMessageDTO(
-                        CoreMessageType.TASKS_OF_TRACK,
+                        CoreMessageType.TRACKS_OF_USER,
                         result
                 );
                 kafkaProducer.reply(response, correlationId, traceId);
@@ -92,7 +92,7 @@ public class KafkaTrackConsumer {
                 result = "some json as string, or exception";
                 // ---CODE TO REPLACE END---
                 response = new CoreMessageDTO(
-                        CoreMessageType.TASKS_OF_TRACK,
+                        CoreMessageType.TRACK,
                         result
                 );
                 kafkaProducer.reply(response, correlationId, traceId);

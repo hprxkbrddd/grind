@@ -4,10 +4,13 @@ public enum CoreMessageType {
     // TRACK RELATED
 
     GET_TRACK,
+    GET_TRACKS_OF_USER,
     CREATE_TRACK,
     CHANGE_TRACK,
     DELETE_TRACK,
 
+    TRACKS_OF_USER,
+    TRACK,
     TRACK_CREATED,
     TRACK_DELETED,
 
@@ -20,6 +23,9 @@ public enum CoreMessageType {
     CHANGE_TASK,
     DELETE_TASK,
 
+    TASKS_OF_TRACK,
+    TASKS_OF_SPRINT,
+    TASK,
     TASK_CREATED,
     TASK_DELETED,
     TASK_CHANGED,
