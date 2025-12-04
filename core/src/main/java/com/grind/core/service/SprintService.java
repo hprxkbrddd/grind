@@ -22,8 +22,12 @@ public class SprintService {
 
     public Sprint createSprint(CreateSprintRequest createSprintRequest){
         Sprint sprint = new Sprint();
-        sprint.setTrackId(createSprintRequest.getTrackId());
-        sprint.setDuration(createSprintRequest.getDuration());
+        sprint.setName(createSprintRequest.getName());
+        sprint.setStartDate(createSprintRequest.getStartDate());
+        sprint.setEndDate(createSprintRequest.getEndDate());
+        sprint.setStatus(createSprintRequest.getStatus());
+        sprint.setCreatedAt(createSprintRequest.getCreatedAt());
+        sprint.setTrack(createSprintRequest.getTrack());
         sprintRepository.save(sprint);
         return sprint;
     }

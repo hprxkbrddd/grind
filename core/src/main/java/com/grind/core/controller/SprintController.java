@@ -5,6 +5,7 @@ import com.grind.core.dto.TaskDTO;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
 import com.grind.core.request.Sprint.CreateSprintRequest;
+import com.grind.core.request.Task.ChangeTaskNameRequest;
 import com.grind.core.request.Task.CreateTaskRequest;
 import com.grind.core.service.SprintService;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,11 @@ public class SprintController {
         Sprint sprint = sprintService.createSprint(createSprintRequest);
 
         return new ResponseEntity<>(sprint.mapDTO(), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/change-name")
+    public void changeName(@RequestBody ChangeTaskNameRequest changeTaskNameRequest){
+        sprintService.changeName(changeTaskNameRequest);
     }
 
     @DeleteMapping("/delete-sprint/{id}")

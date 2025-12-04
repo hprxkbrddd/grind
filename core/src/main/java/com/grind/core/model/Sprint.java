@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,8 +31,8 @@ public class Sprint {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Enumerated(EnumType.STRING)
-    private SprintStatus status;
+    @Column(name = "status")
+    private String status;
 
     @CreationTimestamp
     @Column(name = "created_at")
@@ -37,7 +41,8 @@ public class Sprint {
     @ManyToOne
     @JoinColumn(name = "track_id", nullable = false)
     private Track track;
+
     public SprintDTO mapDTO(){
-        return new SprintDTO(id, trackId, duration);
+        return new SprintDTO(id, name, startDate, endDate, status, createdAt, track);
     }
 }
