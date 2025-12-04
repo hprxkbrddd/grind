@@ -2,7 +2,7 @@ package com.grind.core.repository;
 
 import com.grind.core.model.Task;
 import com.grind.core.request.Task.ChangeTaskDescriptionRequest;
-import com.grind.core.request.Task.ChangeTaskNameRequest;
+import com.grind.core.request.Task.ChangeTaskTitleRequest;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public interface TaskRepository {
 
     void expireTask(String taskID);
 
-    void changeName(ChangeTaskNameRequest changeTaskNameRequest);
+    void changeName(ChangeTaskTitleRequest changeTaskNameRequest);
 
     void changeDescription(ChangeTaskDescriptionRequest changeTaskDescriptionRequest);
 

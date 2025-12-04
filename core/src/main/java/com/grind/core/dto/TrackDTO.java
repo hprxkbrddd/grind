@@ -1,7 +1,10 @@
 package com.grind.core.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 public record TrackDTO(
-        Long id,
+        String id,
 
         String name,
 
@@ -9,5 +12,14 @@ public record TrackDTO(
 
         String petId,
 
-        String messagePolicy) {
+        Integer durationDays,
+
+        LocalDate targetDate,
+
+        LocalDateTime createdAt,
+
+        String messagePolicy,
+        
+        String status
+) {
 }

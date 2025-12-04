@@ -56,9 +56,24 @@ public class TrackController {
         trackService.changePetId(changeTrackPetIdRequest);
     }
 
+    @PutMapping("/change-duration")
+    public void changeDuration(@RequestBody ChangeTrackDurationRequest changeTrackDurationRequest){
+        trackService.changePetId(changeTrackDurationRequest);
+    }
+
+    @PutMapping("/change-target-date")
+    public void changeTargetDate(@RequestBody ChangeTrackTargetDateRequest changeTrackTargetDateRequest){
+        trackService.changeTargetDate(changeTrackTargetDateRequest);
+    }
+
     @PutMapping("/change-message-policy")
     public void changeMessagePolicy(@RequestBody ChangeTrackMessagePolicyRequest changeTrackMessagePolicyRequest){
         trackService.changeMessagePolicy(changeTrackMessagePolicyRequest);
+    }
+
+        @PutMapping("/change-status")
+    public void changeStatus(@RequestBody ChangeTrackStatusRequest changeTrackStatusRequest){
+        trackService.changeStatus(changeTrackStatusRequest);
     }
 
     @DeleteMapping("/delete-track/{id}")
