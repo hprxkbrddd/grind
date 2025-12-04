@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @AllArgsConstructor
@@ -25,14 +29,13 @@ public class Task {
     @JoinColumn(name = "sprint_id", nullable = false)
     private Sprint sprint;
 
-    private String name;
-
     @Column(name = "planned_date")
     private LocalDate plannedDate;
 
     @Column(name = "actual_date")
     private LocalDate actualDate;
 
+    @Column(name = "description")
     private String description;
 
     @Column(name = "status")
@@ -43,6 +46,6 @@ public class Task {
     private LocalDateTime createdAt;
 
     public TaskDTO mapDTO(){
-        return new TaskDTO(id, sprintId, name, description, status);
+        return new TaskDTO(id, title, sprint, plannedDate, actualDate, description, status, createdAt);
     }
 }

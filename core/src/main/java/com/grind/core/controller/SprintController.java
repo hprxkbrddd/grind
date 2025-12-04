@@ -1,12 +1,13 @@
 package com.grind.core.controller;
 
 import com.grind.core.dto.SprintDTO;
-import com.grind.core.dto.TaskDTO;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
+import com.grind.core.request.Sprint.ChangeSprintEndDate;
+import com.grind.core.request.Sprint.ChangeSprintNameRequest;
+import com.grind.core.request.Sprint.ChangeSprintStartDate;
+import com.grind.core.request.Sprint.ChangeSprintStatus;
 import com.grind.core.request.Sprint.CreateSprintRequest;
-import com.grind.core.request.Task.ChangeTaskNameRequest;
-import com.grind.core.request.Task.CreateTaskRequest;
 import com.grind.core.service.SprintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -46,8 +47,23 @@ public class SprintController {
     }
 
     @PutMapping("/change-name")
-    public void changeName(@RequestBody ChangeTaskNameRequest changeTaskNameRequest){
-        sprintService.changeName(changeTaskNameRequest);
+    public void changeName(@RequestBody ChangeSprintNameRequest changeSprintNameRequest){
+        sprintService.changeName(changeSprintNameRequest);
+    }
+
+    @PutMapping("/change-start-date")
+    public void changeStartDate(@RequestBody ChangeSprintStartDate changeSprintStartDate){
+        sprintService.changeStartDate(changeSprintStartDate);
+    }
+
+    @PutMapping("/change-end-date")
+    public void changeEndDate(@RequestBody ChangeSprintEndDate changeSprintEndDate){
+        sprintService.changeEndDate(changeSprintEndDate);
+    }
+
+    @PutMapping("/change-status")
+    public void changeStatus(@RequestBody ChangeSprintStatus changeSprintStatus){
+        sprintService.changeStatus(changeSprintStatus);
     }
 
     @DeleteMapping("/delete-sprint/{id}")

@@ -9,18 +9,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class CreateTrackRequest {
-    private String name;
-
-    private String description;
-
-    private String petId;
-
-    private Integer durationDays;
+public class ChangeTrackTargetDateRequest {
+    private String id;
 
     private LocalDate targetDate;
-
-    private String messagePolicy;
-
-    private String status;
 }

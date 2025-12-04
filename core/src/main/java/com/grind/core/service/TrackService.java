@@ -1,6 +1,5 @@
 package com.grind.core.service;
 
-import com.grind.core.dto.TrackDTO;
 import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
 import com.grind.core.request.Track.*;
@@ -24,7 +23,10 @@ public class TrackService {
         track.setName(createTrackRequest.getName());
         track.setDescription(createTrackRequest.getDescription());
         track.setPetId(createTrackRequest.getPetId());
+        track.setDurationDays(createTrackRequest.getDurationDays());
+        track.setTargetDate(createTrackRequest.getTargetDate());
         track.setMessagePolicy(createTrackRequest.getMessagePolicy());
+        track.setStatus(createTrackRequest.getStatus());
         trackRepository.save(track);
         return track;
     }
@@ -35,7 +37,13 @@ public class TrackService {
 
     public void changePetId(ChangeTrackPetIdRequest changeTrackPetIdRequest){ trackRepository.changePetId(changeTrackPetIdRequest); }
 
+    public void changePetId(ChangeTrackDurationRequest changeTrackDurationRequest){}
+
+    public void changeTargetDate(ChangeTrackTargetDateRequest changeTrackTargetDateRequest){}
+
     public void changeMessagePolicy(ChangeTrackMessagePolicyRequest changeTrackMessagePolicyRequest){ trackRepository.changeMessagePolicy(changeTrackMessagePolicyRequest); }
+
+    public void changeStatus(ChangeTrackStatusRequest changeTrackStatusRequest) {}
 
     public void deleteTask(String id){ trackRepository.deleteTask(id); }
 }
