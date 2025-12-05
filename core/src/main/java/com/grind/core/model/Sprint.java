@@ -3,15 +3,14 @@ package com.grind.core.model;
 import com.grind.core.dto.SprintDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 @Entity
@@ -19,7 +18,6 @@ import java.time.LocalDateTime;
 public class Sprint {
 
     @Id
-    @GeneratedValue
     private String id;
 
     @Column(nullable = false)
@@ -31,7 +29,6 @@ public class Sprint {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "status")
     private String status;
 
     @CreationTimestamp
@@ -42,7 +39,11 @@ public class Sprint {
     @JoinColumn(name = "track_id", nullable = false)
     private Track track;
 
+    public Sprint(){
+        this.id = UUID.randomUUID().toString();
+    }
+
     public SprintDTO mapDTO(){
-        return new SprintDTO(id, name, startDate, endDate, status, createdAt, track);
+        return new SprintDTO(id, name, startDate, endDate, status, createdAt, track.getId());
     }
 }

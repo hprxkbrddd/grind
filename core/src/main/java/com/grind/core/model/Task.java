@@ -3,23 +3,21 @@ package com.grind.core.model;
 import com.grind.core.dto.TaskDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 @Entity
 @Table(name = "tasks")
 public class Task {
     @Id
-    @GeneratedValue
     private String id;
 
     @Column(nullable = false)
@@ -35,17 +33,19 @@ public class Task {
     @Column(name = "actual_date")
     private LocalDate actualDate;
 
-    @Column(name = "description")
     private String description;
 
-    @Column(name = "status")
     private String status;
 
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    public Task(){
+        this.id = UUID.randomUUID().toString();
+    }
+
     public TaskDTO mapDTO(){
-        return new TaskDTO(id, title, sprint, plannedDate, actualDate, description, status, createdAt);
+        return new TaskDTO(id, title, sprint.getId(), plannedDate, actualDate, description, status, createdAt);
     }
 }

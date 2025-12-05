@@ -2,24 +2,15 @@ package com.grind.core.request.Task;
 
 import java.time.LocalDate;
 
-import com.grind.core.model.Sprint;
+public record CreateTaskRequest(
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+        String title,
 
-@AllArgsConstructor
-@Getter
-@Setter
-public class CreateTaskRequest {
+        String sprint_id,
 
-    private String title;
+        LocalDate plannedDate,
 
-    private Sprint sprint;
+        String description,
 
-    private LocalDate plannedDate;
-
-    private String description;
-
-    private String status;
+        String status) {
 }

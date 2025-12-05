@@ -2,9 +2,7 @@ package com.grind.core.controller;
 
 import com.grind.core.model.Task;
 import com.grind.core.dto.TaskDTO;
-import com.grind.core.request.Task.ChangeTaskDescriptionRequest;
-import com.grind.core.request.Task.ChangeTaskPlannedDate;
-import com.grind.core.request.Task.ChangeTaskTitleRequest;
+import com.grind.core.request.Task.ChangeTaskRequest;
 import com.grind.core.request.Task.CreateTaskRequest;
 import com.grind.core.service.TaskService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +20,7 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    @GetMapping("/get-all")
+    @GetMapping
     public ResponseEntity<List<TaskDTO>> taskIndex(){
         List<Task> tasks = taskService.getAllTasks();
         List<TaskDTO> taskDTOS = tasks.stream().map(Task::mapDTO).collect(Collectors.toList());
@@ -32,12 +30,12 @@ public class TaskController {
                         HttpStatus.NO_CONTENT : HttpStatus.FOUND);
     }
 
-    @GetMapping("/get-task/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<TaskDTO> getById(@PathVariable String id){
         return new ResponseEntity<>(taskService.getById(id).mapDTO(), HttpStatus.OK);
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<TaskDTO> createTask(@RequestBody CreateTaskRequest createTaskRequest){
         Task task = taskService.createTask(createTaskRequest);
 
@@ -54,19 +52,9 @@ public class TaskController {
         taskService.expireTask(id);
     }
 
-    @PutMapping("/change-title")
-    public void changeTitle(@RequestBody ChangeTaskTitleRequest changeTaskTitleRequest){
-        taskService.changeTitle(changeTaskTitleRequest);
-    }
-
-    @PutMapping("/change-planned-date")
-    public void changePlannedDate(@RequestBody ChangeTaskPlannedDate changeTaskPlannedDate){
-        taskService.changePlannedDate(changeTaskPlannedDate);
-    }
-
-    @PutMapping("/change-description")
-    public void changeDescription(@RequestBody ChangeTaskDescriptionRequest changeTaskDescriptionRequest){
-        taskService.changeDescription(changeTaskDescriptionRequest);
+    @PutMapping("/change")
+    public void changeTask(@RequestBody ChangeTaskRequest changeTaskRequest){
+        taskService.changeTask(changeTaskRequest);
     }
 
     @DeleteMapping("/delete-task/{id}")

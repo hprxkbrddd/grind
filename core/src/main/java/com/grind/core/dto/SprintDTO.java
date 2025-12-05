@@ -1,7 +1,5 @@
 package com.grind.core.dto;
 
-import com.grind.core.model.Track;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -18,5 +16,5 @@ public record SprintDTO(
 
         LocalDateTime createdAt,
 
-        Track track) {
+        String track_id) {
 }
