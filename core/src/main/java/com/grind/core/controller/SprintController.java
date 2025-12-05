@@ -2,11 +2,7 @@ package com.grind.core.controller;
 
 import com.grind.core.dto.SprintDTO;
 import com.grind.core.model.Sprint;
-import com.grind.core.model.Task;
-import com.grind.core.request.Sprint.ChangeSprintEndDate;
-import com.grind.core.request.Sprint.ChangeSprintNameRequest;
-import com.grind.core.request.Sprint.ChangeSprintStartDate;
-import com.grind.core.request.Sprint.ChangeSprintStatus;
+import com.grind.core.request.Sprint.ChangeSprintRequest;
 import com.grind.core.request.Sprint.CreateSprintRequest;
 import com.grind.core.service.SprintService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +20,7 @@ public class SprintController {
 
     private final SprintService sprintService;
 
-    @GetMapping("/get-all")
+    @GetMapping
     public ResponseEntity<List<SprintDTO>> sprintIndex(){
         List<Sprint> sprints = sprintService.getAllSprints();
         List<SprintDTO> sprintDTOS = sprints.stream().map(Sprint::mapDTO).collect(Collectors.toList());
@@ -34,36 +30,21 @@ public class SprintController {
                         HttpStatus.NO_CONTENT : HttpStatus.FOUND);
     }
 
-    @GetMapping("/get-sprint/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<SprintDTO> getById(@PathVariable String id){
         return new ResponseEntity<>(sprintService.getById(id).mapDTO(), HttpStatus.OK);
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<SprintDTO> createTask(@RequestBody CreateSprintRequest createSprintRequest){
         Sprint sprint = sprintService.createSprint(createSprintRequest);
 
         return new ResponseEntity<>(sprint.mapDTO(), HttpStatus.CREATED);
     }
 
-    @PutMapping("/change-name")
-    public void changeName(@RequestBody ChangeSprintNameRequest changeSprintNameRequest){
-        sprintService.changeName(changeSprintNameRequest);
-    }
-
-    @PutMapping("/change-start-date")
-    public void changeStartDate(@RequestBody ChangeSprintStartDate changeSprintStartDate){
-        sprintService.changeStartDate(changeSprintStartDate);
-    }
-
-    @PutMapping("/change-end-date")
-    public void changeEndDate(@RequestBody ChangeSprintEndDate changeSprintEndDate){
-        sprintService.changeEndDate(changeSprintEndDate);
-    }
-
-    @PutMapping("/change-status")
-    public void changeStatus(@RequestBody ChangeSprintStatus changeSprintStatus){
-        sprintService.changeStatus(changeSprintStatus);
+    @PutMapping("/change")
+    public void changeSprint(@RequestBody ChangeSprintRequest changeSprintRequest){
+        sprintService.changeSprint(changeSprintRequest);
     }
 
     @DeleteMapping("/delete-sprint/{id}")

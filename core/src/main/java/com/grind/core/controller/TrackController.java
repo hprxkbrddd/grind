@@ -19,7 +19,7 @@ public class TrackController {
 
     private final TrackService trackService;
 
-    @GetMapping("/get-all")
+    @GetMapping
     public ResponseEntity<List<TrackDTO>> trackIndex(){
         List<Track> tracks = trackService.getAllTracks();
         List<TrackDTO> trackDTOS = tracks.stream().map(Track::mapDTO).collect(Collectors.toList());
@@ -29,51 +29,21 @@ public class TrackController {
                         HttpStatus.NO_CONTENT : HttpStatus.FOUND);
     }
 
-    @GetMapping("/get-track/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<TrackDTO> getById(@PathVariable String id){
         return new ResponseEntity<>(trackService.getById(id).mapDTO(), HttpStatus.OK);
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<TrackDTO> createTask(@RequestBody CreateTrackRequest createTrackRequest){
         Track track = trackService.createTrack(createTrackRequest);
 
         return new ResponseEntity<>(track.mapDTO(), HttpStatus.CREATED);
     }
 
-    @PutMapping("/change-name")
-    public void changeName(@RequestBody ChangeTrackNameRequest changeTrackNameRequest){
-        trackService.changeName(changeTrackNameRequest);
-    }
-
-    @PutMapping("/change-description")
-    public void changeDescription(@RequestBody ChangeTrackDescriptionRequest changeTrackDescriptionRequest){
-        trackService.changeDescription(changeTrackDescriptionRequest);
-    }
-
-    @PutMapping("/change-pet")
-    public void changePetId(@RequestBody ChangeTrackPetIdRequest changeTrackPetIdRequest){
-        trackService.changePetId(changeTrackPetIdRequest);
-    }
-
-    @PutMapping("/change-duration")
-    public void changeDuration(@RequestBody ChangeTrackDurationRequest changeTrackDurationRequest){
-        trackService.changePetId(changeTrackDurationRequest);
-    }
-
-    @PutMapping("/change-target-date")
-    public void changeTargetDate(@RequestBody ChangeTrackTargetDateRequest changeTrackTargetDateRequest){
-        trackService.changeTargetDate(changeTrackTargetDateRequest);
-    }
-
-    @PutMapping("/change-message-policy")
-    public void changeMessagePolicy(@RequestBody ChangeTrackMessagePolicyRequest changeTrackMessagePolicyRequest){
-        trackService.changeMessagePolicy(changeTrackMessagePolicyRequest);
-    }
-
-        @PutMapping("/change-status")
-    public void changeStatus(@RequestBody ChangeTrackStatusRequest changeTrackStatusRequest){
-        trackService.changeStatus(changeTrackStatusRequest);
+    @PutMapping("/change")
+    public void changeTrack(@RequestBody ChangeTrackRequest changeTrackRequest){
+        trackService.changeTrack(changeTrackRequest);
     }
 
     @DeleteMapping("/delete-track/{id}")

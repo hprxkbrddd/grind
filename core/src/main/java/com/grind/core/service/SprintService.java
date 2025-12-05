@@ -2,10 +2,8 @@ package com.grind.core.service;
 
 import com.grind.core.model.Sprint;
 import com.grind.core.repository.SprintRepository;
-import com.grind.core.request.Sprint.ChangeSprintEndDate;
-import com.grind.core.request.Sprint.ChangeSprintNameRequest;
-import com.grind.core.request.Sprint.ChangeSprintStartDate;
-import com.grind.core.request.Sprint.ChangeSprintStatus;
+import com.grind.core.repository.TrackRepository;
+import com.grind.core.request.Sprint.ChangeSprintRequest;
 import com.grind.core.request.Sprint.CreateSprintRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +17,8 @@ public class SprintService {
 
     private final SprintRepository sprintRepository;
 
+    private final TrackRepository trackRepository;
+
     public List<Sprint> getAllSprints() {
         return sprintRepository.getAllSprints();
     }
@@ -27,22 +27,16 @@ public class SprintService {
 
     public Sprint createSprint(CreateSprintRequest createSprintRequest){
         Sprint sprint = new Sprint();
-        sprint.setName(createSprintRequest.getName());
-        sprint.setStartDate(createSprintRequest.getStartDate());
-        sprint.setEndDate(createSprintRequest.getEndDate());
-        sprint.setStatus(createSprintRequest.getStatus());
-        sprint.setTrack(createSprintRequest.getTrack());
+        sprint.setName(createSprintRequest.name());
+        sprint.setStartDate(createSprintRequest.startDate());
+        sprint.setEndDate(createSprintRequest.endDate());
+        sprint.setStatus(createSprintRequest.status());
+        sprint.setTrack(trackRepository.getById(createSprintRequest.track_id()));
         sprintRepository.save(sprint);
         return sprint;
     }
 
-    public void changeName(ChangeSprintNameRequest changeSprintNameRequest){ }
-
-    public void changeStartDate(ChangeSprintStartDate changeSprintStartDate){ }
-
-    public void changeEndDate(ChangeSprintEndDate changeSprintEndDate){ }
-
-    public void changeStatus(ChangeSprintStatus changeSprintStatus){ }
+    public void changeSprint(ChangeSprintRequest changeSprintRequest){ }
 
     public void deleteSprint(String id){}
 }

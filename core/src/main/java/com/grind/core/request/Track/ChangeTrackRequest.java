@@ -2,7 +2,7 @@ package com.grind.core.request.Track;
 
 import java.time.LocalDate;
 
-public record CreateTrackRequest(        String name,
+public record ChangeTrackRequest(        String name,
 
         String description,
 
@@ -15,4 +15,5 @@ public record CreateTrackRequest(        String name,
         String messagePolicy,
         
         String status) {
+    
 }
