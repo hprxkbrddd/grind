@@ -46,7 +46,7 @@ public class CoreTaskController {
     }
 
     @GetMapping("/sprint/{sprintId}")
-    public ResponseEntity<String> getTasksOfSprint(@PathVariable String sprintId) {
+    public ResponseEntity<Object> getTasksOfSprint(@PathVariable String sprintId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
                 new CoreMessageDTO(
@@ -56,11 +56,13 @@ public class CoreTaskController {
                 coreReqTaskTopic,
                 correlationId
         );
-        return ResponseEntity.ok(correlationId);
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
     }
 
     @GetMapping("/track/{trackId}")
-    public ResponseEntity<String> getTasksOfTrack(@PathVariable String trackId) {
+    public ResponseEntity<Object> getTasksOfTrack(@PathVariable String trackId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
                 new CoreMessageDTO(
@@ -70,7 +72,9 @@ public class CoreTaskController {
                 coreReqTaskTopic,
                 correlationId
         );
-        return ResponseEntity.ok(correlationId);
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
     }
 
     @PostMapping
@@ -88,6 +92,7 @@ public class CoreTaskController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
+
     }
 
     @PutMapping("/{id}")
