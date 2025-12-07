@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 @RestController
 @RequestMapping("/api/core/track")
@@ -28,7 +29,7 @@ public class CoreTrackController {
     private String coreReqTaskTopic;
 
     @GetMapping
-    public ResponseEntity<String> getTracksOfUser() {
+    public ResponseEntity<Object> getTracksOfUser() throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
                 new CoreMessageDTO(
@@ -38,11 +39,13 @@ public class CoreTrackController {
                 coreReqTaskTopic,
                 correlationId
         );
-        return ResponseEntity.ok(correlationId);
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
     }
 
     @GetMapping("/{trackId}")
-    public ResponseEntity<String> getTrack(@PathVariable String trackId) {
+    public ResponseEntity<Object> getTrack(@PathVariable String trackId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
                 new CoreMessageDTO(
@@ -52,7 +55,9 @@ public class CoreTrackController {
                 coreReqTaskTopic,
                 correlationId
         );
-        return ResponseEntity.ok(correlationId);
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
     }
 
     @PostMapping
