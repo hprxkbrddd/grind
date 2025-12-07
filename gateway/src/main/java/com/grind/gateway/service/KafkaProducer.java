@@ -3,6 +3,7 @@ package com.grind.gateway.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +24,10 @@ public class KafkaProducer {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final PendingRegistry pendingRegistry;
+
+    @Value("${app.kafka.response-timeout-ms:5000}")
+    private long responseTimeoutMs;
 
     /**
      * Publishes single with key message. <br>
@@ -36,6 +42,7 @@ public class KafkaProducer {
             String topic,
             String correlationId
     ) {
+        pendingRegistry.put(correlationId, new CompletableFuture<>());
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
@@ -108,6 +115,22 @@ public class KafkaProducer {
         String key = UUID.randomUUID().toString();
         for (Object value : values) {
             publish(value, key, traceId, correlationId);
+        }
+    }
+
+    public Object retrieveResponse(String correlationId) throws TimeoutException {
+        CompletableFuture<Object> response = pendingRegistry.get(correlationId);
+        if (response == null){
+            throw new IllegalStateException("No pending request with correlationId:"+correlationId);
+        }
+        try {
+            return response.get(responseTimeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            pendingRegistry.remove(correlationId);
+            throw e;
+        } catch (Exception e) {
+            pendingRegistry.remove(correlationId);
+            throw new RuntimeException("Ошибка при ожидании ответа из Kafka", e);
         }
     }
 }

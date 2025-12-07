@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 @RestController
 @RequestMapping("/api/core/task")
@@ -28,7 +29,7 @@ public class CoreTaskController {
     private String coreReqTaskTopic;
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<String> getTask(@PathVariable String taskId) {
+    public ResponseEntity<Object> getTask(@PathVariable String taskId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
                 new CoreMessageDTO(
@@ -38,10 +39,13 @@ public class CoreTaskController {
                 coreReqTaskTopic,
                 correlationId
         );
-        return ResponseEntity.ok(correlationId);
+
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
     }
 
-    @GetMapping("/{sprintId}")
+    @GetMapping("/sprint/{sprintId}")
     public ResponseEntity<String> getTasksOfSprint(@PathVariable String sprintId) {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
@@ -62,20 +66,6 @@ public class CoreTaskController {
                 new CoreMessageDTO(
                         CoreMessageType.GET_TASKS_OF_TRACK,
                         trackId
-                ),
-                coreReqTaskTopic,
-                correlationId
-        );
-        return ResponseEntity.ok(correlationId);
-    }
-
-    @GetMapping("/sprint/{sprintId}")
-    public ResponseEntity<String> getPlanned(@PathVariable String sprintId) {
-        String correlationId = UUID.randomUUID().toString();
-        kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.GET_TASKS_OF_SPRINT,
-                        sprintId
                 ),
                 coreReqTaskTopic,
                 correlationId
