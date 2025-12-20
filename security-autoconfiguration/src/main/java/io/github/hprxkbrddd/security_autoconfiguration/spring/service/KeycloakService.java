@@ -137,15 +137,33 @@ public class KeycloakService {
                             .header("Authorization", "Bearer " + token.access_token())
                             .contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(user)
-                            .retrieve()
-                            .toBodilessEntity()
-                            .map(response -> {
-                                if (response.getStatusCode().is2xxSuccessful()) {
-                                    return ResponseEntity.status(HttpStatus.CREATED)
-                                            .body("User registered successfully");
+                            .exchangeToMono(response -> {
+                                if (response.statusCode().equals(HttpStatus.CREATED)) {
+                                    String location = response.headers().asHttpHeaders().getFirst("Location");
+                                    if (location == null) {
+                                        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                                .body("Keycloak did not return Location header"));
+                                    }
+                                    String userId = location.substring(location.lastIndexOf('/') +1);
+
+                                    return webClientAdmin.put()
+                                            .uri("/users/{id}/reset-password", userId)
+                                            .header("Authorization", "Bearer " + token.access_token())
+                                            .contentType(MediaType.APPLICATION_JSON)
+                                            .bodyValue(credential)
+                                            .retrieve()
+                                            .toBodilessEntity()
+                                            .thenReturn(ResponseEntity
+                                                    .status(HttpStatus.CREATED)
+                                                    .body("User registered: " + location)
+                                            );
                                 }
-                                return ResponseEntity.status(response.getStatusCode())
-                                        .body("Failed to register user");
+                                return response
+                                        .bodyToMono(String.class)
+                                        .defaultIfEmpty("")
+                                        .map(body -> ResponseEntity.status(response.statusCode())
+                                                .body("Failed to register user: " + body)
+                                        );
                             });
                 });
 
@@ -162,7 +180,6 @@ public class KeycloakService {
      * @param username username of the user
      * @param password raw password of the user
      * @return reactive publisher emitting {@link TokenResponseDTO}
-     *
      * @throws KeycloakException if username or password are null/blank
      */
     public Mono<TokenResponseDTO> getToken(String username, String password) {
@@ -197,7 +214,6 @@ public class KeycloakService {
      *
      * @param token raw access token (without <code>Bearer </code> prefix)
      * @return reactive publisher emitting {@link TokenIntrospectionResponse}
-     *
      * @throws KeycloakException if token is null or blank
      */
     public Mono<TokenIntrospectionResponse> introspectToken(String token) {
