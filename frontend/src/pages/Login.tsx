@@ -7,8 +7,9 @@ import { CheckBox } from '../components/ui/CheckBox'
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useAxiosPrivate } from '../hooks/useAxiosPrivate'
+import { axiosPublic } from '../http/axios'
 
-const LOGIN_URL = "/login"
+const LOGIN_URL = "/grind/keycloak/token"
 
 export const Login = () => {
     const { setAuth } = useAuth();
@@ -23,9 +24,9 @@ export const Login = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axiosPrivate.post(
+            const response = await axiosPublic.post(
                 LOGIN_URL,
-                JSON.stringify({ user, password })
+                JSON.stringify({ username:user, password })
             );
             
             console.log(response?.data);
