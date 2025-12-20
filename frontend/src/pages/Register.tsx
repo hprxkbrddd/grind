@@ -9,7 +9,7 @@ import { axiosPublic } from '../http/axios'
 const USER_REGEX = /^[A-Za-zА-Яа-яЁё0-9_-]{3,24}$/
 const PASSWORD_REGEX =/^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?\/\\|]{6,24}$/
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-const REGISTER_URL = "/register"
+const REGISTER_URL = "/grind/keycloak/register"
 
 export const Register = () => {
     const [user, setUser] = useState('');
@@ -27,11 +27,12 @@ export const Register = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const navigate = useNavigate();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        const navigate = useNavigate();
         const resUser = USER_REGEX.test(user);
         setValidName(resUser);
         const resEmail = EMAIL_REGEX.test(email);
@@ -47,7 +48,7 @@ export const Register = () => {
         try {
             const response = await axiosPublic.post(
                 REGISTER_URL,
-                JSON.stringify({ user, email, password }),
+                JSON.stringify({ username:user, email, password, isEnabled:true }),
             );
 
             console.log(response?.data);
