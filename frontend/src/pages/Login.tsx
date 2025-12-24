@@ -7,9 +7,13 @@ import { CheckBox } from '../components/ui/CheckBox'
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useAxiosPrivate } from '../hooks/useAxiosPrivate'
-import { axiosPublic } from '../http/axios'
+import { jwtDecode, type JwtPayload } from 'jwt-decode'
 
-const LOGIN_URL = "/grind/keycloak/token"
+interface AppJwtPayload extends JwtPayload {
+  roles: string[];
+}
+
+const LOGIN_URL = "/login"
 
 export const Login = () => {
     const { setAuth } = useAuth();
@@ -24,14 +28,16 @@ export const Login = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axiosPublic.post(
+            const response = await axiosPrivate.post(
                 LOGIN_URL,
-                JSON.stringify({ username:user, password })
+                JSON.stringify({ user, password })
             );
             
             console.log(response?.data);
             const accessToken = response?.data?.accessToken;
-            const roles = response?.data?.roles;
+            const decoded = jwtDecode<AppJwtPayload>(accessToken);
+            console.log(decoded);
+            const roles = decoded.roles ?? [];
             setAuth({user, password, roles, accessToken});
 
             setUser('');
@@ -54,7 +60,7 @@ export const Login = () => {
     };
 
     return(
-        <main className="font-jetbrains flex h-dvh overflow-hidden">
+        <main className="font-jetbrains flex min-h-screen">
             <section className="bg-secondary min-w-1/2">
                 <div className="flex m-6.25 justify-between">
                     <GoBackButton href="/">Назад</GoBackButton>
@@ -63,7 +69,7 @@ export const Login = () => {
                         <Link className="underline underline-offset-4 text-primary" to="/register">Зарегистрируйтесь</Link>
                     </div>
                 </div>
-                <form className="text-primary-dark flex flex-col gap-4 max-w-100 mx-auto mt-75"
+                <form className="text-primary-dark flex flex-col gap-4 mx-auto w-100 mt-75"
                     onSubmit={handleSubmit}>
                     <h1 className="text-5xl">Вход</h1>
                     <FormInput
