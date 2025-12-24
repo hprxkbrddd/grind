@@ -69,7 +69,9 @@ services:
 
   # STATISTICS
   clickhouse:
-    image: clickhouse/clickhouse-server:latest
+    build:
+      context: ./clickhouse
+    image: grind/clickhouse-dev:0.1
     container_name: clickhouse
     ports:
       - "8123:8123"   # HTTP
@@ -78,11 +80,8 @@ services:
       - clickhouse_data:/var/lib/clickhouse
     ulimits:
       nofile:
-        soft: 32768
-        hard: 32768
-      nproc:
-        soft: 2048
-        hard: 2048
+        soft: 262144
+        hard: 262144
 
     environment:
       CLICKHOUSE_USER: grind

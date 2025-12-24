@@ -8,6 +8,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -22,9 +23,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
+    @Value("${kafka.topic.response}")
+    private String responseTopic;
 
-    @Value("${kafka.topic.statistics.response}")
-    private String statRes;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
@@ -35,25 +36,21 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String key) {
+    public void publish(Object value, String key, String traceId, String topic) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
-        String traceId = null; // to identify request for all microservices
         String jsonValue;
 
-        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        System.out.println(">>>>> Trace id: " + traceId);
 
-        if (requestAttributes != null) {
-            traceId = requestAttributes.getRequest().getHeader("X-Trace-Id");
-        }
+        if (auth instanceof UsernamePasswordAuthenticationToken upAuth) {
+            userId = (String) upAuth.getPrincipal();
 
-        if (auth instanceof JwtAuthenticationToken jwtAuth) {
-            userId = jwtAuth.getToken().getSubject();
-            roles = jwtAuth
-                    .getAuthorities()
-                    .stream().map(GrantedAuthority::getAuthority)
+            roles = upAuth.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.joining(","));
         }
 
@@ -63,27 +60,48 @@ public class KafkaProducer {
             jsonValue = value.toString();
         }
 
-        MessageBuilder<String> builder = MessageBuilder
-                .withPayload(jsonValue)
-                .setHeader(KafkaHeaders.TOPIC, statRes);
+        kafkaTemplate.send(
+                formMessage(
+                        jsonValue,
+                        topic,
+                        key,
+                        traceId,
+                        userId,
+                        roles,
+                        null
+                )
+        );
+    }
 
-        if (key!= null && !key.isBlank())
+    private Message<String> formMessage(
+            String payload,
+            String topic,
+            String key,
+            String traceId,
+            String userId,
+            String roles,
+            String correlationId
+    ) {
+        MessageBuilder<String> builder = MessageBuilder
+                .withPayload(payload)
+                .setHeader(KafkaHeaders.TOPIC, topic);
+
+        if (key != null && !key.isBlank())
             builder.setHeader(KafkaHeaders.KEY, key);
 
         if (traceId != null && !traceId.isBlank())
             builder.setHeader("X-Trace-Id", traceId);
-        else
-            builder.setHeader("X-Trace-Id", UUID.randomUUID().toString());
 
-        if (userId!=null && !userId.isBlank())
+        if (userId != null && !userId.isBlank())
             builder.setHeader("X-User-Id", userId);
 
-        if (roles!=null && !roles.isBlank())
+        if (roles != null && !roles.isBlank())
             builder.setHeader("X-Roles", roles);
 
-        Message<String> message = builder.build();
+        if (correlationId != null && !correlationId.isBlank())
+            builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
 
-        kafkaTemplate.send(message);
+        return builder.build();
     }
 
     /**
@@ -91,9 +109,11 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publish(List<Object> values) {
+    public void publish(List<Object> values, String traceId, String topic) {
+        String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
+
         for (Object value : values) {
-            publish(value);
+            publish(value, trId, topic);
         }
     }
 
@@ -102,8 +122,11 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value) {
-        publish(value, null);
+    public void publish(Object value, String traceId, String topic) {
+        publish(value, null,
+                traceId == null ? UUID.randomUUID().toString() : traceId,
+                topic
+        );
     }
 
     /**
@@ -112,10 +135,33 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publishOrdered(List<Object> values) {
+    public void publishOrdered(List<Object> values, String traceId, String topic) {
         String key = UUID.randomUUID().toString();
+        String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
         for (Object value : values) {
-            publish(value, key);
+            publish(value, key, trId);
         }
+    }
+
+    public void reply(Object value, String correlationId, String traceId) {
+        String jsonValue;
+
+        try {
+            jsonValue = objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            jsonValue = value.toString();
+        }
+
+        kafkaTemplate.send(
+                formMessage(
+                        jsonValue,
+                        responseTopic,
+                        null,
+                        traceId,
+                        null,
+                        null,
+                        correlationId
+                )
+        );
     }
 }
