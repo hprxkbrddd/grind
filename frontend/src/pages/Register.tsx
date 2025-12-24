@@ -10,7 +10,7 @@ const USER_REGEX = /^[A-Za-zА-Яа-яЁё0-9_-]{3,24}$/
 const NAME_REGEX = /^(?=.{1,24}$)[A-Za-zА-Яа-яЁё]*(-[A-Za-zА-Яа-яЁё]*)?$/
 const PASSWORD_REGEX =/^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?\/\\|]{6,24}$/
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-const REGISTER_URL = "/register"
+const REGISTER_URL = "/grind/keycloak/register"
 
 export const Register = () => {
     const [user, setUser] = useState('');

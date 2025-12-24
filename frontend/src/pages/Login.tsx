@@ -6,14 +6,14 @@ import { GoBackButton } from '../components/ui/GoBackButton'
 import { CheckBox } from '../components/ui/CheckBox'
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { useAxiosPrivate } from '../hooks/useAxiosPrivate'
+import {axiosPublic } from '../http/axios'
 import { jwtDecode, type JwtPayload } from 'jwt-decode'
 
 interface AppJwtPayload extends JwtPayload {
   roles: string[];
 }
 
-const LOGIN_URL = "/login"
+const LOGIN_URL = "/grind/keycloak/token"
 
 export const Login = () => {
     const { setAuth } = useAuth();
@@ -22,15 +22,14 @@ export const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const axiosPrivate = useAxiosPrivate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axiosPrivate.post(
+            const response = await axiosPublic.post(
                 LOGIN_URL,
-                JSON.stringify({ user, password })
+                JSON.stringify({ username: user, password })
             );
             
             console.log(response?.data);
