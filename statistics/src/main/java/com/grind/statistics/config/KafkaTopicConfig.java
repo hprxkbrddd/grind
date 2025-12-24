@@ -11,8 +11,8 @@ public class KafkaTopicConfig {
 
     @Value("${kafka.topic.statistics.request}")
     private String statReq;
-    @Value("${kafka.topic.statistics.response}")
-    private String statRes;
+    @Value("${kafka.topic.statistics.event}")
+    private String statEv;
 
     @Bean
     public NewTopic statsReqTopic() {
@@ -23,8 +23,8 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic statsResTopic() {
-        return TopicBuilder.name(statRes)
+    public NewTopic statsEvTopic() {
+        return TopicBuilder.name(statEv)
                 .partitions(3)
                 .replicas(1)
                 .build();

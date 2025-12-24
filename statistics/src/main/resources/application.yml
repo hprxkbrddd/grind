@@ -9,7 +9,13 @@ spring:
     consumer:
       bootstrap-servers: localhost:9092
       group-id: core-consumer-group
+      enable-auto-commit: false
       auto-offset-reset: earliest
+      max-poll-records: 200
+      properties:
+        max.poll.interval.ms: 600000
+        session.timeout.ms: 30000
+        heartbeat.interval.ms: 10000
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
@@ -26,11 +32,22 @@ management:
     info:
       enabled: true
 
+clickhouse:
+  baseUrl: http://localhost:8123/
+  username: grind
+  password: grind
+
 kafka.topic:
-  core-events: 'core.events'
+  core:
+    request:
+      task: 'core.request.task'
+      track: 'core.request.track'
+    event:
+      task: 'core.event.task'
+      track: 'core.event.track'
   statistics:
-    response: 'statistics.response'
     request: 'statistics.request'
+  response: 'response'
 
 server:
   port: 8084

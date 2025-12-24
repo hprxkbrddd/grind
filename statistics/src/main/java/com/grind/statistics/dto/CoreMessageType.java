@@ -1,0 +1,35 @@
+package com.grind.statistics.dto;
+
+public enum CoreMessageType {
+    // TRACK RELATED
+
+    GET_TRACKS_OF_USER,
+    GET_TRACK,
+    CREATE_TRACK,
+    CHANGE_TRACK,
+    DELETE_TRACK,
+
+    TRACKS_OF_USER,
+    TRACK,
+    TRACK_CREATED,
+    TRACK_CHANGED,
+    TRACK_DELETED,
+
+    // TASK RELATED
+
+    GET_TASKS_OF_TRACK,
+    GET_TASKS_OF_SPRINT,
+    GET_TASK,
+    CREATE_TASK,
+    CHANGE_TASK,
+    DELETE_TASK,
+
+    TASKS_OF_TRACK,
+    TASKS_OF_SPRINT,
+    TASK,
+    TASK_CREATED,
+    TASK_CHANGED,
+    TASK_DELETED,
+
+    UNDEFINED
+}

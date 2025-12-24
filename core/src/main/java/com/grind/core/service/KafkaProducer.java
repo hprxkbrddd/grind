@@ -98,6 +98,8 @@ public class KafkaProducer {
         if (correlationId != null && !correlationId.isBlank())
             builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
 
+        builder.setHeader("X-Event-Id", UUID.randomUUID().toString());
+
         return builder.build();
     }
 
