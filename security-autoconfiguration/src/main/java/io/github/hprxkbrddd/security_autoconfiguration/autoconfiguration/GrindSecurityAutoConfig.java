@@ -98,7 +98,8 @@ public class GrindSecurityAutoConfig {
                         .requestMatchers(
                                 "/grind/keycloak/**",
                                 "/grind/keycloak/register",
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/test/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
