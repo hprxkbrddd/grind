@@ -1,11 +1,11 @@
-DROP TABLE IF EXISTS analytics_raw;
-CREATE TABLE analytics_raw(
+CREATE TABLE IF NOT EXISTS analytics.raw(
     event_id UUID,
     track_id UUID,
     sprint_id UUID,
     task_id UUID,
     version UInt64,
     task_status Enum8(
+            'UNKNOWN' = 0,
             'CREATED'   = 1,
             'PLANNED'   = 2,
             'COMPLETED' = 3,
@@ -18,8 +18,7 @@ ENGINE = MergeTree
 PARTITION BY toYYYYMM(changed_at)
 ORDER BY (sprint_id, track_id, task_id, version, event_id);
 
-DROP TABLE IF EXISTS analytics_task_actual_state_agg;
-CREATE TABLE analytics_task_actual_state_agg
+CREATE TABLE IF NOT EXISTS analytics.task_actual_state
 (
   task_id UUID,
   track_id UUID,
@@ -28,6 +27,7 @@ CREATE TABLE analytics_task_actual_state_agg
   status_state AggregateFunction(
     argMax,
     Enum8(
+        'UNKNOWN' = 0,
         'CREATED'   = 1,
         'PLANNED'   = 2,
         'COMPLETED' = 3,
@@ -40,5 +40,4 @@ CREATE TABLE analytics_task_actual_state_agg
   changed_month UInt32
 )
 ENGINE = AggregatingMergeTree
-PARTITION BY changed_month
 ORDER BY (task_id, track_id, sprint_id);
