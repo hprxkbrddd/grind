@@ -5,8 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.statistics.dto.CoreRecord;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -17,8 +20,13 @@ import java.util.StringJoiner;
 @RequiredArgsConstructor
 public class ClickhouseRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(ClickhouseRepository.class);
     @Value("${clickhouse.baseUrl}")
     private String clickHouseUrl;
+    @Value("${clickhouse.username}")
+    private String chUsername;
+    @Value("${clickhouse.password}")
+    private String chPassword;
     private WebClient webClient;
 
     private final ObjectMapper objectMapper;
@@ -27,6 +35,7 @@ public class ClickhouseRepository {
     public void init(){
         this.webClient = WebClient.builder()
                 .baseUrl(clickHouseUrl)
+                .defaultHeaders(h -> h.setBasicAuth(chUsername, chPassword))
                 .build();
     }
 
@@ -35,20 +44,22 @@ public class ClickhouseRepository {
         if (batch.isEmpty()) return;
         StringJoiner joiner = new StringJoiner("\n");
         for (CoreRecord coreRecord : batch) {
-            String s = objectMapper.writeValueAsString(coreRecord);
-            joiner.add(s);
+            joiner.add(objectMapper.writeValueAsString(coreRecord));
         }
-        String body = joiner.toString();
+        String body = joiner+"\n";
+
+        log.info(body);
 
         webClient.post()
                 .uri(uriBuilder ->
                     uriBuilder
                             .queryParam("database", "analytics")
-                            .queryParam("query", "INSERT INTO analytics_raw FORMAT JSONEachRow")
+                            .queryParam("query", "INSERT INTO raw FORMAT JSONEachRow\n")
                             .queryParam("input_format_skip_unknown_fields", 1)
                             .build()
 
                 )
+                .contentType(MediaType.TEXT_PLAIN)
                 .bodyValue(body)
                 .retrieve()
                 .onStatus(HttpStatusCode::is5xxServerError,
