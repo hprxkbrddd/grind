@@ -47,6 +47,7 @@ kafka.topic:
       track: 'core.event.track'
   statistics:
     request: 'statistics.request'
+    event: 'statistics.event'
   response: 'response'
 
 server:
