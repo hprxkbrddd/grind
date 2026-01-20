@@ -1,0 +1,64 @@
+package com.grind.core.controller;
+
+import com.grind.core.model.Task;
+import com.grind.core.dto.TaskDTO;
+import com.grind.core.request.Task.ChangeTaskRequest;
+import com.grind.core.request.Task.CreateTaskRequest;
+import com.grind.core.service.TaskService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("core/v1/task")
+public class TaskController {
+
+    private final TaskService taskService;
+
+    @GetMapping
+    public ResponseEntity<List<TaskDTO>> taskIndex(){
+        List<Task> tasks = taskService.getAllTasks();
+        List<TaskDTO> taskDTOS = tasks.stream().map(Task::mapDTO).collect(Collectors.toList());
+
+        return new ResponseEntity<>(taskDTOS,
+                taskDTOS.isEmpty()?
+                        HttpStatus.NO_CONTENT : HttpStatus.FOUND);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TaskDTO> getById(@PathVariable String id){
+        return new ResponseEntity<>(taskService.getById(id).mapDTO(), HttpStatus.OK);
+    }
+
+    @PostMapping
+    public ResponseEntity<TaskDTO> createTask(@RequestBody CreateTaskRequest createTaskRequest){
+        Task task = taskService.createTask(createTaskRequest);
+
+        return new ResponseEntity<>(task.mapDTO(), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/set-completed-task/{id}") //setCompleted должен задавать actualDate
+    public void setCompleted(@PathVariable String id){
+        taskService.completeTask(id);
+    }
+
+    @PutMapping("/set-expired-task/{id}")
+    public void setExpired(@PathVariable String id){
+        taskService.expireTask(id);
+    }
+
+    @PutMapping("/change")
+    public void changeTask(@RequestBody ChangeTaskRequest changeTaskRequest){
+        taskService.changeTask(changeTaskRequest);
+    }
+
+    @DeleteMapping("/delete-task/{id}")
+    public void deleteTask(@PathVariable String id){
+        taskService.deleteTask(id);
+    }
+}
