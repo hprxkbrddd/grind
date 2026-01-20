@@ -32,10 +32,8 @@ public class CoreTaskController {
     public ResponseEntity<Object> getTask(@PathVariable String taskId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.GET_TASK,
-                        taskId
-                ),
+                taskId,
+                CoreMessageType.GET_TASK,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -49,10 +47,8 @@ public class CoreTaskController {
     public ResponseEntity<Object> getTasksOfSprint(@PathVariable String sprintId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.GET_TASKS_OF_SPRINT,
-                        sprintId
-                ),
+                sprintId,
+                CoreMessageType.GET_TASKS_OF_SPRINT,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -65,10 +61,8 @@ public class CoreTaskController {
     public ResponseEntity<Object> getTasksOfTrack(@PathVariable String trackId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.GET_TASKS_OF_TRACK,
-                        trackId
-                ),
+                trackId,
+                CoreMessageType.GET_TASKS_OF_TRACK,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -83,10 +77,8 @@ public class CoreTaskController {
         String payload = objectMapper.writeValueAsString(dto);
 
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.CREATE_TASK,
-                        payload
-                ),
+                payload,
+                CoreMessageType.CREATE_TASK,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -102,10 +94,8 @@ public class CoreTaskController {
         String payload = objectMapper.writeValueAsString(dto);
 
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.CHANGE_TASK,
-                        payload
-                ),
+                payload,
+                CoreMessageType.CHANGE_TASK,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -118,10 +108,8 @@ public class CoreTaskController {
         String correlationId = UUID.randomUUID().toString();
 
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.DELETE_TASK,
-                        id
-                ),
+                id,
+                CoreMessageType.DELETE_TASK,
                 coreReqTaskTopic,
                 correlationId
         );

@@ -2,6 +2,7 @@ package com.grind.gateway.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.gateway.enums.CoreMessageType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -14,6 +15,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -38,6 +40,7 @@ public class KafkaProducer {
      */
     public void publish(
             Object value,
+            CoreMessageType type,
             String key,
             String topic,
             String correlationId
@@ -80,6 +83,8 @@ public class KafkaProducer {
         if (roles!=null && !roles.isBlank())
             builder.setHeader("X-Roles", roles);
 
+        builder.setHeader("X-Message-Type", Objects.requireNonNullElse(type, CoreMessageType.UNDEFINED));
+
         Message<String> message = builder.build();
 
         kafkaTemplate.send(message);
@@ -90,9 +95,9 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publish(List<Object> values, String topic, String correlationId) {
+    public void publish(List<Object> values, CoreMessageType type, String topic, String correlationId) {
         for (Object value : values) {
-            publish(value, topic, correlationId);
+            publish(value, type, topic, correlationId);
         }
     }
 
@@ -101,8 +106,8 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String topic, String correlationId) {
-        publish(value, null, topic, correlationId);
+    public void publish(Object value, CoreMessageType type, String topic, String correlationId) {
+        publish(value, type, null, topic, correlationId);
     }
 
     /**
@@ -111,11 +116,15 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publishOrdered(List<Object> values, String traceId, String correlationId) {
+    public void publishOrdered(List<Object> values, CoreMessageType type, String traceId, String correlationId) {
         String key = UUID.randomUUID().toString();
         for (Object value : values) {
-            publish(value, key, traceId, correlationId);
+            publish(value, type, key, traceId, correlationId);
         }
+    }
+
+    public void publishBodiless(CoreMessageType type, String topic, String correlationId){
+        publish(null, type, null, topic, correlationId);
     }
 
     public Object retrieveResponse(String correlationId) throws TimeoutException {
