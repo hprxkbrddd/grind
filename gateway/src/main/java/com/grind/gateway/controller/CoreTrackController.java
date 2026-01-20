@@ -3,7 +3,6 @@ package com.grind.gateway.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.gateway.dto.core.ChangeTrackDTO;
-import com.grind.gateway.dto.core.CoreMessageDTO;
 import com.grind.gateway.dto.core.TrackCreationDTO;
 import com.grind.gateway.enums.CoreMessageType;
 import com.grind.gateway.service.KafkaProducer;
@@ -31,11 +30,8 @@ public class CoreTrackController {
     @GetMapping
     public ResponseEntity<Object> getTracksOfUser() throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
-        kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.GET_TRACKS_OF_USER,
-                        null
-                ),
+        kafkaProducer.publishBodiless(
+                CoreMessageType.GET_TRACKS_OF_USER,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -48,10 +44,8 @@ public class CoreTrackController {
     public ResponseEntity<Object> getTrack(@PathVariable String trackId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.GET_TRACK,
-                        trackId
-                ),
+                trackId,
+                CoreMessageType.GET_TRACK,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -66,10 +60,8 @@ public class CoreTrackController {
         String payload = objectMapper.writeValueAsString(dto);
 
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.CREATE_TRACK,
-                        payload
-                ),
+                payload,
+                CoreMessageType.CREATE_TRACK,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -84,10 +76,8 @@ public class CoreTrackController {
         String payload = objectMapper.writeValueAsString(dto);
 
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.CHANGE_TRACK,
-                        payload
-                ),
+                payload,
+                CoreMessageType.CHANGE_TRACK,
                 coreReqTaskTopic,
                 correlationId
         );
@@ -100,10 +90,8 @@ public class CoreTrackController {
         String correlationId = UUID.randomUUID().toString();
 
         kafkaProducer.publish(
-                new CoreMessageDTO(
-                        CoreMessageType.DELETE_TRACK,
-                        id
-                ),
+                id,
+                CoreMessageType.DELETE_TRACK,
                 coreReqTaskTopic,
                 correlationId
         );

@@ -2,16 +2,35 @@ spring:
   application:
     name: core
   kafka:
+    bootstrap-servers: localhost:9092
     producer:
-      bootstrap-servers: localhost:9092
       key-deserializer: org.apache.kafka.common.serialization.StringSerializer
       value-deserializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
-      bootstrap-servers: localhost:9092
       group-id: core-consumer-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  datasource:
+    url: jdbc:postgresql://localhost:5433/grind_core
+    username: grind_core
+    password: grind_core
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
 
 management:
   endpoints:
@@ -26,55 +45,26 @@ management:
     info:
       enabled: true
 
-kafka.topic:
-  core:
-    request:
-      task: 'core.request.task'
-      track: 'core.request.track'
-    event:
-      task: 'core.event.task'
-      track: 'core.event.track'
-  statistics:
-    request: 'statistics.request'
-  response: 'response'
-
-
-
-
-datasource:
-  url: jdbc:postgresql://localhost:5432/progress_tracker
-  username: postgres
-  password: 12345
-  driver-class-name: org.postgresql.Driver
-  hikari:
-    maximum-pool-size: 10
-    minimum-idle: 5
-
-jpa:
-  hibernate:
-    ddl-auto: update
-  show-sql: true
-  properties:
-    hibernate:
-      dialect: org.hibernate.dialect.PostgreSQLDialect
-      format_sql: true
-      jdbc:
-        batch_size: 20
-  database-platform: org.hibernate.dialect.PostgreSQLDialect
-
-sql:
-  init:
-    mode: always
+kafka:
+  topic:
+    core:
+      request:
+        task: 'core.request.task'
+        track: 'core.request.track'
+      event:
+        task: 'core.event.task'
+        track: 'core.event.track'
+    statistics:
+      request: 'statistics.request'
+    response: 'response'
 
 server:
-port: 8083
-servlet:
-  context-path: /
+  port: 8083
 
 logging:
-level:
-  org.hibernate.SQL: DEBUG
-  org.hibernate.type: TRACE
-  com.progressapp: DEBUG
-pattern:
-  console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type: TRACE
+    com.progressapp: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

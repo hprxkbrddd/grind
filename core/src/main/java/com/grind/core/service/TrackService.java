@@ -4,6 +4,7 @@ import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
 import com.grind.core.request.Track.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,6 +15,7 @@ public class TrackService {
 
     private final TrackRepository trackRepository;
 
+    @PreAuthorize("hasRole('ADMIN'")
     public List<Track> getAllTracks(){ return trackRepository.getAllTracks(); }
 
     public Track getById(String id){ return trackRepository.getById(id); }
