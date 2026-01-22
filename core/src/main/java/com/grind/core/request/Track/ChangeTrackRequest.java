@@ -1,5 +1,7 @@
 package com.grind.core.request.Track;
 
+import com.grind.core.dto.TrackStatus;
+
 import java.time.LocalDate;
 
 public record ChangeTrackRequest(
@@ -11,6 +13,6 @@ public record ChangeTrackRequest(
         LocalDate targetDate,
         Integer sprintLength,
         String messagePolicy,
-        String status) {
+        TrackStatus status) {
 
 }

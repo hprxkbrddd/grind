@@ -13,7 +13,7 @@ public record TrackDTO(
         LocalDate targetDate,
         LocalDateTime createdAt,
         String messagePolicy,
-        String status,
+        TrackStatus status,
         String userId
 ) {
 }

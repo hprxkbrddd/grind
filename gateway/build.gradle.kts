@@ -32,7 +32,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     // v0.0.4 has NO endpoint protection, v0.0.5 HAS endpoint protection, v0.0.6 has disableable controller
     // v0.1.2 has cors configuration and proper registration
-    implementation("io.github.hprxkbrddd:security-autoconfiguration:0.1.2")
+    implementation("io.github.hprxkbrddd:security-autoconfiguration:0.1.4")
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

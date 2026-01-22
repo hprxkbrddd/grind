@@ -4,11 +4,14 @@ import com.grind.gateway.enums.TrackStatus;
 
 import java.time.LocalDate;
 
-public record TrackCreationDTO(
+public record CreateTrackRequest(
         String name,
         String description,
-        Integer durationDays,
+        String petId,
+        Integer sprintLength,
+        LocalDate startDate,
         LocalDate targetDate,
+        String messagePolicy,
         TrackStatus status
 ) {
 }

@@ -1,6 +1,7 @@
 package com.grind.core.service;
 
 import com.grind.core.dto.TrackDTO;
+import com.grind.core.dto.TrackStatus;
 import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -45,7 +46,7 @@ public class TrackService {
             LocalDate startDate,
             LocalDate targetDate,
             String messagePolicy,
-            String status
+            TrackStatus status
     ) {
         Track track = new Track();
 
@@ -81,7 +82,7 @@ public class TrackService {
             LocalDate targetDate,
             Integer sprintLength,
             String messagePolicy,
-            String status
+            TrackStatus status
     ) {
         Track track = trackRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find track with id:"+id));
