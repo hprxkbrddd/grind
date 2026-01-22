@@ -1,30 +1,40 @@
 package com.grind.core.repository;
 
+import com.grind.core.dto.TaskStatus;
 import com.grind.core.model.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, String> {
 
     List<Task> findBySprintId(String sprintId);
 
-    List<Task> findBySprintIdAndStatus(String sprintId, String status);
+    List<Task> findByTrackId(String trackId);
 
-    @Modifying
-    @Query("UPDATE Task t SET t.status='COMPLETED' WHERE t.id = :taskId")
-    void completeTask(String taskId);
+    List<Task> findBySprintIdAndStatus(String sprintId, TaskStatus status);
 
-    @Modifying
-    @Query("UPDATE Task t SET t.status='OVERDUE' WHERE t.id = :taskId")
-    void expireTask(String taskId);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("""
+                UPDATE Task t
+                SET t.status = :overdue
+                WHERE t.plannedDate < :today
+                  AND t.status = :planned
+            """)
+    void expireTasks(@Param("today") LocalDate today,
+                     @Param("planned") TaskStatus planned,
+                     @Param("overdue") TaskStatus overdue);
 
-    @Modifying
-    @Query("UPDATE Task t SET t.status='PLANNED' WHERE t.id = :taskId")
-    void planTask(String taskId);
+    @Query("SELECT Task t WHERE t.plannedDate < :date AND t.status = :status")
+    List<Task> getOverdueWithStatus(@Param("date") LocalDate date,
+                                    @Param("status") TaskStatus status
+    );
 }

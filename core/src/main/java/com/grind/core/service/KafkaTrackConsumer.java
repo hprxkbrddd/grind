@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageDTO;
 import com.grind.core.dto.CoreMessageType;
+import com.grind.core.request.Track.ChangeTrackRequest;
+import com.grind.core.request.Track.CreateTrackRequest;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.json.JsonParseException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -25,6 +27,7 @@ import java.util.List;
 public class KafkaTrackConsumer {
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
+    private final TrackService service;
 
     @Value("${kafka.topic.core.event.track}")
     private String coreEvTrackTopic;
@@ -35,8 +38,9 @@ public class KafkaTrackConsumer {
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId,
             @Header("X-Trace-Id") String traceId,
             @Header("X-User-Id") String userId,
-            @Header(value = "X-Roles", required = false) String roles
-    ) throws JsonProcessingException, InterruptedException {
+            @Header(value = "X-Roles", required = false) String roles,
+            @Header(value = "X-Message-type") String messageType
+    ) throws JsonProcessingException, InterruptedException, BadRequestException {
         // FORMING AUTHENTICATION OBJECT
         List<SimpleGrantedAuthority> authorities = Arrays.stream(
                         roles != null ? roles.split(",") : new String[0]
@@ -52,110 +56,66 @@ public class KafkaTrackConsumer {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // PARSING PAYLOAD
-        CoreMessageDTO msg;
-        try {
-            msg = objectMapper.readValue(payload, CoreMessageDTO.class);
-        } catch (JsonParseException e) {
-            msg = new CoreMessageDTO(CoreMessageType.UNDEFINED, payload);
-            System.out.println("could not parse. processing as string");
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
         // HANDLING REQUEST
-        CoreMessageDTO response;
-        switch (msg.type()) {
-            case GET_TRACKS_OF_USER -> {
-                String result;
-                // ---CODE TO REPLACE---
-                System.out.println("fetching all TRACKS of USER:id" +
-                        SecurityContextHolder.getContext().getAuthentication().getName()  // the way to access userId and roles
-                        + "..."
-                );
-                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
-                Thread.sleep(500L);
-                result = "some json as string, or exception";
-                // ---CODE TO REPLACE END---
-                response = new CoreMessageDTO(
-                        CoreMessageType.TRACKS_OF_USER,
-                        result
-                );
-                kafkaProducer.reply(response, correlationId, traceId);
-            }
-            case GET_TRACK -> {
-                String result;
-                // ---CODE TO REPLACE---
-                System.out.println("fetching TRACK...");
-                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
-                Thread.sleep(500L);
-                result = "some json as string, or exception";
-                // ---CODE TO REPLACE END---
-                response = new CoreMessageDTO(
-                        CoreMessageType.TRACK,
-                        result
-                );
-                kafkaProducer.reply(response, correlationId, traceId);
-            }
+        CoreMessageType type = CoreMessageType.valueOf(messageType);
+        switch (type) {
+            case GET_TRACKS_OF_USER -> kafkaProducer.reply(
+                    service.getByUserId(userId),
+                    CoreMessageType.TRACKS_OF_USER,
+                    correlationId,
+                    traceId
+            );
+            case GET_TRACK -> kafkaProducer.reply(
+                    service.getById(payload),
+                    CoreMessageType.TRACK,
+                    correlationId,
+                    traceId
+            );
+
             case CHANGE_TRACK -> {
-                String result; // if present
-                // ---CODE TO REPLACE---
-                System.out.println("mocking CHANGE track action");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
-                Thread.sleep(500L);
-                result = "some json as string, or empty";
-                // ---CODE TO REPLACE END---
-                response = new CoreMessageDTO(
+                ChangeTrackRequest req = objectMapper.readValue(payload, ChangeTrackRequest.class);
+                kafkaProducer.publish(
+                        service.changeTrack(
+                                req.id(),
+                                req.name(),
+                                req.description(),
+                                req.petId(),
+                                req.startDate(),
+                                req.targetDate(),
+                                req.sprintLength(),
+                                req.messagePolicy(),
+                                req.status()
+                        ),
                         CoreMessageType.TRACK_CHANGED,
-                        result
+                        traceId,
+                        coreEvTrackTopic
                 );
-                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
             }
             case CREATE_TRACK -> {
-                String result; // if present
-                // ---CODE TO REPLACE---
-                System.out.println("mocking CREATE track action");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
-                Thread.sleep(500L);
-                result = "some json as string, or empty";
-                // ---CODE TO REPLACE END---
-                response = new CoreMessageDTO(
+                CreateTrackRequest req = objectMapper.readValue(payload, CreateTrackRequest.class);
+                kafkaProducer.publish(
+                        service.createTrack(
+                                req.name(),
+                                req.description(),
+                                req.petId(),
+                                req.sprintLength(),
+                                req.startDate(),
+                                req.targetDate(),
+                                req.messagePolicy(),
+                                req.status()
+                        ),
                         CoreMessageType.TRACK_CREATED,
-                        result
-                );
-                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
+                        traceId,
+                        coreEvTrackTopic);
             }
-            case DELETE_TRACK -> {
-                String result; // if present
-                // ---CODE TO REPLACE---
-                System.out.println("mocking DELETE track action");
-                System.out.println(">>> PAYLOAD\n"+objectMapper.writeValueAsString(msg));
-                Thread.sleep(500L);
-                result = "some json as string, or empty";
-                // ---CODE TO REPLACE END---
-                response = new CoreMessageDTO(
-                        CoreMessageType.TRACK_DELETED,
-                        result
-                );
-                kafkaProducer.publish(response, traceId, coreEvTrackTopic);
-            }
-            case UNDEFINED -> {
-                CoreMessageDTO result;
-                // ---CODE TO REPLACE---
-                System.out.println("type is undefined. mocking processing");
-                System.out.println(">>> PAYLOAD\n" + objectMapper.writeValueAsString(msg));
-                Thread.sleep(500L);
-                result = new CoreMessageDTO(
-                        CoreMessageType.UNDEFINED,
-                        "some json as string, or empty"
-                );
-                // ---CODE TO REPLACE END---
-                kafkaProducer.publish(result, traceId, coreEvTrackTopic);
-            }
-            default -> {
-                System.out.println("unknown type");
-                kafkaProducer.publish("unknown type in core.request.track. corrId:" + correlationId, traceId, coreEvTrackTopic);
-            }
+            case DELETE_TRACK -> kafkaProducer.publish(
+                    service.deleteTrack(payload),
+                    CoreMessageType.TRACK_DELETED,
+                    traceId,
+                    coreEvTrackTopic
+            );
+            case UNDEFINED -> kafkaProducer.publishBodiless(CoreMessageType.UNDEFINED, traceId, coreEvTrackTopic);
+            default -> throw new BadRequestException("Not request type");
         }
     }
 }

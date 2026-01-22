@@ -1,8 +1,8 @@
-package com.grind.gateway.enums;
+package com.grind.core.dto;
 
 public enum TaskStatus {
     CREATED,           // К выполнению
     PLANNED,    // В процессе
     COMPLETED,           // Выполнено
-    OVERDUE         // Просрочено
+    OVERDUE
 }

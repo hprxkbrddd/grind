@@ -4,13 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageDTO;
 import com.grind.core.dto.CoreMessageType;
-import com.grind.core.dto.TaskDTO;
 import com.grind.core.request.Task.ChangeTaskRequest;
 import com.grind.core.request.Task.CreateTaskRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.json.JsonParseException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -61,7 +59,6 @@ public class KafkaTaskConsumer {
 
         // HANDLING REQUEST
         CoreMessageType type = CoreMessageType.valueOf(messageType);
-        CoreMessageDTO response;
         switch (type) {
             case GET_TASKS_OF_TRACK -> kafkaProducer.reply(
                     service.getAllTasks(),
@@ -76,29 +73,46 @@ public class KafkaTaskConsumer {
                     traceId);
 
             case GET_TASK -> kafkaProducer.reply(
-                        service.getById(payload),
-                        CoreMessageType.TASK,
-                        correlationId,
-                        traceId
-                );
+                    service.getById(payload),
+                    CoreMessageType.TASK,
+                    correlationId,
+                    traceId
+            );
             case CHANGE_TASK -> {
                 ChangeTaskRequest req = objectMapper.readValue(payload, ChangeTaskRequest.class);
-                service.changeTask(req);
-                kafkaProducer.publishBodiless(CoreMessageType.TASK_CHANGED, traceId, coreEvTaskTopic);
+                kafkaProducer.publish(
+                        service.changeTask(
+                                req.taskId(),
+                                req.title(),
+                                req.description(),
+                                req.plannedDate()
+                        ),
+                        CoreMessageType.TASK_CHANGED,
+                        traceId,
+                        coreEvTaskTopic
+                );
             }
             case CREATE_TASK -> {
                 CreateTaskRequest req = objectMapper.readValue(payload, CreateTaskRequest.class);
-                kafkaProducer.publish(service.createTask(req), CoreMessageType.TASK_CREATED, traceId, coreEvTaskTopic);
+                kafkaProducer.publish(
+                        service.createTask(
+                                req.title(),
+                                req.trackId(),
+                                req.description()
+                        ),
+                        CoreMessageType.TASK_CREATED,
+                        traceId,
+                        coreEvTaskTopic);
             }
-            case DELETE_TASK -> {
-                service.deleteTask(payload);
-                kafkaProducer.publishBodiless(CoreMessageType.TASK_DELETED, traceId, coreEvTaskTopic);
-            }
-            case UNDEFINED ->
-                kafkaProducer.publishBodiless(CoreMessageType.UNDEFINED, traceId, coreEvTaskTopic);
-            default -> {
-                throw new BadRequestException("Not request type");
-            }
+            case DELETE_TASK -> kafkaProducer.publish(
+                    service.deleteTask(payload),
+                    CoreMessageType.TASK_DELETED,
+                    traceId,
+                    coreEvTaskTopic
+            );
+
+            case UNDEFINED -> kafkaProducer.publishBodiless(CoreMessageType.UNDEFINED, traceId, coreEvTaskTopic);
+            default -> throw new BadRequestException("Not request type");
         }
     }
 }
