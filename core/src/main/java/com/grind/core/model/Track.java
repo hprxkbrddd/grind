@@ -1,6 +1,7 @@
 package com.grind.core.model;
 
 import com.grind.core.dto.TrackDTO;
+import com.grind.core.dto.TrackStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,7 +51,8 @@ public class Track {
     private String messagePolicy;
 
     @Column
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private TrackStatus status;
 
     @Column(name = "user_id")
     private String userId;

@@ -1,7 +1,7 @@
 services:
-  postgres:
+  postgres-users:
     image: postgres:18
-    container_name: postgres-1
+    container_name: postgres-users
     environment:
       POSTGRES_DB: grind
       POSTGRES_USER: grind
@@ -10,6 +10,18 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+
+  postgres-core:
+    image: postgres:18
+    container_name: postgres-core
+    environment:
+      POSTGRES_DB: grind_core
+      POSTGRES_USER: grind_core
+      POSTGRES_PASSWORD: grind_core
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_core:/var/lib/postgresql
 
   # KAFKA
   kafka:
@@ -50,10 +62,10 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     depends_on:
-      - postgres
+      - postgres-users
     environment:
       KC_DB: postgres
-      KC_DB_URL_HOST: postgres
+      KC_DB_URL_HOST: postgres-users
       KC_DB_URL_DATABASE: grind
       KC_DB_USERNAME: grind
       KC_DB_PASSWORD: grind
@@ -94,3 +106,4 @@ volumes:
   kafka_data:
   clickhouse_data:
   postgres_data:
+  postgres_data_core:

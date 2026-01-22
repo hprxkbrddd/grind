@@ -3,8 +3,7 @@ package com.grind.gateway.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.gateway.dto.core.ChangeTaskDTO;
-import com.grind.gateway.dto.core.CoreMessageDTO;
-import com.grind.gateway.dto.core.TaskCreationDTO;
+import com.grind.gateway.dto.core.CreateTaskRequest;
 import com.grind.gateway.enums.CoreMessageType;
 import com.grind.gateway.service.KafkaProducer;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +71,7 @@ public class CoreTaskController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> create(@RequestBody TaskCreationDTO dto) throws JsonProcessingException {
+    public ResponseEntity<Void> create(@RequestBody CreateTaskRequest dto) throws JsonProcessingException {
         String correlationId = UUID.randomUUID().toString();
         String payload = objectMapper.writeValueAsString(dto);
 
@@ -90,7 +89,7 @@ public class CoreTaskController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> changeTask(@RequestBody ChangeTaskDTO dto, @PathVariable String id) throws JsonProcessingException {
         String correlationId = UUID.randomUUID().toString();
-        dto.setId(id);
+        dto.setTaskId(id);
         String payload = objectMapper.writeValueAsString(dto);
 
         kafkaProducer.publish(

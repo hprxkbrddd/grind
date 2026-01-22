@@ -33,7 +33,7 @@ public interface TaskRepository extends JpaRepository<Task, String> {
                      @Param("planned") TaskStatus planned,
                      @Param("overdue") TaskStatus overdue);
 
-    @Query("SELECT Task t WHERE t.plannedDate < :date AND t.status = :status")
+    @Query("SELECT t FROM Task t WHERE t.plannedDate < :date AND t.status = :status")
     List<Task> getOverdueWithStatus(@Param("date") LocalDate date,
                                     @Param("status") TaskStatus status
     );

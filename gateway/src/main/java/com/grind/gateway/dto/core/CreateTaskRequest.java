@@ -1,10 +1,8 @@
 package com.grind.gateway.dto.core;
 
-import java.time.LocalDate;
-
-public record TaskCreationDTO(
+public record CreateTaskRequest(
         String title,
         String description,
-        LocalDate plannedDate
+        String trackId
 ) {
 }

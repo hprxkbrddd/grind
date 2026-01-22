@@ -11,11 +11,8 @@ import java.time.LocalDate;
 @Getter
 public class ChangeTaskDTO {
     @Setter
-    private String id;
+    private String taskId;
     private final String title;
     private final String description;
     private final LocalDate plannedDate;
-    private final LocalDate actualDate;
-    private final TaskStatus status;
-    private final String sprintId;
 }

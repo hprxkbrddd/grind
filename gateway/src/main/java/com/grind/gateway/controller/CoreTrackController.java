@@ -3,7 +3,7 @@ package com.grind.gateway.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.gateway.dto.core.ChangeTrackDTO;
-import com.grind.gateway.dto.core.TrackCreationDTO;
+import com.grind.gateway.dto.core.CreateTrackRequest;
 import com.grind.gateway.enums.CoreMessageType;
 import com.grind.gateway.service.KafkaProducer;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +55,7 @@ public class CoreTrackController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> create(@RequestBody TrackCreationDTO dto) throws JsonProcessingException {
+    public ResponseEntity<Void> create(@RequestBody CreateTrackRequest dto) throws JsonProcessingException {
         String correlationId = UUID.randomUUID().toString();
         String payload = objectMapper.writeValueAsString(dto);
 
