@@ -1,17 +1,22 @@
 package com.grind.core.service;
 
 import com.grind.core.dto.TaskDTO;
+import com.grind.core.dto.TaskStatus;
+import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
+import com.grind.core.repository.TrackRepository;
 import com.grind.core.request.Task.ChangeTaskRequest;
-import com.grind.core.request.Task.CreateTaskRequest;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -19,9 +24,10 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final TrackRepository trackRepository;
     private final SprintRepository sprintRepository;
 
-    @PreAuthorize("hasRole('ADMIN'")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
     }
@@ -32,49 +38,85 @@ public class TaskService {
                 .mapDTO();
     }
 
-    public List<TaskDTO> getBySprint(String sprintId){
-        return taskRepository.findBySprintId(sprintId)
-                .stream().map(Task::mapDTO)
-                .toList();
+    public List<Task> getBySprint(String sprintId) {
+        return taskRepository.findBySprintId(sprintId);
     }
 
-    public List<TaskDTO> getBySprintAndStatus(String sprintId, String status){
+    public List<Task> getByTrack(String trackId) {
+        return taskRepository.findByTrackId(trackId);
+    }
+
+    public List<TaskDTO> getBySprintAndStatus(String sprintId, TaskStatus status) {
         return taskRepository.findBySprintIdAndStatus(sprintId, status)
                 .stream().map(Task::mapDTO)
                 .toList();
     }
 
     @Transactional
-    public Task createTask(CreateTaskRequest createTaskRequest) {
+    public Task createTask(
+            String title,
+            String trackId,
+            String description
+    ) {
         Task task = new Task();
-        task.setTitle(createTaskRequest.title());
-        task.setSprint(sprintRepository.getById(createTaskRequest.sprint_id()));
-        task.setPlannedDate(createTaskRequest.plannedDate());
-        task.setDescription(createTaskRequest.description());
-        task.setStatus(createTaskRequest.status());
+        task.setTrack(trackRepository.findById(trackId)
+                .orElseThrow(() -> new EntityNotFoundException("non-existing track has been provided")));
+        task.setTitle(title);
+        task.setDescription(description);
+        task.setStatus(TaskStatus.CREATED);
         taskRepository.save(task);
         return task;
     }
 
-    public void completeTask(String id) {
-        taskRepository.completeTask(id);
-    }
+    @Transactional
+    public Task planTask(String taskId, String sprintId, Integer dayOfSprint) {
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new EntityNotFoundException("non-existing sprint has been provided"));
+        Integer sprintLen = Math.toIntExact(ChronoUnit.DAYS.between(sprint.getStartDate(), sprint.getEndDate()) + 1);
+        if (dayOfSprint >= sprintLen || dayOfSprint < 0) {
+            throw new IllegalArgumentException("day of sprint must be non-negative and less than sprint_length");
+        }
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("could not plan task. task is not in db"));
+        if (!task.getTrack().getId().equals(sprint.getTrack().getId()))
+            throw new IllegalArgumentException("task does not match sprint");
 
-    public void expireTask(String id) {
-        taskRepository.expireTask(id);
-    }
-
-    public void deleteTask(String id) {
-        taskRepository.deleteById(id);
+        LocalDate plannedDate = sprint.getStartDate().plusDays(dayOfSprint);
+        task.setPlannedDate(plannedDate);
+        task.setSprint(sprint);
+        task.setStatus(TaskStatus.PLANNED);
+        return task;
     }
 
     @Transactional
-    public void changeTask(ChangeTaskRequest req) {
-        Task task = taskRepository.findById(req.taskId())
-                .orElseThrow(() -> new EntityNotFoundException("Could not change task with id:"+req.taskId()));
-        if (req.description()!=null) task.setDescription(req.description());
-        if (req.title()!=null) task.setTitle(req.title());
-        if (req.plannedDate()!=null) task.setPlannedDate(req.plannedDate());
-        taskRepository.save(task);
+    public Task completeTask(String taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("could not plan task. task is not in db"));
+        task.setActualDate(LocalDate.now());
+        task.setStatus(TaskStatus.COMPLETED);
+        return task;
+    }
+
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public List<Task> markOverdue() {
+        List<Task> toMark = taskRepository.getOverdueWithStatus(LocalDate.now(), TaskStatus.PLANNED);
+        toMark.forEach(t -> t.setStatus(TaskStatus.OVERDUE));
+        return toMark;
+    }
+    @Transactional
+    public String deleteTask(String id) {
+        taskRepository.deleteById(id);
+        return id;
+    }
+
+    @Transactional
+    public Task changeTask(String taskId, String title, String description, LocalDate plannedDate) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find task with id:" + taskId));
+        if (description != null) task.setDescription(description);
+        if (title != null) task.setTitle(title);
+        if (plannedDate != null) task.setPlannedDate(plannedDate);
+        return task;
     }
 }

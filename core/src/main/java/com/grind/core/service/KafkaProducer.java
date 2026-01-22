@@ -144,12 +144,12 @@ public class KafkaProducer {
         String key = UUID.randomUUID().toString();
         String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
         for (Object value : values) {
-            publish(value, type, key, trId);
+            publish(value, type, key, trId, topic);
         }
     }
 
-    public void publishBodiless(CoreMessageType type, String topic, String correlationId){
-        publish(null, type, null, topic, correlationId);
+    public void publishBodiless(CoreMessageType type, String traceId, String topic){
+        publish(null, type, null, traceId, topic);
     }
 
     public void reply(Object value, CoreMessageType type, String correlationId, String traceId) {

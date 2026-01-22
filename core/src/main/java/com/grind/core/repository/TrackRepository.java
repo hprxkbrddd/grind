@@ -1,16 +1,12 @@
 package com.grind.core.repository;
 
 import com.grind.core.model.Track;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-public interface TrackRepository {
-
-    List<Track> getAllTracks();
-
-    Track getById(String id);
-
-    void save(Track track);
-
-    void deleteTask(String id);
+@Repository
+public interface TrackRepository extends JpaRepository<Track, String> {
+    List<Track> findByUserId(String userId);
 }

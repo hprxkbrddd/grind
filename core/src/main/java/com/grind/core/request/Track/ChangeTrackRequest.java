@@ -2,18 +2,15 @@ package com.grind.core.request.Track;
 
 import java.time.LocalDate;
 
-public record ChangeTrackRequest(        String name,
-
+public record ChangeTrackRequest(
+        String id,
+        String name,
         String description,
-
         String petId,
-
-        Integer durationDays,
-
+        LocalDate startDate,
         LocalDate targetDate,
-
+        Integer sprintLength,
         String messagePolicy,
-        
         String status) {
-    
+
 }
