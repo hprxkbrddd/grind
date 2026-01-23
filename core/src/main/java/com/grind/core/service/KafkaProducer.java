@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageType;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
+    private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class);
     @Value("${kafka.topic.response}")
     private String responseTopic;
 
@@ -73,8 +76,8 @@ public class KafkaProducer {
         );
     }
 
-    private Message<String> formMessage(
-            String payload,
+    private Message<Object> formMessage(
+            Object payload,
             CoreMessageType type,
             String topic,
             String key,
@@ -83,7 +86,7 @@ public class KafkaProducer {
             String roles,
             String correlationId
     ) {
-        MessageBuilder<String> builder = MessageBuilder
+        MessageBuilder<Object> builder = MessageBuilder
                 .withPayload(payload)
                 .setHeader(KafkaHeaders.TOPIC, topic);
 
@@ -152,14 +155,8 @@ public class KafkaProducer {
         publish(null, type, null, traceId, topic);
     }
 
-    public void reply(Object value, CoreMessageType type, String correlationId, String traceId) {
-        String jsonValue;
-
-        try {
-            jsonValue = objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            jsonValue = value.toString();
-        }
+    public void reply(Object value, CoreMessageType type, String correlationId, String traceId) throws JsonProcessingException {
+        String jsonValue = objectMapper.writeValueAsString(value);
 
         kafkaTemplate.send(
                 formMessage(

@@ -6,7 +6,9 @@ import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TrackService {
@@ -50,6 +53,7 @@ public class TrackService {
     ) {
         Track track = new Track();
 
+        track.setUserId(SecurityContextHolder.getContext().getAuthentication().getName());
         track.setName(name);
         track.setDescription(description);
         track.setPetId(petId);
@@ -82,7 +86,7 @@ public class TrackService {
             LocalDate targetDate,
             Integer sprintLength,
             String messagePolicy,
-            TrackStatus status
+            String status
     ) {
         Track track = trackRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find track with id:"+id));
@@ -106,7 +110,7 @@ public class TrackService {
         if (description!=null) track.setDescription(description);
         if (petId!=null) track.setPetId(petId);
         if (messagePolicy!=null) track.setMessagePolicy(messagePolicy);
-        if (status!=null) track.setStatus(status);
+        if (status!=null) track.setStatus(TrackStatus.valueOf(status));
         return track;
     }
 }

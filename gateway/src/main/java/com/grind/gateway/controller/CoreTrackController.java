@@ -24,15 +24,15 @@ public class CoreTrackController {
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
 
-    @Value("${kafka.topic.core.request.task}")
-    private String coreReqTaskTopic;
+    @Value("${kafka.topic.core.request.track}")
+    private String coreReqTrackTopic;
 
     @GetMapping
     public ResponseEntity<Object> getTracksOfUser() throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publishBodiless(
                 CoreMessageType.GET_TRACKS_OF_USER,
-                coreReqTaskTopic,
+                coreReqTrackTopic,
                 correlationId
         );
         return ResponseEntity.ok(
@@ -46,7 +46,7 @@ public class CoreTrackController {
         kafkaProducer.publish(
                 trackId,
                 CoreMessageType.GET_TRACK,
-                coreReqTaskTopic,
+                coreReqTrackTopic,
                 correlationId
         );
         return ResponseEntity.ok(
@@ -62,7 +62,7 @@ public class CoreTrackController {
         kafkaProducer.publish(
                 payload,
                 CoreMessageType.CREATE_TRACK,
-                coreReqTaskTopic,
+                coreReqTrackTopic,
                 correlationId
         );
 
@@ -78,7 +78,7 @@ public class CoreTrackController {
         kafkaProducer.publish(
                 payload,
                 CoreMessageType.CHANGE_TRACK,
-                coreReqTaskTopic,
+                coreReqTrackTopic,
                 correlationId
         );
 
@@ -92,7 +92,7 @@ public class CoreTrackController {
         kafkaProducer.publish(
                 id,
                 CoreMessageType.DELETE_TRACK,
-                coreReqTaskTopic,
+                coreReqTrackTopic,
                 correlationId
         );
 
