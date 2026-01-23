@@ -40,7 +40,7 @@ public class KafkaTaskConsumer {
             @Header("X-Trace-Id") String traceId,
             @Header("X-User-Id") String userId,
             @Header(value = "X-Roles", required = false) String roles,
-            @Header(value = "X-Message-type") String messageType
+            @Header(value = "X-Message-Type") String messageType
     ) throws InterruptedException, JsonProcessingException, BadRequestException {
         // FORMING AUTHENTICATION OBJECT
         List<SimpleGrantedAuthority> authorities = Arrays.stream(

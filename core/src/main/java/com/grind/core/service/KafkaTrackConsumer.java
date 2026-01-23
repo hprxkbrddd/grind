@@ -2,12 +2,17 @@ package com.grind.core.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.dto.CoreMessageDTO;
 import com.grind.core.dto.CoreMessageType;
+import com.grind.core.dto.TrackDTO;
+import com.grind.core.dto.TrackStatus;
+import com.grind.core.model.Task;
+import com.grind.core.model.Track;
 import com.grind.core.request.Track.ChangeTrackRequest;
 import com.grind.core.request.Track.CreateTrackRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -21,10 +26,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class KafkaTrackConsumer {
+    private static final Logger log = LoggerFactory.getLogger(KafkaTrackConsumer.class);
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
     private final TrackService service;
@@ -39,8 +46,8 @@ public class KafkaTrackConsumer {
             @Header("X-Trace-Id") String traceId,
             @Header("X-User-Id") String userId,
             @Header(value = "X-Roles", required = false) String roles,
-            @Header(value = "X-Message-type") String messageType
-    ) throws JsonProcessingException, InterruptedException, BadRequestException {
+            @Header(value = "X-Message-Type") String messageType
+    ) throws JsonProcessingException, BadRequestException {
         // FORMING AUTHENTICATION OBJECT
         List<SimpleGrantedAuthority> authorities = Arrays.stream(
                         roles != null ? roles.split(",") : new String[0]
@@ -60,13 +67,16 @@ public class KafkaTrackConsumer {
         CoreMessageType type = CoreMessageType.valueOf(messageType);
         switch (type) {
             case GET_TRACKS_OF_USER -> kafkaProducer.reply(
-                    service.getByUserId(userId),
+                    service.getByUserId(userId)
+                            .stream()
+                            .map(Track::mapDTO)
+                            .toList(),
                     CoreMessageType.TRACKS_OF_USER,
                     correlationId,
                     traceId
             );
             case GET_TRACK -> kafkaProducer.reply(
-                    service.getById(payload),
+                    service.getById(payload).mapDTO(),
                     CoreMessageType.TRACK,
                     correlationId,
                     traceId
@@ -85,7 +95,7 @@ public class KafkaTrackConsumer {
                                 req.sprintLength(),
                                 req.messagePolicy(),
                                 req.status()
-                        ),
+                        ).mapDTO(),
                         CoreMessageType.TRACK_CHANGED,
                         traceId,
                         coreEvTrackTopic
@@ -103,7 +113,7 @@ public class KafkaTrackConsumer {
                                 req.targetDate(),
                                 req.messagePolicy(),
                                 req.status()
-                        ),
+                        ).mapDTO(),
                         CoreMessageType.TRACK_CREATED,
                         traceId,
                         coreEvTrackTopic);

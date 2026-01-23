@@ -14,7 +14,10 @@ public class ChangeTrackDTO {
     private String id;
     private final String name;
     private final String description;
-    private final Integer durationDays;
+    private final String petId;
+    private final LocalDate startDate;
     private final LocalDate targetDate;
+    private final Integer sprintLength;
+    private final String messagePolicy;
     private final TrackStatus status;
 }

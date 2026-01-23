@@ -50,7 +50,6 @@ public class KafkaProducer {
 
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
-        String jsonValue;
 
         if (auth instanceof JwtAuthenticationToken jwtAuth) {
             userId = jwtAuth.getToken().getSubject();
@@ -60,32 +59,27 @@ public class KafkaProducer {
                     .collect(Collectors.joining(","));
         }
 
-        try {
-            jsonValue = objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            jsonValue = value.toString();
-        }
-
-        MessageBuilder<String> builder = MessageBuilder
-                .withPayload(jsonValue)
+        if (value == null) value = "";
+        MessageBuilder<Object> builder = MessageBuilder
+                .withPayload(value)
                 .setHeader(KafkaHeaders.TOPIC, topic);
 
-        if (key!= null && !key.isBlank())
+        if (key != null && !key.isBlank())
             builder.setHeader(KafkaHeaders.KEY, key);
 
         builder.setHeader("X-Trace-Id", UUID.randomUUID().toString());
 
         builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
 
-        if (userId!=null && !userId.isBlank())
+        if (userId != null && !userId.isBlank())
             builder.setHeader("X-User-Id", userId);
 
-        if (roles!=null && !roles.isBlank())
+        if (roles != null && !roles.isBlank())
             builder.setHeader("X-Roles", roles);
 
-        builder.setHeader("X-Message-Type", Objects.requireNonNullElse(type, CoreMessageType.UNDEFINED));
+        builder.setHeader("X-Message-Type", Objects.requireNonNullElse(type, CoreMessageType.UNDEFINED).toString());
 
-        Message<String> message = builder.build();
+        Message<Object> message = builder.build();
 
         kafkaTemplate.send(message);
     }
@@ -123,14 +117,14 @@ public class KafkaProducer {
         }
     }
 
-    public void publishBodiless(CoreMessageType type, String topic, String correlationId){
+    public void publishBodiless(CoreMessageType type, String topic, String correlationId) {
         publish(null, type, null, topic, correlationId);
     }
 
     public Object retrieveResponse(String correlationId) throws TimeoutException {
         CompletableFuture<Object> response = pendingRegistry.get(correlationId);
-        if (response == null){
-            throw new IllegalStateException("No pending request with correlationId:"+correlationId);
+        if (response == null) {
+            throw new IllegalStateException("No pending request with correlationId:" + correlationId);
         }
         try {
             return response.get(responseTimeoutMs, TimeUnit.MILLISECONDS);
