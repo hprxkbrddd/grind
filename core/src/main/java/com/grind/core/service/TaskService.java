@@ -69,7 +69,7 @@ public class TaskService {
     }
 
     @Transactional
-    public Task planTask(String taskId, String sprintId, Integer dayOfSprint) {
+    public Task planTaskSprint(String taskId, String sprintId, Integer dayOfSprint) {
         Sprint sprint = sprintRepository.findById(sprintId)
                 .orElseThrow(() -> new EntityNotFoundException("non-existing sprint has been provided"));
         Integer sprintLen = Math.toIntExact(ChronoUnit.DAYS.between(sprint.getStartDate(), sprint.getEndDate()) + 1);
@@ -85,6 +85,26 @@ public class TaskService {
         task.setPlannedDate(plannedDate);
         task.setSprint(sprint);
         task.setStatus(TaskStatus.PLANNED);
+        return task;
+    }
+
+    @Transactional
+    public Task planTaskByDate(String taskId, LocalDate date) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("could not plan task. task is not in db"));
+
+        Sprint sprint = sprintRepository
+                .findByTrack_IdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                        task.getTrack().getId(),
+                        date,
+                        date
+                )
+                .orElseThrow(() -> new EntityNotFoundException("no sprint found for given date"));
+
+        task.setPlannedDate(date);
+        task.setSprint(sprint);
+        task.setStatus(TaskStatus.PLANNED);
+
         return task;
     }
 
@@ -111,12 +131,11 @@ public class TaskService {
     }
 
     @Transactional
-    public Task changeTask(String taskId, String title, String description, LocalDate plannedDate) {
+    public Task changeTask(String taskId, String title, String description) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find task with id:" + taskId));
         if (description != null) task.setDescription(description);
         if (title != null) task.setTitle(title);
-        if (plannedDate != null) task.setPlannedDate(plannedDate);
         return task;
     }
 }

@@ -2,8 +2,10 @@ package com.grind.core.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.dto.CoreMessageDTO;
 import com.grind.core.dto.CoreMessageType;
+import com.grind.core.dto.PlanTaskDateDTO;
+import com.grind.core.dto.PlanTaskSprintDTO;
+import com.grind.core.model.Task;
 import com.grind.core.request.Task.ChangeTaskRequest;
 import com.grind.core.request.Task.CreateTaskRequest;
 import lombok.RequiredArgsConstructor;
@@ -61,13 +63,13 @@ public class KafkaTaskConsumer {
         CoreMessageType type = CoreMessageType.valueOf(messageType);
         switch (type) {
             case GET_TASKS_OF_TRACK -> kafkaProducer.reply(
-                    service.getAllTasks(),
+                        service.getByTrack(payload).stream().map(Task::mapDTO),
                     CoreMessageType.TASKS_OF_TRACK,
                     correlationId,
-                    traceId);
-
+                    traceId
+            );
             case GET_TASKS_OF_SPRINT -> kafkaProducer.reply(
-                    service.getBySprint(payload),
+                    service.getBySprint(payload).stream().map(Task::mapDTO).toList(),
                     CoreMessageType.TASKS_OF_SPRINT,
                     correlationId,
                     traceId);
@@ -78,20 +80,58 @@ public class KafkaTaskConsumer {
                     correlationId,
                     traceId
             );
+
+            case GET_ALL_TASKS -> kafkaProducer.reply(
+                    service.getAllTasks().stream().map(Task::mapDTO),
+                    CoreMessageType.ALL_TASKS,
+                    correlationId,
+                    traceId
+            );
             case CHANGE_TASK -> {
                 ChangeTaskRequest req = objectMapper.readValue(payload, ChangeTaskRequest.class);
                 kafkaProducer.publish(
                         service.changeTask(
                                 req.taskId(),
                                 req.title(),
-                                req.description(),
-                                req.plannedDate()
+                                req.description()
                         ),
                         CoreMessageType.TASK_CHANGED,
                         traceId,
                         coreEvTaskTopic
                 );
             }
+            case PLAN_TASK_SPRINT -> {
+                PlanTaskSprintDTO req = objectMapper.readValue(payload, PlanTaskSprintDTO.class);
+                kafkaProducer.publish(
+                        service.planTaskSprint(
+                                req.taskId(),
+                                req.sprintId(),
+                                req.dayOfSprint()
+                        ),
+                        CoreMessageType.TASK_PLANNED,
+                        traceId,
+                        coreEvTaskTopic
+                );
+            }
+            case PLAN_TASK_DATE -> {
+                PlanTaskDateDTO req = objectMapper.readValue(payload, PlanTaskDateDTO.class);
+                kafkaProducer.publish(
+                        service.planTaskByDate(
+                                req.taskId(),
+                                req.plannedDate()
+                        ),
+                        CoreMessageType.TASK_PLANNED,
+                        traceId,
+                        coreEvTaskTopic
+                );
+            }
+
+            case COMPLETE_TASK -> kafkaProducer.publish(
+                    service.completeTask(payload).mapDTO(),
+                    CoreMessageType.TASK_COMPLETED,
+                    traceId,
+                    coreEvTaskTopic
+            );
             case CREATE_TASK -> {
                 CreateTaskRequest req = objectMapper.readValue(payload, CreateTaskRequest.class);
                 kafkaProducer.publish(

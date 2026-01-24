@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageType;
 import com.grind.core.dto.TrackDTO;
 import com.grind.core.dto.TrackStatus;
+import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
 import com.grind.core.model.Track;
 import com.grind.core.request.Track.ChangeTrackRequest;
@@ -78,6 +79,20 @@ public class KafkaTrackConsumer {
             case GET_TRACK -> kafkaProducer.reply(
                     service.getById(payload).mapDTO(),
                     CoreMessageType.TRACK,
+                    correlationId,
+                    traceId
+            );
+
+            case GET_ALL_TRACKS -> kafkaProducer.reply(
+                    service.getAllTracks().stream().map(Track::mapDTO).toList(),
+                    CoreMessageType.ALL_TRACKS,
+                    correlationId,
+                    traceId
+            );
+
+            case GET_SPRINTS_OF_TRACK -> kafkaProducer.reply(
+                    service.getSprintsOfTrack(payload).stream().map(Sprint::mapDTO).toList(),
+                    CoreMessageType.SPRINTS_OF_TRACK,
                     correlationId,
                     traceId
             );

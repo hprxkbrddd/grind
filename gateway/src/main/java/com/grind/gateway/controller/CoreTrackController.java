@@ -6,6 +6,7 @@ import com.grind.gateway.dto.core.ChangeTrackDTO;
 import com.grind.gateway.dto.core.CreateTrackRequest;
 import com.grind.gateway.enums.CoreMessageType;
 import com.grind.gateway.service.KafkaProducer;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -40,12 +41,39 @@ public class CoreTrackController {
         );
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<Object> getAllTracks() throws TimeoutException {
+        String correlationId = UUID.randomUUID().toString();
+        kafkaProducer.publishBodiless(
+                CoreMessageType.GET_ALL_TRACKS,
+                coreReqTrackTopic,
+                correlationId
+        );
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
+    }
+
     @GetMapping("/{trackId}")
     public ResponseEntity<Object> getTrack(@PathVariable String trackId) throws TimeoutException {
         String correlationId = UUID.randomUUID().toString();
         kafkaProducer.publish(
                 trackId,
                 CoreMessageType.GET_TRACK,
+                coreReqTrackTopic,
+                correlationId
+        );
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
+    }
+
+    @GetMapping("/sprints/{trackId}")
+    public ResponseEntity<Object> getSprintsOfTrack(@PathVariable String trackId) throws TimeoutException {
+        String correlationId = UUID.randomUUID().toString();
+        kafkaProducer.publish(
+                trackId,
+                CoreMessageType.GET_SPRINTS_OF_TRACK,
                 coreReqTrackTopic,
                 correlationId
         );

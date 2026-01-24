@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.gateway.dto.core.ChangeTaskDTO;
 import com.grind.gateway.dto.core.CreateTaskRequest;
+import com.grind.gateway.dto.core.PlanTaskDateDTO;
+import com.grind.gateway.dto.core.PlanTaskSprintDTO;
 import com.grind.gateway.enums.CoreMessageType;
 import com.grind.gateway.service.KafkaProducer;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,19 @@ public class CoreTaskController {
 
     @Value("${kafka.topic.core.request.task}")
     private String coreReqTaskTopic;
+
+    @GetMapping("/all")
+    public ResponseEntity<Object> getAllTasks() throws TimeoutException {
+        String correlationId = UUID.randomUUID().toString();
+        kafkaProducer.publishBodiless(
+                CoreMessageType.GET_ALL_TASKS,
+                coreReqTaskTopic,
+                correlationId
+        );
+        return ResponseEntity.ok(
+                kafkaProducer.retrieveResponse(correlationId)
+        );
+    }
 
     @GetMapping("/{taskId}")
     public ResponseEntity<Object> getTask(@PathVariable String taskId) throws TimeoutException {
@@ -95,6 +110,52 @@ public class CoreTaskController {
         kafkaProducer.publish(
                 payload,
                 CoreMessageType.CHANGE_TASK,
+                coreReqTaskTopic,
+                correlationId
+        );
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PutMapping("/{taskId}/plan/sprint")
+    public ResponseEntity<Void> planTaskSprint(@RequestBody PlanTaskSprintDTO dto, @PathVariable String taskId) throws JsonProcessingException {
+        String correlationId = UUID.randomUUID().toString();
+        dto.setTaskId(taskId);
+        String payload = objectMapper.writeValueAsString(dto);
+
+        kafkaProducer.publish(
+                payload,
+                CoreMessageType.PLAN_TASK_SPRINT,
+                coreReqTaskTopic,
+                correlationId
+        );
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PutMapping("/{taskId}/plan/date")
+    public ResponseEntity<Void> planTaskDate(@RequestBody PlanTaskDateDTO dto, @PathVariable String taskId) throws JsonProcessingException {
+        String correlationId = UUID.randomUUID().toString();
+        dto.setTaskId(taskId);
+        String payload = objectMapper.writeValueAsString(dto);
+
+        kafkaProducer.publish(
+                payload,
+                CoreMessageType.PLAN_TASK_DATE,
+                coreReqTaskTopic,
+                correlationId
+        );
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PutMapping("/{taskId}/complete")
+    public ResponseEntity<Void> completeTask(@PathVariable String taskId){
+        String correlationId = UUID.randomUUID().toString();
+
+        kafkaProducer.publish(
+                taskId,
+                CoreMessageType.COMPLETE_TASK,
                 coreReqTaskTopic,
                 correlationId
         );

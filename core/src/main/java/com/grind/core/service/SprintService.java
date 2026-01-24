@@ -31,12 +31,8 @@ public class SprintService {
                 .orElseThrow(() -> new EntityNotFoundException("could not find sprint"));
     }
 
-    public void createSprint(LocalDate startDate, LocalDate endDate, Track track) {
-        Sprint sprint = new Sprint();
-        sprint.setStartDate(startDate);
-        sprint.setEndDate(endDate);
-        sprint.setTrack(track);
-        sprintRepository.save(sprint);
+    public List<Sprint> getByTrackId(String trackId){
+        return sprintRepository.findByTrackIdOrderByStartDate(trackId);
     }
 
     public List<Sprint> createSprintsForTrack(Track track) {
@@ -61,7 +57,7 @@ public class SprintService {
     @Transactional
     public void recreateSprintsForTrack(Track track) {
         // старые спринты (удалим после переназначения задач)
-        List<Sprint> oldSprints = sprintRepository.findByTrackId(track.getId());
+        List<Sprint> oldSprints = sprintRepository.findByTrackIdOrderByStartDate(track.getId());
 
         // новые спринты
         List<Sprint> newSprints = createSprintsForTrack(track);
