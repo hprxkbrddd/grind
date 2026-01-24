@@ -3,10 +3,7 @@ package com.grind.core.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageType;
-import com.grind.core.dto.TrackDTO;
-import com.grind.core.dto.TrackStatus;
 import com.grind.core.model.Sprint;
-import com.grind.core.model.Task;
 import com.grind.core.model.Track;
 import com.grind.core.request.Track.ChangeTrackRequest;
 import com.grind.core.request.Track.CreateTrackRequest;
@@ -27,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor

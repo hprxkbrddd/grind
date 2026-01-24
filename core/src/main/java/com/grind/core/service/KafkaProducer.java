@@ -151,16 +151,14 @@ public class KafkaProducer {
         }
     }
 
-    public void publishBodiless(CoreMessageType type, String traceId, String topic){
+    public void publishBodiless(CoreMessageType type, String traceId, String topic) {
         publish(null, type, null, traceId, topic);
     }
 
-    public void reply(Object value, CoreMessageType type, String correlationId, String traceId) throws JsonProcessingException {
-        String jsonValue = objectMapper.writeValueAsString(value);
-
+    public void reply(Object value, CoreMessageType type, String correlationId, String traceId) {
         kafkaTemplate.send(
                 formMessage(
-                        jsonValue,
+                        value,
                         type,
                         responseTopic,
                         null,

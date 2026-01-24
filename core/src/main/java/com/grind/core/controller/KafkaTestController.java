@@ -1,11 +1,7 @@
 package com.grind.core.controller;
 
-import com.grind.core.service.KafkaProducer;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * <h1>Тестовый контроллер</h1>

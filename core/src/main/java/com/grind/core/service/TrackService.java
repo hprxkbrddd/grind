@@ -1,6 +1,5 @@
 package com.grind.core.service;
 
-import com.grind.core.dto.TrackDTO;
 import com.grind.core.dto.TrackStatus;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
@@ -35,11 +34,11 @@ public class TrackService {
                 .orElseThrow(() -> new EntityNotFoundException("could not find track with this id"));
     }
 
-    public List<Sprint> getSprintsOfTrack(String trackId){
+    public List<Sprint> getSprintsOfTrack(String trackId) {
         return sprintService.getByTrackId(trackId);
     }
 
-    public List<Track> getByUserId(String userId){
+    public List<Track> getByUserId(String userId) {
         return trackRepository.findByUserId(userId);
     }
 
@@ -92,13 +91,22 @@ public class TrackService {
             String status
     ) {
         Track track = trackRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find track with id:"+id));
+                .orElseThrow(() -> new EntityNotFoundException("Could not find track with id:" + id));
 
         boolean regen = false;
 
-        if (startDate != null) { track.setStartDate(startDate); regen = true; }
-        if (targetDate != null) { track.setTargetDate(targetDate); regen = true; }
-        if (sprintLength != null) { track.setSprintLength(sprintLength); regen = true; }
+        if (startDate != null) {
+            track.setStartDate(startDate);
+            regen = true;
+        }
+        if (targetDate != null) {
+            track.setTargetDate(targetDate);
+            regen = true;
+        }
+        if (sprintLength != null) {
+            track.setSprintLength(sprintLength);
+            regen = true;
+        }
 
         if (regen) {
             LocalDate s = track.getStartDate();
@@ -109,11 +117,11 @@ public class TrackService {
             sprintService.recreateSprintsForTrack(track);
         }
 
-        if (name!=null) track.setName(name);
-        if (description!=null) track.setDescription(description);
-        if (petId!=null) track.setPetId(petId);
-        if (messagePolicy!=null) track.setMessagePolicy(messagePolicy);
-        if (status!=null) track.setStatus(TrackStatus.valueOf(status));
+        if (name != null) track.setName(name);
+        if (description != null) track.setDescription(description);
+        if (petId != null) track.setPetId(petId);
+        if (messagePolicy != null) track.setMessagePolicy(messagePolicy);
+        if (status != null) track.setStatus(TrackStatus.valueOf(status));
         return track;
     }
 }
