@@ -2,6 +2,7 @@ package com.grind.core.service;
 
 import com.grind.core.dto.TrackDTO;
 import com.grind.core.dto.TrackStatus;
+import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,15 +26,17 @@ public class TrackService {
     private final SprintService sprintService;
 
     @PreAuthorize("hasRole('ADMIN')")
-    public List<TrackDTO> getAllTracks() {
-        return trackRepository.findAll()
-                .stream().map(Track::mapDTO)
-                .toList();
+    public List<Track> getAllTracks() {
+        return trackRepository.findAll();
     }
 
     public Track getById(String id) {
         return trackRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("could not find track with this id"));
+    }
+
+    public List<Sprint> getSprintsOfTrack(String trackId){
+        return sprintService.getByTrackId(trackId);
     }
 
     public List<Track> getByUserId(String userId){

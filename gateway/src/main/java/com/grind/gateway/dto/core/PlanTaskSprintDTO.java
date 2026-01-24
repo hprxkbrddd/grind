@@ -1,17 +1,14 @@
 package com.grind.gateway.dto.core;
 
-import com.grind.gateway.enums.TaskStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @RequiredArgsConstructor
 @Getter
-public class ChangeTaskDTO {
+public class PlanTaskSprintDTO{
     @Setter
     private String taskId;
-    private final String title;
-    private final String description;
+    private final String sprintId;
+    private final Integer dayOfSprint;
 }
