@@ -1,16 +1,10 @@
 package com.grind.core.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.CoreMessageType;
-import com.grind.core.dto.PlanTaskDateDTO;
-import com.grind.core.dto.PlanTaskSprintDTO;
-import com.grind.core.model.Task;
-import com.grind.core.request.Task.ChangeTaskRequest;
-import com.grind.core.request.Task.CreateTaskRequest;
+import com.grind.core.dto.Reply;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -29,8 +23,14 @@ import java.util.List;
 public class KafkaTaskConsumer {
 
     private final KafkaProducer kafkaProducer;
-    private final ObjectMapper objectMapper;
-    private final TaskService service;
+    private final TaskReplyHandler replyHandler;
+    private final static List<CoreMessageType> TO_PUBLISH_EVENT = List.of(
+            CoreMessageType.CHANGE_TASK,
+            CoreMessageType.CREATE_TASK,
+            CoreMessageType.PLAN_TASK_DATE,
+            CoreMessageType.PLAN_TASK_SPRINT,
+            CoreMessageType.COMPLETE_TASK
+    );
 
     @Value("${kafka.topic.core.event.task}")
     private String coreEvTaskTopic;
@@ -43,116 +43,79 @@ public class KafkaTaskConsumer {
             @Header("X-User-Id") String userId,
             @Header(value = "X-Roles", required = false) String roles,
             @Header(value = "X-Message-Type") String messageType
-    ) throws InterruptedException, JsonProcessingException, BadRequestException {
-        // FORMING AUTHENTICATION OBJECT
-        List<SimpleGrantedAuthority> authorities = Arrays.stream(
-                        roles != null ? roles.split(",") : new String[0]
-                )
-                .map(String::trim)
-                .filter(r -> !r.isBlank())
-                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
-                .map(SimpleGrantedAuthority::new)
-                .toList();
+    ) {
+        try {
+            // FORMING AUTHENTICATION OBJECT
+            List<SimpleGrantedAuthority> authorities = Arrays.stream(
+                            roles != null ? roles.split(",") : new String[0]
+                    )
+                    .map(String::trim)
+                    .filter(r -> !r.isBlank())
+                    .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                    .map(SimpleGrantedAuthority::new)
+                    .toList();
 
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(userId, null, authorities);
+            Authentication authentication =
+                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // HANDLING REQUEST
-        CoreMessageType type = CoreMessageType.valueOf(messageType);
-        switch (type) {
-            case GET_TASKS_OF_TRACK -> kafkaProducer.reply(
-                        service.getByTrack(payload).stream().map(Task::mapDTO),
-                    CoreMessageType.TASKS_OF_TRACK,
-                    correlationId,
-                    traceId
-            );
-            case GET_TASKS_OF_SPRINT -> kafkaProducer.reply(
-                    service.getBySprint(payload).stream().map(Task::mapDTO).toList(),
-                    CoreMessageType.TASKS_OF_SPRINT,
-                    correlationId,
-                    traceId);
-
-            case GET_TASK -> kafkaProducer.reply(
-                    service.getById(payload),
-                    CoreMessageType.TASK,
-                    correlationId,
-                    traceId
-            );
-
-            case GET_ALL_TASKS -> kafkaProducer.reply(
-                    service.getAllTasks().stream().map(Task::mapDTO),
-                    CoreMessageType.ALL_TASKS,
-                    correlationId,
-                    traceId
-            );
-            case CHANGE_TASK -> {
-                ChangeTaskRequest req = objectMapper.readValue(payload, ChangeTaskRequest.class);
+            // HANDLING REQUEST
+            CoreMessageType type = CoreMessageType.valueOf(messageType);
+            Reply rep = routeReply(type, payload);
+            if (TO_PUBLISH_EVENT.contains(type)) {
                 kafkaProducer.publish(
-                        service.changeTask(
-                                req.taskId(),
-                                req.title(),
-                                req.description()
-                        ),
-                        CoreMessageType.TASK_CHANGED,
+                        rep.payload(),
+                        rep.type(),
                         traceId,
                         coreEvTaskTopic
                 );
+            }
+            kafkaProducer.reply(rep.payload(), rep.type(), correlationId, traceId);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    private Reply routeReply(CoreMessageType type, String payload) {
+        switch (type) {
+            case GET_TASKS_OF_TRACK -> {
+                return replyHandler.handleGetTasksOfTrack(payload);
+            }
+            case GET_TASKS_OF_SPRINT -> {
+                return replyHandler.handleGetTasksOfSprint(payload);
+            }
+            case GET_TASK -> {
+                return replyHandler.handleGetTask(payload);
+            }
+            case GET_ALL_TASKS -> {
+                return replyHandler.handleGetAllTasks();
+            }
+            case CHANGE_TASK -> {
+                return replyHandler.handleChangeTask(payload);
             }
             case PLAN_TASK_SPRINT -> {
-                PlanTaskSprintDTO req = objectMapper.readValue(payload, PlanTaskSprintDTO.class);
-                kafkaProducer.publish(
-                        service.planTaskSprint(
-                                req.taskId(),
-                                req.sprintId(),
-                                req.dayOfSprint()
-                        ),
-                        CoreMessageType.TASK_PLANNED,
-                        traceId,
-                        coreEvTaskTopic
-                );
+                return replyHandler.handlePlanTaskSprint(payload);
             }
             case PLAN_TASK_DATE -> {
-                PlanTaskDateDTO req = objectMapper.readValue(payload, PlanTaskDateDTO.class);
-                kafkaProducer.publish(
-                        service.planTaskByDate(
-                                req.taskId(),
-                                req.plannedDate()
-                        ),
-                        CoreMessageType.TASK_PLANNED,
-                        traceId,
-                        coreEvTaskTopic
+                return replyHandler.handlePlanTaskDate(payload);
+            }
+            case COMPLETE_TASK -> {
+                return replyHandler.handleCompleteTask(payload);
+            }
+            case CREATE_TASK -> {
+                return replyHandler.handleCreateTask(payload);
+            }
+            case DELETE_TASK -> {
+                return replyHandler.handleDeleteTask(payload);
+            }
+            case UNDEFINED -> {
+                return Reply.error(
+                        new IllegalStateException("Unhandled message type"),
+                        HttpStatus.INTERNAL_SERVER_ERROR
                 );
             }
-
-            case COMPLETE_TASK -> kafkaProducer.publish(
-                    service.completeTask(payload).mapDTO(),
-                    CoreMessageType.TASK_COMPLETED,
-                    traceId,
-                    coreEvTaskTopic
-            );
-            case CREATE_TASK -> {
-                CreateTaskRequest req = objectMapper.readValue(payload, CreateTaskRequest.class);
-                kafkaProducer.publish(
-                        service.createTask(
-                                req.title(),
-                                req.trackId(),
-                                req.description()
-                        ),
-                        CoreMessageType.TASK_CREATED,
-                        traceId,
-                        coreEvTaskTopic);
-            }
-            case DELETE_TASK -> kafkaProducer.publish(
-                    service.deleteTask(payload),
-                    CoreMessageType.TASK_DELETED,
-                    traceId,
-                    coreEvTaskTopic
-            );
-
-            case UNDEFINED -> kafkaProducer.publishBodiless(CoreMessageType.UNDEFINED, traceId, coreEvTaskTopic);
-            default -> throw new BadRequestException("Not request type");
+            default -> throw new UnsupportedOperationException("САК МА ДИК ПУСИ ФАК");
         }
     }
 }

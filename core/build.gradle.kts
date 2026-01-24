@@ -32,6 +32,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-actuator:3.5.7")
     implementation("io.github.hprxkbrddd:security-autoconfiguration:0.1.4")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")

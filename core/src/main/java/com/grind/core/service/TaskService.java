@@ -2,18 +2,25 @@ package com.grind.core.service;
 
 import com.grind.core.dto.TaskDTO;
 import com.grind.core.dto.TaskStatus;
+import com.grind.core.exception.InvalidAggregateStateException;
+import com.grind.core.exception.SprintNotFoundException;
+import com.grind.core.exception.TaskNotFoundException;
+import com.grind.core.exception.TrackNotFoundException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
+import com.grind.core.model.Track;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
 import com.grind.core.repository.TrackRepository;
-import com.grind.core.request.Task.ChangeTaskRequest;
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -21,6 +28,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Validated
 public class TaskService {
 
     private final TaskRepository taskRepository;
@@ -32,18 +40,36 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
-    public TaskDTO getById(String id) {
+    public Task getById(
+            @NotBlank(message = "Task id must be not null or blank")
+            String id
+    ) {
         return taskRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Tried to fetch by id, but not found"))
-                .mapDTO();
+                .orElseThrow(() -> new TaskNotFoundException(id));
     }
 
-    public List<Task> getBySprint(String sprintId) {
-        return taskRepository.findBySprintId(sprintId);
+    public List<Task> getBySprint(
+            @NotBlank(message = "Sprint id must be not null or blank")
+            String sprintId
+    ) {
+        if (!sprintRepository.existsById(sprintId))
+            throw new SprintNotFoundException(sprintId);
+        List<Task> res = taskRepository.findBySprintId(sprintId);
+        if (res.isEmpty())
+            throw new InvalidAggregateStateException(Sprint.class, Task.class);
+        return res;
     }
 
-    public List<Task> getByTrack(String trackId) {
-        return taskRepository.findByTrackId(trackId);
+    public List<Task> getByTrack(
+            @NotBlank(message = "Track id must be not null or blank")
+            String trackId
+    ) {
+        if (!trackRepository.existsById(trackId))
+            throw new TrackNotFoundException(trackId);
+        List<Task> res = taskRepository.findByTrackId(trackId);
+        if (res.isEmpty())
+            throw new InvalidAggregateStateException(Track.class, Task.class);
+        return res;
     }
 
     public List<TaskDTO> getBySprintAndStatus(String sprintId, TaskStatus status) {
@@ -54,13 +80,16 @@ public class TaskService {
 
     @Transactional
     public Task createTask(
+            @NotBlank(message = "Task title must not be null or blank")
             String title,
+            @NotBlank(message = "Task trackId must not be null or blank")
             String trackId,
+            @NotNull(message = "Track id must be not null or blank")
             String description
     ) {
         Task task = new Task();
         task.setTrack(trackRepository.findById(trackId)
-                .orElseThrow(() -> new EntityNotFoundException("non-existing track has been provided")));
+                .orElseThrow(() -> new TrackNotFoundException(trackId, "Task creation failed")));
         task.setTitle(title);
         task.setDescription(description);
         task.setStatus(TaskStatus.CREATED);
@@ -69,17 +98,24 @@ public class TaskService {
     }
 
     @Transactional
-    public Task planTaskSprint(String taskId, String sprintId, Integer dayOfSprint) {
+    public Task planTaskSprint(
+            @NotBlank(message = "Task id must not be null or blank")
+            String taskId,
+            @NotBlank(message = "Sprint id must not be null or blank")
+            String sprintId,
+            @NotNull(message = "Day of sprint must not be null")
+            @PositiveOrZero(message = "Day of sprint must be non-negative")
+            Integer dayOfSprint
+    ) {
         Sprint sprint = sprintRepository.findById(sprintId)
-                .orElseThrow(() -> new EntityNotFoundException("non-existing sprint has been provided"));
-        Integer sprintLen = Math.toIntExact(ChronoUnit.DAYS.between(sprint.getStartDate(), sprint.getEndDate()) + 1);
-        if (dayOfSprint >= sprintLen || dayOfSprint < 0) {
-            throw new IllegalArgumentException("day of sprint must be non-negative and less than sprint_length");
-        }
+                .orElseThrow(() -> new SprintNotFoundException(sprintId, "Could not plan task for sprint"));
+        int sprintLen = Math.toIntExact(ChronoUnit.DAYS.between(sprint.getStartDate(), sprint.getEndDate()) + 1);
+        if (dayOfSprint >= sprintLen || dayOfSprint < 0)
+            throw new IllegalArgumentException("Day must be less than sprint's length");
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("could not plan task. task is not in db"));
+                .orElseThrow(() -> new TaskNotFoundException(taskId, "Could not plan task for sprint"));
         if (!task.getTrack().getId().equals(sprint.getTrack().getId()))
-            throw new IllegalArgumentException("task does not match sprint");
+            throw new IllegalArgumentException("Could not plan task for sprint.\nTask:" + taskId + " and sprint:" + sprintId + " do not belong to one track");
 
         LocalDate plannedDate = sprint.getStartDate().plusDays(dayOfSprint);
         task.setPlannedDate(plannedDate);
@@ -89,29 +125,33 @@ public class TaskService {
     }
 
     @Transactional
-    public Task planTaskByDate(String taskId, LocalDate date) {
+    public Task planTaskByDate(
+            @NotBlank(message = "Task id must not be null or blank")
+            String taskId,
+            @NotNull(message = "Planned date must not be null")
+            LocalDate date) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("could not plan task. task is not in db"));
-
+                .orElseThrow(() -> new TaskNotFoundException(taskId, "Could not plan task for date"));
         Sprint sprint = sprintRepository
                 .findByTrack_IdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
                         task.getTrack().getId(),
                         date,
                         date
                 )
-                .orElseThrow(() -> new EntityNotFoundException("no sprint found for given date"));
-
+                .orElseThrow(() -> new IllegalArgumentException("Provided date has to be within the track's time limits"));
         task.setPlannedDate(date);
         task.setSprint(sprint);
         task.setStatus(TaskStatus.PLANNED);
-
         return task;
     }
 
     @Transactional
-    public Task completeTask(String taskId) {
+    public Task completeTask(
+            @NotBlank(message = "Task id must not be null or blank")
+            String taskId
+    ) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("could not plan task. task is not in db"));
+                .orElseThrow(() -> new TaskNotFoundException("Task has not been marked as completed"));
         task.setActualDate(LocalDate.now());
         task.setStatus(TaskStatus.COMPLETED);
         return task;
@@ -124,16 +164,26 @@ public class TaskService {
         toMark.forEach(t -> t.setStatus(TaskStatus.OVERDUE));
         return toMark;
     }
+
     @Transactional
-    public String deleteTask(String id) {
-        taskRepository.deleteById(id);
-        return id;
+    public String deleteTask(
+            @NotBlank(message = "Task id must not be null or blank")
+            String taskId
+    ) {
+        taskRepository.deleteById(taskId);
+        return taskId;
     }
 
     @Transactional
-    public Task changeTask(String taskId, String title, String description) {
+    public Task changeTask(
+            @NotBlank(message = "Task id must not be null or blank")
+            String taskId,
+            @NotBlank(message = "Task title must not be null or blank")
+            String title,
+            @NotNull(message = "Task description must not be null")
+            String description) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find task with id:" + taskId));
+                .orElseThrow(() -> new TaskNotFoundException(taskId, "Task has not been changed"));
         if (description != null) task.setDescription(description);
         if (title != null) task.setTitle(title);
         return task;

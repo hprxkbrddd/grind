@@ -42,5 +42,6 @@ public enum CoreMessageType {
     TASK_COMPLETED,
     TASK_DELETED,
 
-    UNDEFINED
+    UNDEFINED,
+    ERROR
 }
