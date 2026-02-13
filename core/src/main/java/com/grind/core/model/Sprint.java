@@ -1,6 +1,6 @@
 package com.grind.core.model;
 
-import com.grind.core.dto.SprintDTO;
+import com.grind.core.dto.entity.SprintDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

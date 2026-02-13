@@ -1,6 +1,6 @@
-package com.grind.core.request.Track;
+package com.grind.core.dto.request.track;
 
-import com.grind.core.dto.TrackStatus;
+import com.grind.core.enums.TrackStatus;
 
 import java.time.LocalDate;
 
