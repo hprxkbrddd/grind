@@ -1,10 +1,12 @@
-package com.grind.gateway.service;
+package com.grind.gateway.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.gateway.dto.Body;
 import com.grind.gateway.enums.CoreMessageType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
@@ -14,10 +16,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,8 +29,9 @@ import java.util.stream.Collectors;
 public class KafkaProducer {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
     private final PendingRegistry pendingRegistry;
+    private final ObjectMapper objectMapper;
+
 
     @Value("${app.kafka.response-timeout-ms:5000}")
     private long responseTimeoutMs;
@@ -85,17 +90,6 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes a group of messages
-     *
-     * @param values
-     */
-    public void publish(List<Object> values, CoreMessageType type, String topic, String correlationId) {
-        for (Object value : values) {
-            publish(value, type, topic, correlationId);
-        }
-    }
-
-    /**
      * Publishes single message
      *
      * @param value
@@ -104,36 +98,48 @@ public class KafkaProducer {
         publish(value, type, null, topic, correlationId);
     }
 
-    /**
-     * Publishes a group of messages to the same partition <br>
-     * That means messages will be published and consumed in turn (from first to last)
-     *
-     * @param values
-     */
-    public void publishOrdered(List<Object> values, CoreMessageType type, String traceId, String correlationId) {
-        String key = UUID.randomUUID().toString();
-        for (Object value : values) {
-            publish(value, type, key, traceId, correlationId);
-        }
-    }
-
     public void publishBodiless(CoreMessageType type, String topic, String correlationId) {
         publish(null, type, null, topic, correlationId);
     }
 
-    public Object retrieveResponse(String correlationId) throws TimeoutException {
-        CompletableFuture<Object> response = pendingRegistry.get(correlationId);
-        if (response == null) {
-            throw new IllegalStateException("No pending request with correlationId:" + correlationId);
+    public Body retrieveResponse(String correlationId) {
+        CompletableFuture<Body> future = pendingRegistry.get(correlationId);
+        if (future == null) {
+            throw new IllegalStateException("No pending request with correlationId: " + correlationId);
         }
+
         try {
-            return response.get(responseTimeoutMs, TimeUnit.MILLISECONDS);
+            return future.get(responseTimeoutMs, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
+            future.cancel(false);
+            return Body.of("Gateway timeout exceeded", HttpStatus.GATEWAY_TIMEOUT);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return Body.of("Interrupted while waiting for response", HttpStatus.INTERNAL_SERVER_ERROR);
+
+        } catch (ExecutionException e) {
+            // причина из бизнес-логики/обработчика ответа
+            Throwable cause = e.getCause();
+            return Body.of("Could not handle Kafka response: " + (cause != null ? cause.getMessage() : e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
             pendingRegistry.remove(correlationId);
-            throw e;
-        } catch (Exception e) {
-            pendingRegistry.remove(correlationId);
-            throw new RuntimeException("Ошибка при ожидании ответа из Kafka", e);
         }
+    }
+
+    public Body requestReply(Object body, CoreMessageType type, String topic) {
+        String correlationId = UUID.randomUUID().toString();
+        try {
+            publish(
+                    objectMapper.writeValueAsString(body),
+                    type,
+                    topic,
+                    correlationId
+            );
+        } catch (JsonProcessingException e) {
+            return Body.of("Request serialization exception", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return retrieveResponse(correlationId);
     }
 }

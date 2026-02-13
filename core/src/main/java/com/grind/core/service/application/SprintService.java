@@ -1,4 +1,4 @@
-package com.grind.core.service;
+package com.grind.core.service.application;
 
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
@@ -31,7 +31,7 @@ public class SprintService {
                 .orElseThrow(() -> new EntityNotFoundException("could not find sprint"));
     }
 
-    public List<Sprint> getByTrackId(String trackId){
+    public List<Sprint> getByTrackId(String trackId) {
         return sprintRepository.findByTrackIdOrderByStartDate(trackId);
     }
 

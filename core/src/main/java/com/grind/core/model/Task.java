@@ -1,7 +1,7 @@
 package com.grind.core.model;
 
-import com.grind.core.dto.TaskDTO;
-import com.grind.core.dto.TaskStatus;
+import com.grind.core.dto.entity.TaskDTO;
+import com.grind.core.enums.TaskStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,18 +1,16 @@
-package com.grind.gateway.service;
+package com.grind.gateway.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.gateway.dto.Body;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +23,8 @@ public class KafkaResponseListener {
             @Payload String payload,
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId
     ) throws JsonProcessingException {
-        Object response = objectMapper.readValue(payload, Object.class);
-        CompletableFuture<Object> future = pendingRegistry.remove(correlationId);
+        Body response = objectMapper.readValue(payload, Body.class);
+        CompletableFuture<Body> future = pendingRegistry.remove(correlationId);
         if (future!=null){
             future.complete(response);
         } else {

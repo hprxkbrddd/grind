@@ -1,4 +1,4 @@
-package com.grind.gateway.dto.core;
+package com.grind.gateway.dto.core.task;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

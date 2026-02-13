@@ -1,4 +1,4 @@
-package com.grind.gateway.dto.core;
+package com.grind.gateway.dto.core.track;
 
 import com.grind.gateway.enums.TrackStatus;
 

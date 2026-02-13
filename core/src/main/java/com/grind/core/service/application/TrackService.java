@@ -1,6 +1,6 @@
-package com.grind.core.service;
+package com.grind.core.service.application;
 
-import com.grind.core.dto.TrackStatus;
+import com.grind.core.enums.TrackStatus;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;

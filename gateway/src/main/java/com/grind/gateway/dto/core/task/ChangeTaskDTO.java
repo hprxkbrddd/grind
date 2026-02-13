@@ -1,11 +1,8 @@
-package com.grind.gateway.dto.core;
+package com.grind.gateway.dto.core.task;
 
-import com.grind.gateway.enums.TaskStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
 
 @RequiredArgsConstructor
 @Getter

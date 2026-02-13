@@ -1,8 +1,8 @@
-package com.grind.core.service;
+package com.grind.core.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.dto.CoreMessageType;
+import com.grind.core.enums.CoreMessageType;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,19 +113,6 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes a group of messages
-     *
-     * @param values
-     */
-    public void publish(List<Object> values, CoreMessageType type, String traceId, String topic) {
-        String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
-
-        for (Object value : values) {
-            publish(value, type, trId, topic);
-        }
-    }
-
-    /**
      * Publishes single message
      *
      * @param value
@@ -135,24 +122,6 @@ public class KafkaProducer {
                 traceId == null ? UUID.randomUUID().toString() : traceId,
                 topic
         );
-    }
-
-    /**
-     * Publishes a group of messages to the same partition <br>
-     * That means messages will be published and consumed in turn (from first to last)
-     *
-     * @param values
-     */
-    public void publishOrdered(List<Object> values, CoreMessageType type, String traceId, String topic) {
-        String key = UUID.randomUUID().toString();
-        String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
-        for (Object value : values) {
-            publish(value, type, key, trId, topic);
-        }
-    }
-
-    public void publishBodiless(CoreMessageType type, String traceId, String topic) {
-        publish(null, type, null, traceId, topic);
     }
 
     public void reply(Object value, CoreMessageType type, String correlationId, String traceId) {

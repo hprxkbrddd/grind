@@ -1,9 +1,10 @@
-package com.grind.gateway.dto.core;
+package com.grind.core.dto.entity;
 
-import com.grind.gateway.enums.TaskStatus;
+import com.grind.core.enums.TaskStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 
 public record TaskDTO(
         String id,
@@ -23,4 +24,3 @@ public record TaskDTO(
         LocalDateTime createdAt
 ) {
 }
-
