@@ -1,4 +1,4 @@
-package com.grind.core.request.Task;
+package com.grind.core.dto.request.task;
 
 public record CreateTaskRequest(
         String title,

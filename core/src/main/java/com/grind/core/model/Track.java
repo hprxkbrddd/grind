@@ -1,7 +1,7 @@
 package com.grind.core.model;
 
-import com.grind.core.dto.TrackDTO;
-import com.grind.core.dto.TrackStatus;
+import com.grind.core.dto.entity.TrackDTO;
+import com.grind.core.enums.TrackStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package com.grind.core.dto;
+package com.grind.core.dto.request.task;
 
 public record PlanTaskSprintDTO(
         String taskId,

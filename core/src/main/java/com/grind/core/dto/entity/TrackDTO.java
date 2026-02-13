@@ -1,4 +1,6 @@
-package com.grind.core.dto;
+package com.grind.core.dto.entity;
+
+import com.grind.core.enums.TrackStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

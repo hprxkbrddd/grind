@@ -1,4 +1,4 @@
-package com.grind.core.dto;
+package com.grind.core.enums;
 
 public enum CoreMessageType {
     // TRACK RELATED

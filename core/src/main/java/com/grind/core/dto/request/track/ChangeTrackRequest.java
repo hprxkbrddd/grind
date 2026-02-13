@@ -1,4 +1,4 @@
-package com.grind.core.request.Track;
+package com.grind.core.dto.request.track;
 
 import java.time.LocalDate;
 

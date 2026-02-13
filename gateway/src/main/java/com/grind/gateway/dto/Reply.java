@@ -1,5 +1,6 @@
-package com.grind.core.dto;
+package com.grind.gateway.dto;
 
+import com.grind.gateway.enums.CoreMessageType;
 import org.springframework.http.HttpStatus;
 
 public record Reply(
