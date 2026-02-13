@@ -1,7 +1,8 @@
-package com.grind.core.service;
+package com.grind.core.service.application;
 
-import com.grind.core.dto.TaskDTO;
-import com.grind.core.dto.TaskStatus;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.core.dto.entity.TaskDTO;
+import com.grind.core.enums.TaskStatus;
 import com.grind.core.exception.InvalidAggregateStateException;
 import com.grind.core.exception.SprintNotFoundException;
 import com.grind.core.exception.TaskNotFoundException;
@@ -34,6 +35,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TrackRepository trackRepository;
     private final SprintRepository sprintRepository;
+    private final ObjectMapper objectMapper;
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<Task> getAllTasks() {

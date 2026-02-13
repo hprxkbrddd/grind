@@ -1,7 +1,10 @@
-package com.grind.core.service;
+package com.grind.core.service.kafka;
 
-import com.grind.core.dto.CoreMessageType;
-import com.grind.core.dto.Reply;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.core.enums.CoreMessageType;
+import com.grind.core.dto.wrap.Reply;
+import com.grind.core.service.handler.TaskReplyHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -24,6 +27,7 @@ public class KafkaTaskConsumer {
 
     private final KafkaProducer kafkaProducer;
     private final TaskReplyHandler replyHandler;
+    private final ObjectMapper objectMapper;
     private final static List<CoreMessageType> TO_PUBLISH_EVENT = List.of(
             CoreMessageType.CHANGE_TASK,
             CoreMessageType.CREATE_TASK,
@@ -65,13 +69,16 @@ public class KafkaTaskConsumer {
             Reply rep = routeReply(type, payload);
             if (TO_PUBLISH_EVENT.contains(type)) {
                 kafkaProducer.publish(
-                        rep.payload(),
+                        rep.body(),
                         rep.type(),
                         traceId,
                         coreEvTaskTopic
                 );
             }
-            kafkaProducer.reply(rep.payload(), rep.type(), correlationId, traceId);
+            String replyPayload = objectMapper.writeValueAsString(rep.body());
+            kafkaProducer.reply(replyPayload, rep.type(), correlationId, traceId);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         } finally {
             SecurityContextHolder.clearContext();
         }
@@ -115,7 +122,7 @@ public class KafkaTaskConsumer {
                         HttpStatus.INTERNAL_SERVER_ERROR
                 );
             }
-            default -> throw new UnsupportedOperationException("САК МА ДИК ПУСИ ФАК");
+            default -> throw new UnsupportedOperationException("Message type is not related to tasks");
         }
     }
 }

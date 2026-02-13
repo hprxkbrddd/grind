@@ -1,6 +1,6 @@
 package com.grind.core.repository;
 
-import com.grind.core.dto.TaskStatus;
+import com.grind.core.enums.TaskStatus;
 import com.grind.core.model.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

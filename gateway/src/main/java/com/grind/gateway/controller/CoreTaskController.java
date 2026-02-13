@@ -1,179 +1,82 @@
 package com.grind.gateway.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.gateway.dto.core.ChangeTaskDTO;
-import com.grind.gateway.dto.core.CreateTaskRequest;
-import com.grind.gateway.dto.core.PlanTaskDateDTO;
-import com.grind.gateway.dto.core.PlanTaskSprintDTO;
-import com.grind.gateway.enums.CoreMessageType;
-import com.grind.gateway.service.KafkaProducer;
+import com.grind.gateway.dto.Body;
+import com.grind.gateway.dto.core.task.ChangeTaskDTO;
+import com.grind.gateway.dto.core.task.CreateTaskRequest;
+import com.grind.gateway.dto.core.task.PlanTaskDateDTO;
+import com.grind.gateway.dto.core.task.PlanTaskSprintDTO;
+import com.grind.gateway.service.core.CoreTaskService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 
 @RestController
 @RequestMapping("/api/core/task")
 @RequiredArgsConstructor
 public class CoreTaskController {
 
-    // TODO get rid of repeating code
-    private final KafkaProducer kafkaProducer;
-    private final ObjectMapper objectMapper;
-
-    @Value("${kafka.topic.core.request.task}")
-    private String coreReqTaskTopic;
+    private final CoreTaskService taskService;
 
     @GetMapping("/all")
-    public ResponseEntity<Object> getAllTasks() throws TimeoutException {
-        String correlationId = UUID.randomUUID().toString();
-        kafkaProducer.publishBodiless(
-                CoreMessageType.GET_ALL_TASKS,
-                coreReqTaskTopic,
-                correlationId
-        );
-        return ResponseEntity.ok(
-                kafkaProducer.retrieveResponse(correlationId)
-        );
+    public ResponseEntity<Object> getAllTasks() {
+        Body body = taskService.callGetAllTasks();
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @GetMapping("/{taskId}")
-    public ResponseEntity<Object> getTask(@PathVariable String taskId) throws TimeoutException {
-        String correlationId = UUID.randomUUID().toString();
-        kafkaProducer.publish(
-                taskId,
-                CoreMessageType.GET_TASK,
-                coreReqTaskTopic,
-                correlationId
-        );
-
-        return ResponseEntity.ok(
-                kafkaProducer.retrieveResponse(correlationId)
-        );
+    public ResponseEntity<Object> getTask(@PathVariable String taskId) {
+        Body body = taskService.callGetTask(taskId);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @GetMapping("/sprint/{sprintId}")
-    public ResponseEntity<Object> getTasksOfSprint(@PathVariable String sprintId) throws TimeoutException {
-        String correlationId = UUID.randomUUID().toString();
-        kafkaProducer.publish(
-                sprintId,
-                CoreMessageType.GET_TASKS_OF_SPRINT,
-                coreReqTaskTopic,
-                correlationId
-        );
-        return ResponseEntity.ok(
-                kafkaProducer.retrieveResponse(correlationId)
-        );
+    public ResponseEntity<Object> getTasksOfSprint(@PathVariable String sprintId) {
+        Body body = taskService.callGetTasksOfSprint(sprintId);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @GetMapping("/track/{trackId}")
-    public ResponseEntity<Object> getTasksOfTrack(@PathVariable String trackId) throws TimeoutException {
-        String correlationId = UUID.randomUUID().toString();
-        kafkaProducer.publish(
-                trackId,
-                CoreMessageType.GET_TASKS_OF_TRACK,
-                coreReqTaskTopic,
-                correlationId
-        );
-        return ResponseEntity.ok(
-                kafkaProducer.retrieveResponse(correlationId)
-        );
+    public ResponseEntity<Object> getTasksOfTrack(@PathVariable String trackId) {
+        Body body = taskService.callGetTasksOfTrack(trackId);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @PostMapping
-    public ResponseEntity<Void> create(@RequestBody CreateTaskRequest dto) throws JsonProcessingException {
-        String correlationId = UUID.randomUUID().toString();
-        String payload = objectMapper.writeValueAsString(dto);
-
-        kafkaProducer.publish(
-                payload,
-                CoreMessageType.CREATE_TASK,
-                coreReqTaskTopic,
-                correlationId
-        );
-
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-
+    public ResponseEntity<?> create(@RequestBody CreateTaskRequest dto) {
+        Body body = taskService.callCreateTask(dto);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> changeTask(@RequestBody ChangeTaskDTO dto, @PathVariable String id) throws JsonProcessingException {
-        String correlationId = UUID.randomUUID().toString();
+    public ResponseEntity<?> changeTask(@RequestBody ChangeTaskDTO dto, @PathVariable String id) {
         dto.setTaskId(id);
-        String payload = objectMapper.writeValueAsString(dto);
-
-        kafkaProducer.publish(
-                payload,
-                CoreMessageType.CHANGE_TASK,
-                coreReqTaskTopic,
-                correlationId
-        );
-
-        return ResponseEntity.status(HttpStatus.OK).build();
+        Body body = taskService.callChangeTask(dto);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @PutMapping("/{taskId}/plan/sprint")
-    public ResponseEntity<Void> planTaskSprint(@RequestBody PlanTaskSprintDTO dto, @PathVariable String taskId) throws JsonProcessingException {
-        String correlationId = UUID.randomUUID().toString();
+    public ResponseEntity<?> planTaskSprint(@RequestBody PlanTaskSprintDTO dto, @PathVariable String taskId) {
         dto.setTaskId(taskId);
-        String payload = objectMapper.writeValueAsString(dto);
-
-        kafkaProducer.publish(
-                payload,
-                CoreMessageType.PLAN_TASK_SPRINT,
-                coreReqTaskTopic,
-                correlationId
-        );
-
-        return ResponseEntity.status(HttpStatus.OK).build();
+        Body body = taskService.callPlanTaskSprint(dto);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @PutMapping("/{taskId}/plan/date")
-    public ResponseEntity<Void> planTaskDate(@RequestBody PlanTaskDateDTO dto, @PathVariable String taskId) throws JsonProcessingException {
-        String correlationId = UUID.randomUUID().toString();
+    public ResponseEntity<?> planTaskDate(@RequestBody PlanTaskDateDTO dto, @PathVariable String taskId) {
         dto.setTaskId(taskId);
-        String payload = objectMapper.writeValueAsString(dto);
-
-        kafkaProducer.publish(
-                payload,
-                CoreMessageType.PLAN_TASK_DATE,
-                coreReqTaskTopic,
-                correlationId
-        );
-
-        return ResponseEntity.status(HttpStatus.OK).build();
+        Body body = taskService.callPlanTaskDate(dto);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @PutMapping("/{taskId}/complete")
-    public ResponseEntity<Void> completeTask(@PathVariable String taskId){
-        String correlationId = UUID.randomUUID().toString();
-
-        kafkaProducer.publish(
-                taskId,
-                CoreMessageType.COMPLETE_TASK,
-                coreReqTaskTopic,
-                correlationId
-        );
-
-        return ResponseEntity.status(HttpStatus.OK).build();
+    public ResponseEntity<?> completeTask(@PathVariable String taskId) {
+        Body body = taskService.callCompleteTask(taskId);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        String correlationId = UUID.randomUUID().toString();
-
-        kafkaProducer.publish(
-                id,
-                CoreMessageType.DELETE_TASK,
-                coreReqTaskTopic,
-                correlationId
-        );
-
-        return ResponseEntity.status(HttpStatus.OK).build();
+    public ResponseEntity<?> delete(@PathVariable String id) {
+        Body body = taskService.callDeleteTask(id);
+        return ResponseEntity.status(body.status()).body(body.payload());
     }
 }
