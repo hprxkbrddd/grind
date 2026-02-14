@@ -9,6 +9,7 @@ import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
 import com.grind.core.service.application.TrackService;
 import com.grind.core.util.ActionReplyExecutor;
+import com.grind.core.util.IdParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -35,12 +36,13 @@ public class TrackReplyHandler {
         );
     }
 
-    public Reply handleGetTrack(String trackId) {
+    public Reply handleGetTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         CoreMessageType.TRACK,
-                        service.getById(trackId)
-                                .mapDTO()
+                        service.getById(
+                                IdParser.run(payload)
+                        ).mapDTO()
                 )
         );
     }
@@ -54,12 +56,13 @@ public class TrackReplyHandler {
         );
     }
 
-    public Reply handleGetSprintsOfTrack(String trackId) {
+    public Reply handleGetSprintsOfTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         CoreMessageType.SPRINTS_OF_TRACK,
-                        service.getSprintsOfTrack(trackId)
-                                .stream().map(Sprint::mapDTO)
+                        service.getSprintsOfTrack(
+                                IdParser.run(payload)
+                        ).stream().map(Sprint::mapDTO)
                 )
         );
     }
@@ -100,11 +103,13 @@ public class TrackReplyHandler {
         });
     }
 
-    public Reply handleDeleteTrack(String trackId) {
+    public Reply handleDeleteTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         CoreMessageType.TRACK_DELETED,
-                        service.deleteTrack(trackId)
+                        service.deleteTrack(
+                                IdParser.run(payload)
+                        )
                 )
         );
     }

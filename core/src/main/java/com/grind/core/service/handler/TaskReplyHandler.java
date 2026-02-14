@@ -1,7 +1,6 @@
 package com.grind.core.service.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.dto.request.IdDTO;
 import com.grind.core.dto.request.task.ChangeTaskRequest;
 import com.grind.core.dto.request.task.CreateTaskRequest;
 import com.grind.core.dto.request.task.PlanTaskDateDTO;
@@ -11,6 +10,7 @@ import com.grind.core.enums.CoreMessageType;
 import com.grind.core.model.Task;
 import com.grind.core.service.application.TaskService;
 import com.grind.core.util.ActionReplyExecutor;
+import com.grind.core.util.IdParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +27,7 @@ public class TaskReplyHandler {
                 Reply.ok(
                         CoreMessageType.TASKS_OF_TRACK,
                         service.getByTrack(
-                                objectMapper.readValue(payload, IdDTO.class).id()
+                                IdParser.run(payload)
                         ).stream().map(Task::mapDTO).toList()
                 )
         );
@@ -39,7 +39,7 @@ public class TaskReplyHandler {
                 Reply.ok(
                         CoreMessageType.TASKS_OF_SPRINT,
                         service.getBySprint(
-                                objectMapper.readValue(payload, IdDTO.class).id()
+                                IdParser.run(payload)
                         ).stream().map(Task::mapDTO).toList()
                 )
         );
@@ -50,7 +50,7 @@ public class TaskReplyHandler {
                 Reply.ok(
                         CoreMessageType.TASK,
                         service.getById(
-                                objectMapper.readValue(payload, IdDTO.class).id()
+                                IdParser.run(payload)
                         ).mapDTO()
                 )
         );
@@ -110,7 +110,7 @@ public class TaskReplyHandler {
                 Reply.ok(
                         CoreMessageType.TASK_COMPLETED,
                         service.completeTask(
-                                objectMapper.readValue(payload, IdDTO.class).id()
+                                IdParser.run(payload)
                         ).mapDTO()
                 )
         );
@@ -134,7 +134,7 @@ public class TaskReplyHandler {
                 Reply.ok(
                         CoreMessageType.TASK_DELETED,
                         service.deleteTask(
-                                objectMapper.readValue(payload, IdDTO.class).id()
+                                IdParser.run(payload)
                         )
                 )
         );
