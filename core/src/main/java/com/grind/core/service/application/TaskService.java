@@ -2,13 +2,11 @@ package com.grind.core.service.application;
 
 import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.enums.TaskStatus;
-import com.grind.core.exception.InvalidAggregateStateException;
 import com.grind.core.exception.SprintNotFoundException;
 import com.grind.core.exception.TaskNotFoundException;
 import com.grind.core.exception.TrackNotFoundException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
-import com.grind.core.model.Track;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
 import com.grind.core.repository.TrackRepository;
@@ -54,10 +52,7 @@ public class TaskService {
     ) {
         if (!sprintRepository.existsById(sprintId))
             throw new SprintNotFoundException(sprintId);
-        List<Task> res = taskRepository.findBySprintId(sprintId);
-        if (res.isEmpty())
-            throw new InvalidAggregateStateException(Sprint.class, Task.class);
-        return res;
+        return taskRepository.findBySprintId(sprintId);
     }
 
     public List<Task> getByTrack(
@@ -66,10 +61,7 @@ public class TaskService {
     ) {
         if (!trackRepository.existsById(trackId))
             throw new TrackNotFoundException(trackId);
-        List<Task> res = taskRepository.findByTrackId(trackId);
-        if (res.isEmpty())
-            throw new InvalidAggregateStateException(Track.class, Task.class);
-        return res;
+        return taskRepository.findByTrackId(trackId);
     }
 
     public List<TaskDTO> getBySprintAndStatus(String sprintId, TaskStatus status) {
@@ -152,8 +144,28 @@ public class TaskService {
     ) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task has not been marked as completed"));
+        if (task.getStatus() == TaskStatus.CREATED)
+            throw new IllegalStateException("Task is not marked as completed; you have to plan it first");
         task.setActualDate(LocalDate.now());
         task.setStatus(TaskStatus.COMPLETED);
+        return task;
+    }
+
+    @Transactional
+    public Task toBackLog(
+            @NotBlank(message = "Task id must not be null or blank")
+            String taskId
+    ) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Task has not been moved to backlog"));
+        TaskStatus status = task.getStatus();
+        if (status == TaskStatus.CREATED) return task;
+        if (status == TaskStatus.COMPLETED) task.setActualDate(null);
+
+        task.setPlannedDate(null);
+        task.setSprint(null);
+        task.setStatus(TaskStatus.CREATED);
+
         return task;
     }
 

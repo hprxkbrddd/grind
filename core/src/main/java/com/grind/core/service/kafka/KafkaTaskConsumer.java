@@ -34,6 +34,7 @@ public class KafkaTaskConsumer {
             CoreMessageType.PLAN_TASK_DATE,
             CoreMessageType.PLAN_TASK_SPRINT,
             CoreMessageType.COMPLETE_TASK,
+            CoreMessageType.MOVE_TASK_TO_BACKLOG,
             CoreMessageType.DELETE_TASK
     );
 
@@ -110,6 +111,9 @@ public class KafkaTaskConsumer {
             }
             case COMPLETE_TASK -> {
                 return replyHandler.handleCompleteTask(payload);
+            }
+            case MOVE_TASK_TO_BACKLOG -> {
+                return replyHandler.handleTaskToBacklog(payload);
             }
             case CREATE_TASK -> {
                 return replyHandler.handleCreateTask(payload);

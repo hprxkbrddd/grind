@@ -30,6 +30,7 @@ public enum CoreMessageType {
     PLAN_TASK_DATE,
     PLAN_TASK_SPRINT,
     COMPLETE_TASK,
+    MOVE_TASK_TO_BACKLOG,
     DELETE_TASK,
 
     TASKS_OF_TRACK,
@@ -40,6 +41,7 @@ public enum CoreMessageType {
     TASK_CHANGED,
     TASK_PLANNED,
     TASK_COMPLETED,
+    TASK_AT_BACKLOG,
     TASK_DELETED,
 
     UNDEFINED,

@@ -116,6 +116,17 @@ public class TaskReplyHandler {
         );
     }
 
+    public Reply handleTaskToBacklog(String payload) {
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        CoreMessageType.TASK_AT_BACKLOG,
+                        service.toBackLog(
+                                IdParser.run(payload)
+                        ).mapDTO()
+                )
+        );
+    }
+
     public Reply handleCreateTask(String payload) {
         return exec.withErrorMapping(() -> {
             CreateTaskRequest req = objectMapper.readValue(payload, CreateTaskRequest.class);

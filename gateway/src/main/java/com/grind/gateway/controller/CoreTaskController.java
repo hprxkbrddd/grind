@@ -74,6 +74,12 @@ public class CoreTaskController {
         return ResponseEntity.status(body.status()).body(body.payload());
     }
 
+    @PutMapping("/{taskId}/backlog")
+    public ResponseEntity<?> moveTaskToBackLog(@PathVariable String taskId) {
+        Body body = taskService.callTaskToBacklog(taskId);
+        return ResponseEntity.status(body.status()).body(body.payload());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable String id) {
         Body body = taskService.callDeleteTask(id);

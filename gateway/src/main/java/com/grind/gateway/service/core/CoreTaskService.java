@@ -92,6 +92,14 @@ public class CoreTaskService {
         );
     }
 
+    public Body callTaskToBacklog(String taskId){
+        return kafkaProducer.requestReply(
+                IdDTO.of(taskId),
+                CoreMessageType.MOVE_TASK_TO_BACKLOG,
+                coreReqTaskTopic
+        );
+    }
+
     public Body callDeleteTask(String taskId){
         return kafkaProducer.requestReply(
                 IdDTO.of(taskId),

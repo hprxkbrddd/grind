@@ -1,7 +1,6 @@
 package com.grind.core.service.application;
 
 import com.grind.core.enums.TaskStatus;
-import com.grind.core.exception.InvalidAggregateStateException;
 import com.grind.core.exception.SprintNotFoundException;
 import com.grind.core.exception.TaskNotFoundException;
 import com.grind.core.exception.TrackNotFoundException;
@@ -88,15 +87,6 @@ class TaskServiceTest {
         when(sprintRepository.existsById("s1")).thenReturn(false);
 
         assertThrows(SprintNotFoundException.class,
-                () -> taskService.getBySprint("s1"));
-    }
-
-    @Test
-    void getBySprint_shouldThrowIfNoTasks() {
-        when(sprintRepository.existsById("s1")).thenReturn(true);
-        when(taskRepository.findBySprintId("s1")).thenReturn(List.of());
-
-        assertThrows(InvalidAggregateStateException.class,
                 () -> taskService.getBySprint("s1"));
     }
 
@@ -193,6 +183,71 @@ class TaskServiceTest {
 
         assertEquals(TaskStatus.COMPLETED, result.getStatus());
         assertNotNull(result.getActualDate());
+    }
+
+    // ----- TASK TO BACKLOG -----
+    @Test
+    void toBackLog_shouldResetFieldsForPlanned() {
+        Task task = new Task();
+        task.setStatus(TaskStatus.PLANNED);
+        task.setPlannedDate(LocalDate.now());
+        task.setSprint(new Sprint());
+
+        when(taskRepository.findById("t1"))
+                .thenReturn(Optional.of(task));
+
+        Task result = taskService.toBackLog("t1");
+
+        assertNull(result.getPlannedDate());
+        assertNull(result.getSprint());
+        assertEquals(TaskStatus.CREATED, result.getStatus());
+    }
+
+    @Test
+    void toBackLog_shouldClearActualDateIfCompleted() {
+        Task task = new Task();
+        task.setStatus(TaskStatus.COMPLETED);
+        task.setActualDate(LocalDate.now());
+        task.setPlannedDate(LocalDate.now());
+        task.setSprint(new Sprint());
+
+        when(taskRepository.findById("t1"))
+                .thenReturn(Optional.of(task));
+
+        Task result = taskService.toBackLog("t1");
+
+        assertNull(result.getActualDate());
+        assertNull(result.getPlannedDate());
+        assertNull(result.getSprint());
+        assertEquals(TaskStatus.CREATED, result.getStatus());
+    }
+
+    @Test
+    void toBackLog_shouldReturnSameIfAlreadyCreated() {
+        Task task = new Task();
+        task.setStatus(TaskStatus.CREATED);
+        task.setPlannedDate(LocalDate.now());
+        task.setActualDate(LocalDate.now());
+        task.setSprint(new Sprint());
+
+        when(taskRepository.findById("t1"))
+                .thenReturn(Optional.of(task));
+
+        Task result = taskService.toBackLog("t1");
+
+        assertEquals(TaskStatus.CREATED, result.getStatus());
+        assertNotNull(result.getPlannedDate());
+        assertNotNull(result.getActualDate());
+        assertNotNull(result.getSprint());
+    }
+
+    @Test
+    void toBackLog_shouldThrowIfNotFound() {
+        when(taskRepository.findById("t1"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(TaskNotFoundException.class,
+                () -> taskService.toBackLog("t1"));
     }
 
     // ----- OVERDUE TASK -----
