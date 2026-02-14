@@ -88,7 +88,7 @@ public class TrackReplyHandler {
     public Reply handleCreateTrack(String payload) {
         return exec.withErrorMapping(() -> {
             CreateTrackRequest req = objectMapper.readValue(payload, CreateTrackRequest.class);
-            return Reply.ok(CoreMessageType.TRACK_CHANGED,
+            return Reply.ok(CoreMessageType.TRACK_CREATED,
                     service.createTrack(
                             req.name(),
                             req.description(),

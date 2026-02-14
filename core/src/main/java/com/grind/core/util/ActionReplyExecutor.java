@@ -2,7 +2,6 @@ package com.grind.core.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.grind.core.dto.wrap.Reply;
-import com.grind.core.exception.InvalidAggregateStateException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -17,8 +16,7 @@ public class ActionReplyExecutor {
             return action.getWithException();
         } catch (EntityNotFoundException ex) {
             return Reply.error(ex, HttpStatus.NOT_FOUND);
-        } catch (InvalidAggregateStateException | IllegalArgumentException | JsonProcessingException |
-                 ConstraintViolationException ex) {
+        } catch (IllegalArgumentException | JsonProcessingException | ConstraintViolationException ex) {
             return Reply.error(ex, HttpStatus.BAD_REQUEST);
         } catch (AccessDeniedException ex) {
             return Reply.error(ex, HttpStatus.FORBIDDEN);

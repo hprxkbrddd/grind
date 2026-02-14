@@ -1,11 +1,12 @@
 package com.grind.core.service.application;
 
+import com.grind.core.exception.InvalidAggregateStateException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
 import com.grind.core.model.Track;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +27,14 @@ public class SprintService {
         return sprintRepository.findAll();
     }
 
-    public Sprint getById(String id) {
-        return sprintRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("could not find sprint"));
-    }
-
-    public List<Sprint> getByTrackId(String trackId) {
-        return sprintRepository.findByTrackIdOrderByStartDate(trackId);
+    public List<Sprint> getByTrackId(
+            @NotBlank(message = "Track id must be not null or blank")
+            String trackId
+    ) {
+        List<Sprint> res = sprintRepository.findByTrackIdOrderByStartDate(trackId);
+        if (res.isEmpty())
+            throw new InvalidAggregateStateException(Track.class, Sprint.class);
+        return res;
     }
 
     public List<Sprint> createSprintsForTrack(Track track) {
@@ -74,6 +76,7 @@ public class SprintService {
             Sprint newSprint = findSprintForDate(newSprints, t.getPlannedDate());
 
             // если plannedDate внезапно вне диапазона трека — прижимаем к последнему спринту
+            //TODO make this type of tasks return to backlog
             if (newSprint == null) {
                 newSprint = newSprints.get(newSprints.size() - 1);
             }
@@ -89,16 +92,12 @@ public class SprintService {
         }
     }
 
-    private Sprint findSprintForDate(List<Sprint> sprints, LocalDate date) {
+    Sprint findSprintForDate(List<Sprint> sprints, LocalDate date) {
         for (Sprint s : sprints) {
             boolean geStart = !date.isBefore(s.getStartDate()); // date >= start
             boolean leEnd = !date.isAfter(s.getEndDate());      // date <= end
             if (geStart && leEnd) return s;
         }
         return null;
-    }
-
-    public void deleteSprint(String id) {
-        sprintRepository.deleteById(id);
     }
 }

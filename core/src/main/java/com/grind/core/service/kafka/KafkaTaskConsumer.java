@@ -33,7 +33,8 @@ public class KafkaTaskConsumer {
             CoreMessageType.CREATE_TASK,
             CoreMessageType.PLAN_TASK_DATE,
             CoreMessageType.PLAN_TASK_SPRINT,
-            CoreMessageType.COMPLETE_TASK
+            CoreMessageType.COMPLETE_TASK,
+            CoreMessageType.DELETE_TASK
     );
 
     @Value("${kafka.topic.core.event.task}")
