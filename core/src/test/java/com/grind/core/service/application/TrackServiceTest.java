@@ -146,7 +146,7 @@ class TrackServiceTest {
         when(trackRepository.findById("t1"))
                 .thenReturn(Optional.empty());
 
-        assertThrows(TaskNotFoundException.class,
+        assertThrows(TrackNotFoundException.class,
                 () -> trackService.deleteTrack("t1"));
 
         verify(trackRepository).findById("t1");

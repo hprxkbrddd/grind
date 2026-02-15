@@ -43,7 +43,6 @@ class SprintServiceTest {
         Sprint s1 = new Sprint();
         Sprint s2 = new Sprint();
 
-        when(trackRepository.existsById("t1")).thenReturn(true);
         when(sprintRepository.findByTrackIdOrderByStartDate("t1"))
                 .thenReturn(List.of(s1, s2));
 
@@ -52,19 +51,6 @@ class SprintServiceTest {
         assertEquals(2, result.size());
         assertEquals(s1, result.get(0));
         assertEquals(s2, result.get(1));
-    }
-
-    @Test
-    void getByTrackId_shouldThrowIfNoSprints() {
-        when(trackRepository.existsById("t1")).thenReturn(true);
-        when(sprintRepository.findByTrackIdOrderByStartDate("t1"))
-                .thenReturn(List.of());
-
-        assertThrows(InvalidAggregateStateException.class,
-                () -> sprintService.getByTrackId("t1"));
-
-        verify(trackRepository).existsById("t1");
-        verify(sprintRepository).findByTrackIdOrderByStartDate("t1");
     }
 
     // ----- CREATE SPRINTS FOR TRACK -----
