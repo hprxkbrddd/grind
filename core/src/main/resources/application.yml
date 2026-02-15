@@ -46,6 +46,7 @@ management:
       enabled: true
 
 kafka:
+  outbox-batch-size: 5
   topic:
     core:
       request:

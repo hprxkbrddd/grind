@@ -2,7 +2,8 @@ package com.grind.core.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.enums.CoreMessageType;
+import com.grind.core.dto.wrap.MessageType;
+import com.grind.core.enums.coreMessageTypes.SystemMsgType;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,7 +39,7 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, CoreMessageType type, String key, String traceId, String topic) {
+    public void publish(Object value, MessageType type, String key, String traceId, String topic) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
@@ -77,7 +79,7 @@ public class KafkaProducer {
 
     private Message<Object> formMessage(
             Object payload,
-            CoreMessageType type,
+            MessageType type,
             String topic,
             String key,
             String traceId,
@@ -106,7 +108,7 @@ public class KafkaProducer {
 
         builder.setHeader("X-Event-Id", UUID.randomUUID().toString());
 
-        builder.setHeader("X-Message-Type", Objects.requireNonNullElse(type, CoreMessageType.UNDEFINED));
+        builder.setHeader("X-Message-Type", Objects.requireNonNullElse(type.code(), SystemMsgType.UNDEFINED));
 
         return builder.build();
     }
@@ -116,14 +118,25 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, CoreMessageType type, String traceId, String topic) {
+    public void publish(Object value, MessageType type, String traceId, String topic) {
         publish(value, type, null,
                 traceId == null ? UUID.randomUUID().toString() : traceId,
                 topic
         );
     }
 
-    public void reply(Object value, CoreMessageType type, String correlationId, String traceId) {
+    /**
+     * Publishes a group of messages
+     *
+     * @param values
+     */
+    public void publish(List<Object> values, MessageType type, String topic, String correlationId) {
+        for (Object value : values) {
+            publish(value, type, topic, correlationId);
+        }
+    }
+
+    public void reply(Object value, MessageType type, String correlationId, String traceId) {
         kafkaTemplate.send(
                 formMessage(
                         value,

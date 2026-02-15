@@ -31,8 +31,22 @@ public class ClickhouseRepository {
 
     private final ObjectMapper objectMapper;
 
+    private static final String trackCompletionPercentQuery = """
+            SELECT
+                track_id,
+                round(
+                    countIf(task_status = 'COMPLETED') / count() * 100,
+                    2
+                ) AS completion_percent,
+                count() AS total_tasks
+            FROM analytics.task_actual_state_v
+            WHERE track_id = {track:UInt64}
+            GROUP BY track_id
+            FORMAT JSONEachRow
+            """;
+
     @PostConstruct
-    public void init(){
+    public void init() {
         this.webClient = WebClient.builder()
                 .baseUrl(clickHouseUrl)
                 .defaultHeaders(h -> h.setBasicAuth(chUsername, chPassword))
@@ -40,23 +54,22 @@ public class ClickhouseRepository {
     }
 
     public void postEvent(List<CoreRecord> batch) throws JsonProcessingException {
-
         if (batch.isEmpty()) return;
         StringJoiner joiner = new StringJoiner("\n");
         for (CoreRecord coreRecord : batch) {
             joiner.add(objectMapper.writeValueAsString(coreRecord));
         }
-        String body = joiner+"\n";
+        String body = joiner + "\n";
 
         log.info(body);
 
         webClient.post()
                 .uri(uriBuilder ->
-                    uriBuilder
-                            .queryParam("database", "analytics")
-                            .queryParam("query", "INSERT INTO raw FORMAT JSONEachRow\n")
-                            .queryParam("input_format_skip_unknown_fields", 1)
-                            .build()
+                        uriBuilder
+                                .queryParam("database", "analytics")
+                                .queryParam("query", "INSERT INTO raw FORMAT JSONEachRow\n")
+                                .queryParam("input_format_skip_unknown_fields", 1)
+                                .build()
 
                 )
                 .contentType(MediaType.TEXT_PLAIN)

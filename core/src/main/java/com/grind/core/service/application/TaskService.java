@@ -178,12 +178,14 @@ public class TaskService {
     }
 
     @Transactional
-    public String deleteTask(
+    public Task deleteTask(
             @NotBlank(message = "Task id must not be null or blank")
             String taskId
     ) {
+        Task task = taskRepository.findById(taskId)
+                        .orElseThrow(() -> new TaskNotFoundException(taskId));
         taskRepository.deleteById(taskId);
-        return taskId;
+        return task;
     }
 
     @Transactional

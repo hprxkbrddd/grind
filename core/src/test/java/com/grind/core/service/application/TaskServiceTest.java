@@ -23,8 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
@@ -266,11 +265,32 @@ class TaskServiceTest {
 
     // ----- DELETE TASK -----
     @Test
-    void deleteTask_shouldCallRepository() {
-        String id = taskService.deleteTask("t1");
+    void deleteTask_shouldDeleteAndReturnTask() {
+        Task task = new Task();
+        task.setId("t1");
 
+        when(taskRepository.findById("t1"))
+                .thenReturn(Optional.of(task));
+
+        Task result = taskService.deleteTask("t1");
+
+        verify(taskRepository).findById("t1");
         verify(taskRepository).deleteById("t1");
-        assertEquals("t1", id);
+
+        assertEquals("t1", result.getId());
+    }
+
+    @Test
+    void deleteTask_shouldThrowIfNotFound() {
+
+        when(taskRepository.findById("t1"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(TaskNotFoundException.class,
+                () -> taskService.deleteTask("t1"));
+
+        verify(taskRepository).findById("t1");
+        verify(taskRepository, never()).deleteById(any());
     }
 
     // ----- CHANGE TASK -----

@@ -2,11 +2,16 @@ package com.grind.core.dto.wrap;
 
 import org.springframework.http.HttpStatus;
 
-public record Body(
-        Object payload,
-        HttpStatus status
+public record Body<T>(
+        T payload,
+        HttpStatus status,
+        String error
 ) {
-    public static Body of(Object payload, HttpStatus status){
-        return new Body(payload, status);
+    public static <T> Body<T> ok(T payload) {
+        return new Body<>(payload, HttpStatus.OK, null);
+    }
+
+    public static <T> Body<T> err(String error, HttpStatus status) {
+        return new Body<>(null, status, error);
     }
 }

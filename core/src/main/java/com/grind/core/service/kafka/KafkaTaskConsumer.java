@@ -2,11 +2,12 @@ package com.grind.core.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.dto.wrap.Reply;
-import com.grind.core.enums.CoreMessageType;
+import com.grind.core.enums.coreMessageTypes.CoreTaskReqMsgType;
+import com.grind.core.enums.coreMessageTypes.SystemMsgType;
 import com.grind.core.service.handler.TaskReplyHandler;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -28,18 +29,15 @@ public class KafkaTaskConsumer {
     private final KafkaProducer kafkaProducer;
     private final TaskReplyHandler replyHandler;
     private final ObjectMapper objectMapper;
-    private final static List<CoreMessageType> TO_PUBLISH_EVENT = List.of(
-            CoreMessageType.CHANGE_TASK,
-            CoreMessageType.CREATE_TASK,
-            CoreMessageType.PLAN_TASK_DATE,
-            CoreMessageType.PLAN_TASK_SPRINT,
-            CoreMessageType.COMPLETE_TASK,
-            CoreMessageType.MOVE_TASK_TO_BACKLOG,
-            CoreMessageType.DELETE_TASK
+    private final OutboxService outboxService;
+    private final static List<CoreTaskReqMsgType> TO_PUBLISH_EVENT = List.of(
+            CoreTaskReqMsgType.CREATE_TASK,
+            CoreTaskReqMsgType.PLAN_TASK_DATE,
+            CoreTaskReqMsgType.PLAN_TASK_SPRINT,
+            CoreTaskReqMsgType.COMPLETE_TASK,
+            CoreTaskReqMsgType.MOVE_TASK_TO_BACKLOG,
+            CoreTaskReqMsgType.DELETE_TASK
     );
-
-    @Value("${kafka.topic.core.event.task}")
-    private String coreEvTaskTopic;
 
     @KafkaListener(id = "core-server-task", topics = "core.request.task")
     public void listen(
@@ -67,67 +65,34 @@ public class KafkaTaskConsumer {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // HANDLING REQUEST
-            CoreMessageType type = CoreMessageType.valueOf(messageType);
-            Reply rep = routeReply(type, payload);
-            if (TO_PUBLISH_EVENT.contains(type)) {
-                kafkaProducer.publish(
-                        rep.body(),
-                        rep.type(),
-                        traceId,
-                        coreEvTaskTopic
-                );
+            CoreTaskReqMsgType type = CoreTaskReqMsgType.valueOf(messageType);
+            Reply<?> rep = replyHandler.routeReply(type, payload);
+            if (TO_PUBLISH_EVENT.contains(type) && rep.body().status() == HttpStatus.OK) {
+                Object repPayload = rep.body().payload();
+
+                if (repPayload instanceof TaskDTO dto) {
+                    outboxService.genEvent(dto, rep.type(), traceId);
+                } else if (repPayload instanceof List<?> list) {
+                    List<TaskDTO> dtoList = list.stream()
+                            .filter(TaskDTO.class::isInstance)
+                            .map(TaskDTO.class::cast)
+                            .toList();
+
+                    if (!dtoList.isEmpty()) {
+                        outboxService.genEvents(dtoList, rep.type(), traceId);
+                    }
+                }
             }
-            String replyPayload = objectMapper.writeValueAsString(rep.body());
+            String replyPayload = rep.type().code().equals(SystemMsgType.ERROR.name()) ?
+                    rep.body().error() : objectMapper.writeValueAsString(rep.body());
+
             kafkaProducer.reply(replyPayload, rep.type(), correlationId, traceId);
+
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         } finally {
             SecurityContextHolder.clearContext();
-        }
-    }
-
-    private Reply routeReply(CoreMessageType type, String payload) {
-        switch (type) {
-            case GET_TASKS_OF_TRACK -> {
-                return replyHandler.handleGetTasksOfTrack(payload);
-            }
-            case GET_TASKS_OF_SPRINT -> {
-                return replyHandler.handleGetTasksOfSprint(payload);
-            }
-            case GET_TASK -> {
-                return replyHandler.handleGetTask(payload);
-            }
-            case GET_ALL_TASKS -> {
-                return replyHandler.handleGetAllTasks();
-            }
-            case CHANGE_TASK -> {
-                return replyHandler.handleChangeTask(payload);
-            }
-            case PLAN_TASK_SPRINT -> {
-                return replyHandler.handlePlanTaskSprint(payload);
-            }
-            case PLAN_TASK_DATE -> {
-                return replyHandler.handlePlanTaskDate(payload);
-            }
-            case COMPLETE_TASK -> {
-                return replyHandler.handleCompleteTask(payload);
-            }
-            case MOVE_TASK_TO_BACKLOG -> {
-                return replyHandler.handleTaskToBacklog(payload);
-            }
-            case CREATE_TASK -> {
-                return replyHandler.handleCreateTask(payload);
-            }
-            case DELETE_TASK -> {
-                return replyHandler.handleDeleteTask(payload);
-            }
-            case UNDEFINED -> {
-                return Reply.error(
-                        new IllegalStateException("Unhandled message type"),
-                        HttpStatus.INTERNAL_SERVER_ERROR
-                );
-            }
-            default -> throw new UnsupportedOperationException("Message type is not related to tasks");
         }
     }
 }

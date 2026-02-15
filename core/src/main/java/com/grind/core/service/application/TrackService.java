@@ -85,9 +85,11 @@ public class TrackService {
     }
 
     @Transactional
-    public String deleteTrack(String id) {
+    public Track deleteTrack(String id) {
+        Track track = trackRepository.findById(id)
+                        .orElseThrow(() -> new TrackNotFoundException(id));
         trackRepository.deleteById(id);
-        return id;
+        return track;
     }
 
     @Transactional

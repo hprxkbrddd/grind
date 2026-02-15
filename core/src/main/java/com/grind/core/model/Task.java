@@ -46,11 +46,26 @@ public class Task {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     public Task() {
         this.id = UUID.randomUUID().toString();
     }
 
     public TaskDTO mapDTO() {
-        return new TaskDTO(id, title, sprint == null ? "" : sprint.getId(), plannedDate, actualDate, description, status, createdAt);
+        return new TaskDTO(
+                id,
+                title,
+                sprint == null ? "" : sprint.getId(),
+                track == null ? "" : track.getId(),
+                plannedDate,
+                actualDate,
+                description,
+                status,
+                createdAt,
+                version
+        );
     }
 }

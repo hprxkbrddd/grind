@@ -11,7 +11,7 @@ import org.springframework.util.function.ThrowingSupplier;
 
 @Component
 public class ActionReplyExecutor {
-    public Reply withErrorMapping(ThrowingSupplier<Reply> action) {
+    public <T> Reply<T> withErrorMapping(ThrowingSupplier<Reply<T>> action) {
         try {
             return action.getWithException();
         } catch (EntityNotFoundException ex) {

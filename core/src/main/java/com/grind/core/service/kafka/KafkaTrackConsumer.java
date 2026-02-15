@@ -2,8 +2,12 @@ package com.grind.core.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.core.dto.entity.TaskDTO;
+import com.grind.core.dto.entity.TrackDTO;
 import com.grind.core.dto.wrap.Reply;
 import com.grind.core.enums.CoreMessageType;
+import com.grind.core.enums.coreMessageTypes.CoreTaskReqMsgType;
+import com.grind.core.enums.coreMessageTypes.CoreTrackReqMsgType;
 import com.grind.core.service.handler.TrackReplyHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,10 +31,10 @@ public class KafkaTrackConsumer {
     private final KafkaProducer kafkaProducer;
     private final TrackReplyHandler replyHandler;
     private final ObjectMapper objectMapper;
-    private final static List<CoreMessageType> TO_PUBLISH_EVENT = List.of(
-            CoreMessageType.CHANGE_TRACK,
-            CoreMessageType.CREATE_TRACK,
-            CoreMessageType.DELETE_TRACK
+    private final static List<CoreTrackReqMsgType> TO_PUBLISH_EVENT = List.of(
+            CoreTrackReqMsgType.CHANGE_TRACK,
+            CoreTrackReqMsgType.CREATE_TRACK,
+            CoreTrackReqMsgType.DELETE_TRACK
     );
 
     @Value("${kafka.topic.core.event.track}")
@@ -63,15 +67,22 @@ public class KafkaTrackConsumer {
 
 
             // HANDLING REQUEST
-            CoreMessageType type = CoreMessageType.valueOf(messageType);
-            Reply rep = routeReply(type, payload);
-            if (TO_PUBLISH_EVENT.contains(type)) {
-                kafkaProducer.publish(
-                        rep.body(),
-                        rep.type(),
-                        traceId,
-                        coreEvTrackTopic
-                );
+            CoreTrackReqMsgType type = CoreTrackReqMsgType.valueOf(messageType);
+            Reply<?> rep = replyHandler.routeReply(type, payload);
+            if (TO_PUBLISH_EVENT.contains(type) && rep.body().status() == HttpStatus.OK) {
+//                TODO publish events for all tasks, which are connected with sprints of this track
+                Object repPayload = rep.body().payload();
+
+                if (repPayload instanceof TrackDTO dto) {
+                    // someService.findTasksWhichChangedAndGenEvents()
+                    return;
+                }
+//                kafkaProducer.publish(
+//                        rep.body(),
+//                        rep.type(),
+//                        traceId,
+//                        coreEvTrackTopic
+//                );
             }
             String replyPayload = objectMapper.writeValueAsString(rep.body());
             kafkaProducer.reply(replyPayload, rep.type(), correlationId, traceId);
@@ -82,36 +93,5 @@ public class KafkaTrackConsumer {
         }
     }
 
-    private Reply routeReply(CoreMessageType type, String payload) {
-        switch (type) {
-            case GET_TRACKS_OF_USER -> {
-                return replyHandler.handleGetTracksOfUser();
-            }
-            case GET_TRACK -> {
-                return replyHandler.handleGetTrack(payload);
-            }
-            case GET_ALL_TRACKS -> {
-                return replyHandler.handleGetAllTracks();
-            }
-            case GET_SPRINTS_OF_TRACK -> {
-                return replyHandler.handleGetSprintsOfTrack(payload);
-            }
-            case CHANGE_TRACK -> {
-                return replyHandler.handleChangeTrack(payload);
-            }
-            case CREATE_TRACK -> {
-                return replyHandler.handleCreateTrack(payload);
-            }
-            case DELETE_TRACK -> {
-                return replyHandler.handleDeleteTrack(payload);
-            }
-            case UNDEFINED -> {
-                return Reply.error(
-                        new IllegalStateException("Unhandled message type"),
-                        HttpStatus.INTERNAL_SERVER_ERROR
-                );
-            }
-            default -> throw new UnsupportedOperationException("Message type is not related to tracks");
-        }
-    }
+
 }

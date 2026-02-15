@@ -1,8 +1,10 @@
 package com.grind.core.service.application;
 
 import com.grind.core.enums.TrackStatus;
+import com.grind.core.exception.TaskNotFoundException;
 import com.grind.core.exception.TrackNotFoundException;
 import com.grind.core.model.Sprint;
+import com.grind.core.model.Task;
 import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
 import org.junit.jupiter.api.Test;
@@ -99,8 +101,8 @@ class TrackServiceTest {
 
         SecurityContextHolder.setContext(context);
 
-        LocalDate start = LocalDate.of(2024,1,1);
-        LocalDate end = LocalDate.of(2024,1,10);
+        LocalDate start = LocalDate.of(2024, 1, 1);
+        LocalDate end = LocalDate.of(2024, 1, 10);
 
         Track result = trackService.createTrack(
                 "name",
@@ -123,19 +125,40 @@ class TrackServiceTest {
 
     // ----- DELETE TRACK -----
     @Test
-    void deleteTrack_shouldDelete() {
-        String id = trackService.deleteTrack("t1");
+    void deleteTask_shouldDeleteAndReturnTask() {
+        Track track = new Track();
+        track.setId("t1");
 
+        when(trackRepository.findById("t1"))
+                .thenReturn(Optional.of(track));
+
+        Track result = trackService.deleteTrack("t1");
+
+        verify(trackRepository).findById("t1");
         verify(trackRepository).deleteById("t1");
-        assertEquals("t1", id);
+
+        assertEquals("t1", result.getId());
+    }
+
+    @Test
+    void deleteTask_shouldThrowIfNotFound() {
+
+        when(trackRepository.findById("t1"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(TaskNotFoundException.class,
+                () -> trackService.deleteTrack("t1"));
+
+        verify(trackRepository).findById("t1");
+        verify(trackRepository, never()).deleteById(any());
     }
 
     // ----- CHANGE TRACK -----
     @Test
     void changeTrack_shouldRecreateSprintsIfDatesChanged() {
         Track track = new Track();
-        track.setStartDate(LocalDate.of(2024,1,1));
-        track.setTargetDate(LocalDate.of(2024,1,10));
+        track.setStartDate(LocalDate.of(2024, 1, 1));
+        track.setTargetDate(LocalDate.of(2024, 1, 10));
 
         when(trackRepository.findById("t1"))
                 .thenReturn(Optional.of(track));
@@ -145,8 +168,8 @@ class TrackServiceTest {
                 null,
                 null,
                 null,
-                LocalDate.of(2024,1,5),
-                LocalDate.of(2024,1,15),
+                LocalDate.of(2024, 1, 5),
+                LocalDate.of(2024, 1, 15),
                 7,
                 null,
                 null
@@ -189,6 +212,6 @@ class TrackServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(TrackNotFoundException.class,
-                () -> trackService.changeTrack("t1",null,null,null,null,null,null,null,null));
+                () -> trackService.changeTrack("t1", null, null, null, null, null, null, null, null));
     }
 }

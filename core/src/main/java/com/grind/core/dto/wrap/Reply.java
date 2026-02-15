@@ -1,23 +1,23 @@
 package com.grind.core.dto.wrap;
 
-import com.grind.core.enums.CoreMessageType;
+import com.grind.core.enums.coreMessageTypes.SystemMsgType;
 import org.springframework.http.HttpStatus;
 
-public record Reply(
-        CoreMessageType type,
-        Body body
+public record Reply<T>(
+        MessageType type,
+        Body<T> body
 ) {
-    public static Reply ok(CoreMessageType type, Object payload) {
-        return new Reply(
+    public static <T> Reply<T> ok(MessageType type, T payload) {
+        return new Reply<>(
                 type,
-                Body.of(payload, HttpStatus.OK)
+                Body.ok(payload)
         );
     }
 
-    public static Reply error(Throwable ex, HttpStatus status) {
-        return new Reply(
-                CoreMessageType.ERROR,
-                Body.of(ex.getMessage(), status)
+    public static <T> Reply<T> error(Throwable ex, HttpStatus status) {
+        return new Reply<>(
+                SystemMsgType.ERROR,
+                Body.err(ex.getMessage(), status)
         );
     }
 }

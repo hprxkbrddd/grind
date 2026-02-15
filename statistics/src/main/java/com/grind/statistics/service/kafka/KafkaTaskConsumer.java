@@ -1,15 +1,13 @@
-package com.grind.statistics.service;
+package com.grind.statistics.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.statistics.dto.CoreMessageDTO;
 import com.grind.statistics.dto.CoreMessageType;
 import com.grind.statistics.dto.CoreRecord;
 import com.grind.statistics.repository.ClickhouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.json.JsonParseException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -33,6 +31,13 @@ public class KafkaTaskConsumer {
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
     private final ClickhouseRepository repository;
+    private static final List<CoreMessageType> events = List.of(
+            CoreMessageType.TASK_CREATED,
+            CoreMessageType.TASK_DELETED,
+            CoreMessageType.TASK_COMPLETED,
+            CoreMessageType.TASK_PLANNED,
+            CoreMessageType.TASK_AT_BACKLOG
+    );
 
     @Value("${kafka.topic.core.event.task}")
     private String coreEvTaskTopic;
@@ -49,14 +54,16 @@ public class KafkaTaskConsumer {
 
                 // SAFE HEADER PARSING
                 String traceId = headerAsString(rec, "X-Trace-Id");
-                String userId  = headerAsString(rec, "X-User-Id");
-                String roles   = headerAsString(rec, "X-Roles");
+                String userId = headerAsString(rec, "X-User-Id");
+                String roles = headerAsString(rec, "X-Roles");
+                String messageType = headerAsString(rec, "X-Message-Type");
 
                 // FORMING AUTHENTICATION OBJECT
                 authenticate(userId, roles);
 
                 // PARSING PAYLOAD
-                CoreMessageDTO msg = objectMapper.readValue(payload, CoreMessageDTO.class);
+
+
 
                 // FILLING BATCH
                 batch.add(new CoreRecord(
