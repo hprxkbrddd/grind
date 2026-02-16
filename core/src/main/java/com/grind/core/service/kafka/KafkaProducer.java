@@ -1,6 +1,5 @@
 package com.grind.core.service.kafka;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.enums.CoreMessageType;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +37,7 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, CoreMessageType type, String key, String traceId, String topic) {
+    public void publish(String value, CoreMessageType type, String key, String traceId, String topic) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
@@ -56,15 +55,9 @@ public class KafkaProducer {
                     .collect(Collectors.joining(","));
         }
 
-        try {
-            jsonValue = objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            jsonValue = value.toString();
-        }
-
         kafkaTemplate.send(
                 formMessage(
-                        jsonValue,
+                        value,
                         type,
                         topic,
                         key,
@@ -76,8 +69,8 @@ public class KafkaProducer {
         );
     }
 
-    private Message<Object> formMessage(
-            Object payload,
+    private Message<String> formMessage(
+            String payload,
             CoreMessageType type,
             String topic,
             String key,
@@ -86,7 +79,7 @@ public class KafkaProducer {
             String roles,
             String correlationId
     ) {
-        MessageBuilder<Object> builder = MessageBuilder
+        MessageBuilder<String> builder = MessageBuilder
                 .withPayload(payload)
                 .setHeader(KafkaHeaders.TOPIC, topic);
 
@@ -117,7 +110,7 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, CoreMessageType type, String traceId, String topic) {
+    public void publish(String value, CoreMessageType type, String traceId, String topic) {
         publish(value, type, null,
                 traceId == null ? UUID.randomUUID().toString() : traceId,
                 topic
@@ -129,13 +122,13 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publish(List<Object> values, CoreMessageType type, String topic, String correlationId) {
-        for (Object value : values) {
+    public void publish(List<String> values, CoreMessageType type, String topic, String correlationId) {
+        for (String value : values) {
             publish(value, type, topic, correlationId);
         }
     }
 
-    public void reply(Object value, CoreMessageType type, String correlationId, String traceId) {
+    public void reply(String value, CoreMessageType type, String correlationId, String traceId) {
         kafkaTemplate.send(
                 formMessage(
                         value,

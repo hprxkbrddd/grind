@@ -1,6 +1,5 @@
 package com.grind.core.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.grind.core.enums.CoreMessageType;
 import com.grind.core.enums.OutboxStatus;
 import jakarta.persistence.*;
@@ -44,7 +43,7 @@ public class OutboxEvent {
     private String topic;
 
     @Column(name = "payload", nullable = false)
-    private JsonNode payload;
+    private String payload;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
