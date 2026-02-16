@@ -1,4 +1,4 @@
-package com.grind.core.dto.wrap;
+package com.grind.statistics.dto.wrap;
 
 public interface MessageType {
     String code();

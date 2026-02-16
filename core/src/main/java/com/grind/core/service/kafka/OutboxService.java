@@ -4,19 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.entity.OutboxRecord;
 import com.grind.core.dto.entity.TaskDTO;
-import com.grind.core.dto.wrap.MessageType;
-import com.grind.core.enums.OutboxStatus;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.model.OutboxEvent;
 import com.grind.core.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -34,6 +32,7 @@ public class OutboxService {
 
     // TODO add retry for 'FAILED' outbox events
 
+    @Scheduled(fixedDelay = 1000)
     public void sendOutbox() {
 
         List<OutboxEvent> batch = fetchBatch();
@@ -51,6 +50,7 @@ public class OutboxService {
                         ev.getTopic()
                 );
                 ev.markSent();
+                log.info("OUTBOX EVENT SENT");
             } catch (Exception ex) {
                 ev.markFailed(ex.getMessage());
                 log.warn(ex.getMessage());
@@ -70,11 +70,11 @@ public class OutboxService {
         outboxRepository.saveAll(events);
     }
 
-    public void genEvent(TaskDTO dto, MessageType type, String traceId) {
+    public void genEvent(TaskDTO dto, CoreMessageType type, String traceId) {
         outboxRepository.save(toEvent(dto, type, traceId));
     }
 
-    public void genEvents(List<TaskDTO> dtoList, MessageType type, String traceId) {
+    public void genEvents(List<TaskDTO> dtoList, CoreMessageType type, String traceId) {
         outboxRepository.saveAll(
                 dtoList.stream()
                         .map(dto -> toEvent(dto, type, traceId))
@@ -82,7 +82,7 @@ public class OutboxService {
         );
     }
 
-    private OutboxEvent toEvent(TaskDTO dto, MessageType type, String traceId) {
+    private OutboxEvent toEvent(TaskDTO dto, CoreMessageType type, String traceId) {
 
         try {
             String payload = objectMapper.writeValueAsString(

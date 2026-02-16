@@ -7,8 +7,7 @@ import com.grind.core.dto.request.task.CreateTaskRequest;
 import com.grind.core.dto.request.task.PlanTaskDateDTO;
 import com.grind.core.dto.request.task.PlanTaskSprintDTO;
 import com.grind.core.dto.wrap.Reply;
-import com.grind.core.enums.coreMessageTypes.CoreTaskReqMsgType;
-import com.grind.core.enums.coreMessageTypes.CoreTaskResMsgType;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.model.Task;
 import com.grind.core.service.application.TaskService;
 import com.grind.core.util.ActionReplyExecutor;
@@ -26,7 +25,7 @@ public class TaskReplyHandler {
     private final ObjectMapper objectMapper;
     private final ActionReplyExecutor exec;
 
-    public Reply<?> routeReply(CoreTaskReqMsgType type, String payload) {
+    public Reply<?> routeReply(CoreMessageType type, String payload) {
         switch (type) {
             case GET_TASKS_OF_TRACK -> {
                 return handleGetTasksOfTrack(payload);
@@ -68,7 +67,7 @@ public class TaskReplyHandler {
     private Reply<List<TaskDTO>> handleGetTasksOfTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTaskResMsgType.TASKS_OF_TRACK,
+                        CoreMessageType.TASKS_OF_TRACK,
                         service.getByTrack(
                                 IdParser.run(payload)
                         ).stream().map(Task::mapDTO).toList()
@@ -79,7 +78,7 @@ public class TaskReplyHandler {
     private Reply<List<TaskDTO>> handleGetTasksOfSprint(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTaskResMsgType.TASKS_OF_SPRINT,
+                        CoreMessageType.TASKS_OF_SPRINT,
                         service.getBySprint(
                                 IdParser.run(payload)
                         ).stream().map(Task::mapDTO).toList()
@@ -90,7 +89,7 @@ public class TaskReplyHandler {
     private Reply<TaskDTO> handleGetTask(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTaskResMsgType.TASK,
+                        CoreMessageType.TASK,
                         service.getById(
                                 IdParser.run(payload)
                         ).mapDTO()
@@ -102,7 +101,7 @@ public class TaskReplyHandler {
     private Reply<List<TaskDTO>> handleGetAllTasks() {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTaskResMsgType.ALL_TASKS,
+                        CoreMessageType.ALL_TASKS,
                         service.getAllTasks()
                                 .stream().map(Task::mapDTO).toList()
                 )
@@ -113,7 +112,7 @@ public class TaskReplyHandler {
         return exec.withErrorMapping(() -> {
             ChangeTaskRequest req = objectMapper.readValue(payload, ChangeTaskRequest.class);
             return Reply.ok(
-                    CoreTaskResMsgType.TASK_CHANGED,
+                    CoreMessageType.TASK_CHANGED,
                     service.changeTask(
                             req.taskId(),
                             req.description(),
@@ -127,7 +126,7 @@ public class TaskReplyHandler {
         return exec.withErrorMapping(() -> {
             PlanTaskSprintDTO req = objectMapper.readValue(payload, PlanTaskSprintDTO.class);
             return Reply.ok(
-                    CoreTaskResMsgType.TASK_PLANNED,
+                    CoreMessageType.TASK_PLANNED,
                     service.planTaskSprint(
                             req.taskId(),
                             req.sprintId(),
@@ -140,7 +139,7 @@ public class TaskReplyHandler {
         return exec.withErrorMapping(() -> {
             PlanTaskDateDTO req = objectMapper.readValue(payload, PlanTaskDateDTO.class);
             return Reply.ok(
-                    CoreTaskResMsgType.TASK_PLANNED,
+                    CoreMessageType.TASK_PLANNED,
                     service.planTaskByDate(req.taskId(), req.plannedDate())
                             .mapDTO()
             );
@@ -150,7 +149,7 @@ public class TaskReplyHandler {
     private Reply<TaskDTO> handleCompleteTask(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTaskResMsgType.TASK_COMPLETED,
+                        CoreMessageType.TASK_COMPLETED,
                         service.completeTask(
                                 IdParser.run(payload)
                         ).mapDTO()
@@ -161,7 +160,7 @@ public class TaskReplyHandler {
     private Reply<TaskDTO> handleTaskToBacklog(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTaskResMsgType.TASK_AT_BACKLOG,
+                        CoreMessageType.TASK_AT_BACKLOG,
                         service.toBackLog(
                                 IdParser.run(payload)
                         ).mapDTO()
@@ -173,7 +172,7 @@ public class TaskReplyHandler {
         return exec.withErrorMapping(() -> {
             CreateTaskRequest req = objectMapper.readValue(payload, CreateTaskRequest.class);
             return Reply.ok(
-                    CoreTaskResMsgType.TASK_CREATED,
+                    CoreMessageType.TASK_CREATED,
                     service.createTask(
                             req.title(),
                             req.trackId(),
@@ -185,7 +184,7 @@ public class TaskReplyHandler {
     private Reply<TaskDTO> handleDeleteTask(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTaskResMsgType.TASK_DELETED,
+                        CoreMessageType.TASK_DELETED,
                         service.deleteTask(
                                 IdParser.run(payload)
                         ).mapDTO()

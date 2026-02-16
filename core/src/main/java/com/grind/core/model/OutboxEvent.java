@@ -1,6 +1,7 @@
 package com.grind.core.model;
 
-import com.grind.core.dto.wrap.MessageType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -20,7 +21,6 @@ import java.util.UUID;
         }
 )
 public class OutboxEvent {
-
     @Id
     private String id;
 
@@ -35,7 +35,7 @@ public class OutboxEvent {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false)
-    private MessageType eventType;
+    private CoreMessageType eventType;
 
     @Column(name = "trace_id", nullable = false)
     private String traceId;
@@ -43,8 +43,8 @@ public class OutboxEvent {
     @Column(name = "topic", nullable = false)
     private String topic;
 
-    @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
-    private String payload;
+    @Column(name = "payload", nullable = false)
+    private JsonNode payload;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.statistics.dto.CoreMessageType;
 import com.grind.statistics.dto.CoreRecord;
+import com.grind.statistics.enums.CoreTaskResMsgType;
 import com.grind.statistics.repository.ClickhouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -31,12 +32,12 @@ public class KafkaTaskConsumer {
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
     private final ClickhouseRepository repository;
-    private static final List<CoreMessageType> events = List.of(
-            CoreMessageType.TASK_CREATED,
-            CoreMessageType.TASK_DELETED,
-            CoreMessageType.TASK_COMPLETED,
-            CoreMessageType.TASK_PLANNED,
-            CoreMessageType.TASK_AT_BACKLOG
+    private static final List<CoreTaskResMsgType> events = List.of(
+            CoreTaskResMsgType.TASK_CREATED,
+            CoreTaskResMsgType.TASK_DELETED,
+            CoreTaskResMsgType.TASK_COMPLETED,
+            CoreTaskResMsgType.TASK_PLANNED,
+            CoreTaskResMsgType.TASK_AT_BACKLOG
     );
 
     @Value("${kafka.topic.core.event.task}")

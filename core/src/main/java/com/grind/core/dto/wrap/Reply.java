@@ -1,13 +1,13 @@
 package com.grind.core.dto.wrap;
 
-import com.grind.core.enums.coreMessageTypes.SystemMsgType;
+import com.grind.core.enums.CoreMessageType;
 import org.springframework.http.HttpStatus;
 
 public record Reply<T>(
-        MessageType type,
+        CoreMessageType type,
         Body<T> body
 ) {
-    public static <T> Reply<T> ok(MessageType type, T payload) {
+    public static <T> Reply<T> ok(CoreMessageType type, T payload) {
         return new Reply<>(
                 type,
                 Body.ok(payload)
@@ -16,7 +16,7 @@ public record Reply<T>(
 
     public static <T> Reply<T> error(Throwable ex, HttpStatus status) {
         return new Reply<>(
-                SystemMsgType.ERROR,
+                CoreMessageType.ERROR,
                 Body.err(ex.getMessage(), status)
         );
     }

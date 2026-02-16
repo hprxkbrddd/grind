@@ -2,12 +2,9 @@ package com.grind.core.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.dto.entity.TrackDTO;
 import com.grind.core.dto.wrap.Reply;
 import com.grind.core.enums.CoreMessageType;
-import com.grind.core.enums.coreMessageTypes.CoreTaskReqMsgType;
-import com.grind.core.enums.coreMessageTypes.CoreTrackReqMsgType;
 import com.grind.core.service.handler.TrackReplyHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +28,10 @@ public class KafkaTrackConsumer {
     private final KafkaProducer kafkaProducer;
     private final TrackReplyHandler replyHandler;
     private final ObjectMapper objectMapper;
-    private final static List<CoreTrackReqMsgType> TO_PUBLISH_EVENT = List.of(
-            CoreTrackReqMsgType.CHANGE_TRACK,
-            CoreTrackReqMsgType.CREATE_TRACK,
-            CoreTrackReqMsgType.DELETE_TRACK
+    private final static List<CoreMessageType> TO_PUBLISH_EVENT = List.of(
+            CoreMessageType.CHANGE_TRACK,
+            CoreMessageType.CREATE_TRACK,
+            CoreMessageType.DELETE_TRACK
     );
 
     @Value("${kafka.topic.core.event.track}")
@@ -67,7 +64,7 @@ public class KafkaTrackConsumer {
 
 
             // HANDLING REQUEST
-            CoreTrackReqMsgType type = CoreTrackReqMsgType.valueOf(messageType);
+            CoreMessageType type = CoreMessageType.valueOf(messageType);
             Reply<?> rep = replyHandler.routeReply(type, payload);
             if (TO_PUBLISH_EVENT.contains(type) && rep.body().status() == HttpStatus.OK) {
 //                TODO publish events for all tasks, which are connected with sprints of this track

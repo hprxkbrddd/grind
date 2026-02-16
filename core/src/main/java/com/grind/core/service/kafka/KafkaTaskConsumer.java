@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.dto.wrap.Reply;
-import com.grind.core.enums.coreMessageTypes.CoreTaskReqMsgType;
-import com.grind.core.enums.coreMessageTypes.SystemMsgType;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.service.handler.TaskReplyHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,13 +29,13 @@ public class KafkaTaskConsumer {
     private final TaskReplyHandler replyHandler;
     private final ObjectMapper objectMapper;
     private final OutboxService outboxService;
-    private final static List<CoreTaskReqMsgType> TO_PUBLISH_EVENT = List.of(
-            CoreTaskReqMsgType.CREATE_TASK,
-            CoreTaskReqMsgType.PLAN_TASK_DATE,
-            CoreTaskReqMsgType.PLAN_TASK_SPRINT,
-            CoreTaskReqMsgType.COMPLETE_TASK,
-            CoreTaskReqMsgType.MOVE_TASK_TO_BACKLOG,
-            CoreTaskReqMsgType.DELETE_TASK
+    private final static List<CoreMessageType> TO_PUBLISH_EVENT = List.of(
+            CoreMessageType.CREATE_TASK,
+            CoreMessageType.PLAN_TASK_DATE,
+            CoreMessageType.PLAN_TASK_SPRINT,
+            CoreMessageType.COMPLETE_TASK,
+            CoreMessageType.MOVE_TASK_TO_BACKLOG,
+            CoreMessageType.DELETE_TASK
     );
 
     @KafkaListener(id = "core-server-task", topics = "core.request.task")
@@ -65,7 +64,7 @@ public class KafkaTaskConsumer {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // HANDLING REQUEST
-            CoreTaskReqMsgType type = CoreTaskReqMsgType.valueOf(messageType);
+            CoreMessageType type = CoreMessageType.valueOf(messageType);
             Reply<?> rep = replyHandler.routeReply(type, payload);
             if (TO_PUBLISH_EVENT.contains(type) && rep.body().status() == HttpStatus.OK) {
                 Object repPayload = rep.body().payload();
@@ -83,7 +82,7 @@ public class KafkaTaskConsumer {
                     }
                 }
             }
-            String replyPayload = rep.type().code().equals(SystemMsgType.ERROR.name()) ?
+            String replyPayload = rep.type() == CoreMessageType.ERROR ?
                     rep.body().error() : objectMapper.writeValueAsString(rep.body());
 
             kafkaProducer.reply(replyPayload, rep.type(), correlationId, traceId);

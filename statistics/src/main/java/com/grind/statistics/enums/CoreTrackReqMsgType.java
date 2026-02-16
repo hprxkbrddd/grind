@@ -1,6 +1,6 @@
-package com.grind.core.enums.coreMessageTypes;
+package com.grind.statistics.enums;
 
-import com.grind.core.dto.wrap.MessageType;
+import com.grind.statistics.dto.wrap.MessageType;
 
 public enum CoreTrackReqMsgType implements MessageType {
     GET_TRACK,

@@ -47,7 +47,7 @@ public class Task {
     private LocalDateTime createdAt;
 
     @Version
-    @Column(nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version;
 
     public Task() {

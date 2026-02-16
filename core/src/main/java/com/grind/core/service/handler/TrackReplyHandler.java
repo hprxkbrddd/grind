@@ -7,15 +7,12 @@ import com.grind.core.dto.request.track.ChangeTrackRequest;
 import com.grind.core.dto.request.track.CreateTrackRequest;
 import com.grind.core.dto.wrap.Reply;
 import com.grind.core.enums.CoreMessageType;
-import com.grind.core.enums.coreMessageTypes.CoreTrackReqMsgType;
-import com.grind.core.enums.coreMessageTypes.CoreTrackResMsgType;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
 import com.grind.core.service.application.TrackService;
 import com.grind.core.util.ActionReplyExecutor;
 import com.grind.core.util.IdParser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +26,7 @@ public class TrackReplyHandler {
     private final ObjectMapper objectMapper;
     private final ActionReplyExecutor exec;
 
-    public Reply<?> routeReply(CoreTrackReqMsgType type, String payload) {
+    public Reply<?> routeReply(CoreMessageType type, String payload) {
         switch (type) {
             case GET_TRACKS_OF_USER -> {
                 return handleGetTracksOfUser();
@@ -59,7 +56,7 @@ public class TrackReplyHandler {
     private Reply<List<TrackDTO>> handleGetTracksOfUser() {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTrackResMsgType.TRACKS_OF_USER,
+                        CoreMessageType.TRACKS_OF_USER,
                         service.getByUserId(
                                         SecurityContextHolder.getContext().getAuthentication().getName()
                                 )
@@ -73,7 +70,7 @@ public class TrackReplyHandler {
     private Reply<TrackDTO> handleGetTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTrackResMsgType.TRACK,
+                        CoreMessageType.TRACK,
                         service.getById(
                                 IdParser.run(payload)
                         ).mapDTO()
@@ -83,7 +80,7 @@ public class TrackReplyHandler {
 
     private Reply<List<TrackDTO>> handleGetAllTracks() {
         return exec.withErrorMapping(() ->
-                Reply.ok(CoreTrackResMsgType.ALL_TRACKS,
+                Reply.ok(CoreMessageType.ALL_TRACKS,
                         service.getAllTracks()
                                 .stream()
                                 .map(Track::mapDTO)
@@ -95,7 +92,7 @@ public class TrackReplyHandler {
     private Reply<List<SprintDTO>> handleGetSprintsOfTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTrackResMsgType.SPRINTS_OF_TRACK,
+                        CoreMessageType.SPRINTS_OF_TRACK,
                         service.getSprintsOfTrack(
                                 IdParser.run(payload)
                         ).stream().map(Sprint::mapDTO).toList()
@@ -106,7 +103,7 @@ public class TrackReplyHandler {
     private Reply<TrackDTO> handleChangeTrack(String payload) {
         return exec.withErrorMapping(() -> {
             ChangeTrackRequest req = objectMapper.readValue(payload, ChangeTrackRequest.class);
-            return Reply.ok(CoreTrackResMsgType.TRACK_CHANGED,
+            return Reply.ok(CoreMessageType.TRACK_CHANGED,
                     service.changeTrack(
                             req.id(),
                             req.name(),
@@ -124,7 +121,7 @@ public class TrackReplyHandler {
     private Reply<TrackDTO> handleCreateTrack(String payload) {
         return exec.withErrorMapping(() -> {
             CreateTrackRequest req = objectMapper.readValue(payload, CreateTrackRequest.class);
-            return Reply.ok(CoreTrackResMsgType.TRACK_CREATED,
+            return Reply.ok(CoreMessageType.TRACK_CREATED,
                     service.createTrack(
                             req.name(),
                             req.description(),
@@ -142,7 +139,7 @@ public class TrackReplyHandler {
     private Reply<TrackDTO> handleDeleteTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        CoreTrackResMsgType.TRACK_DELETED,
+                        CoreMessageType.TRACK_DELETED,
                         service.deleteTrack(
                                 IdParser.run(payload)
                         ).mapDTO()
