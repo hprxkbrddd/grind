@@ -1,4 +1,4 @@
-package com.grind.statistics.dto;
+package com.grind.statistics.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

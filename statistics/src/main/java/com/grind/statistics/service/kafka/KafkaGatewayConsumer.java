@@ -2,12 +2,11 @@ package com.grind.statistics.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.statistics.dto.StatisticsMessageType;
+import com.grind.statistics.enums.StatisticsMessageType;
 import com.grind.statistics.dto.wrap.Reply;
 import com.grind.statistics.service.handler.StatisticsHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.archivers.dump.DumpArchiveEntry;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;

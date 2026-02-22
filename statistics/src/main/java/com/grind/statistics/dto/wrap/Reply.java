@@ -1,6 +1,6 @@
 package com.grind.statistics.dto.wrap;
 
-import com.grind.statistics.dto.StatisticsMessageType;
+import com.grind.statistics.enums.StatisticsMessageType;
 import org.springframework.http.HttpStatus;
 
 public record Reply<T>(

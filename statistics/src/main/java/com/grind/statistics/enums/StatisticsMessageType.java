@@ -1,4 +1,4 @@
-package com.grind.statistics.dto;
+package com.grind.statistics.enums;
 
 public enum StatisticsMessageType {
     GET_TRACK_COMPLETION,

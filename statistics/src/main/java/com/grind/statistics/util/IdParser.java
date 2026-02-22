@@ -2,7 +2,7 @@ package com.grind.statistics.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.statistics.dto.IdDTO;
+import com.grind.statistics.dto.request.IdDTO;
 import org.springframework.stereotype.Component;
 
 @Component

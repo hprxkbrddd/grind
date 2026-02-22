@@ -1,6 +1,6 @@
 package com.grind.statistics.controller;
 
-import com.grind.statistics.dto.StatisticsEventDTO;
+import com.grind.statistics.dto.request.StatisticsEventDTO;
 import com.grind.statistics.service.application.ClickhouseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

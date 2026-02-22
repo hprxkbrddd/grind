@@ -48,6 +48,7 @@ public class ClickhouseQueries {
                 track_id,
                 countIf(task_status = 'PLANNED') AS active_wip
             FROM analytics.task_actual_state_v
+            WHERE track_id = {track:UInt64}
             GROUP BY track_id;
             """;
     public static final String Q_OVERDUE_AMONG_COMPLETED = """
@@ -61,6 +62,7 @@ public class ClickhouseQueries {
                     2
                 ) AS overdue_among_active_percent
             FROM analytics.task_actual_state_v
+            WHERE track_id = {track:UInt64}
             GROUP BY track_id;
             """;
     public static final String Q_COMPLETED_LAST_MONTH = """
@@ -70,6 +72,7 @@ public class ClickhouseQueries {
             FROM analytics.raw
             WHERE task_status = 'COMPLETED'
               AND changed_at >= now() - INTERVAL 30 DAY
+            WHERE track_id = {track:UInt64}
             GROUP BY track_id;
             """;
     public static final String Q_INGEST_EVENT = """

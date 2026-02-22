@@ -1,18 +1,14 @@
 package com.grind.statistics.service.handler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.statistics.dto.IdDTO;
-import com.grind.statistics.dto.StatisticsMessageType;
-import com.grind.statistics.dto.TrackCompletionDTO;
+import com.grind.statistics.enums.StatisticsMessageType;
+import com.grind.statistics.dto.response.TrackCompletionDTO;
 import com.grind.statistics.dto.wrap.Reply;
 import com.grind.statistics.service.application.ClickhouseService;
 import com.grind.statistics.util.ActionReplyExecutor;
 import com.grind.statistics.util.IdParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -63,26 +59,68 @@ public class StatisticsHandler {
     }
 
     private Reply<?> handleGetCompletedLastMonth(String payload) {
-        return Reply.ok(null, null);
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.COMPLETED_LAST_MONTH,
+                        clickhouseService.getCompletedLastMonth(
+                                IdParser.run(payload)
+                        )
+                )
+        );
     }
 
     private Reply<?> handleOverdueAmongCompleted(String payload) {
-        return Reply.ok(null, null);
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.OVERDUE_AMONG_COMPLETED,
+                        clickhouseService.getOverdueAmongCompleted(
+                                IdParser.run(payload)
+                        )
+                )
+        );
     }
 
     private Reply<?> handleGetWorkInProgress(String payload) {
-        return Reply.ok(null, null);
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.WORK_IN_PROGRESS,
+                        clickhouseService.getWIP(
+                                IdParser.run(payload)
+                        )
+                )
+        );
     }
 
     private Reply<?> handleActiveTasksAging(String payload) {
-        return Reply.ok(null, null);
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.ACTIVE_TASKS_AGING,
+                        clickhouseService.getActiveTasksAging(
+                                IdParser.run(payload)
+                        )
+                )
+        );
     }
 
     private Reply<?> handleGetOverduePressure(String payload) {
-        return Reply.ok(null, null);
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.OVERDUE_PRESSURE,
+                        clickhouseService.getOverduePressure(
+                                IdParser.run(payload)
+                        )
+                )
+        );
     }
 
     private Reply<?> handleGetRemainingLoad(String payload) {
-        return Reply.ok(null, null);
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.REMAINING_LOAD,
+                        clickhouseService.getRemainingLoad(
+                                IdParser.run(payload)
+                        )
+                )
+        );
     }
 }

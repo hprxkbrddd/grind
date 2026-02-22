@@ -23,4 +23,52 @@ public class StatisticsService {
                 statReqTopic
         );
     }
+
+    public Body<?> callGetRemainingLoad(String trackId){
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_REMAINING_LOAD.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetOverduePressure(String trackId){
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_OVERDUE_PRESSURE.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetActiveTasksAging(String trackId){
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_ACTIVE_TASKS_AGING.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetWorkInProgress(String trackId){
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_WORK_IN_PROGRESS.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetOverdueAmongCompleted(String trackId){
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_OVERDUE_AMONG_COMPLETED.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetCompletedLastMonth(String trackId){
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_COMPLETED_LAST_MONTH.name(),
+                statReqTopic
+        );
+    }
 }
