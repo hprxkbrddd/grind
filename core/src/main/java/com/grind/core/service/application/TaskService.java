@@ -14,8 +14,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -29,6 +32,7 @@ import java.util.List;
 @Validated
 public class TaskService {
 
+    private static final Logger log = LoggerFactory.getLogger(TaskService.class);
     private final TaskRepository taskRepository;
     private final TrackRepository trackRepository;
     private final SprintRepository sprintRepository;
@@ -196,10 +200,27 @@ public class TaskService {
             String title,
             @NotNull(message = "Task description must not be null")
             String description) {
+
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new TaskNotFoundException(taskId, "Task has not been changed"));
-        if (description != null) task.setDescription(description);
-        if (title != null) task.setTitle(title);
+                .orElseThrow(() ->
+                        new TaskNotFoundException(taskId, "Task not found"));
+
+        boolean changed = false;
+
+        if (!title.equals(task.getTitle())) {
+            task.setTitle(title);
+            changed = true;
+        }
+
+        if (!description.equals(task.getDescription())) {
+            task.setDescription(description);
+            changed = true;
+        }
+
+        if (!changed) {
+            throw new IllegalStateException("Task was not modified");
+        }
+
         return task;
     }
 }

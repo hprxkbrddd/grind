@@ -20,7 +20,7 @@ public class CoreTaskService {
     @Value("${kafka.topic.core.request.task}")
     private String coreReqTaskTopic;
 
-    public Body callGetAllTasks() {
+    public Body<?> callGetAllTasks() {
         return kafkaProducer.requestReply(
                 null,
                 CoreMessageType.GET_ALL_TASKS,
@@ -28,7 +28,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callGetTask(String taskId){
+    public Body<?> callGetTask(String taskId){
         return kafkaProducer.requestReply(
                 IdDTO.of(taskId),
                 CoreMessageType.GET_TASK,
@@ -36,7 +36,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callGetTasksOfSprint(String sprintId){
+    public Body<?> callGetTasksOfSprint(String sprintId){
         return kafkaProducer.requestReply(
                 IdDTO.of(sprintId),
                 CoreMessageType.GET_TASKS_OF_SPRINT,
@@ -44,7 +44,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callGetTasksOfTrack(String trackId){
+    public Body<?> callGetTasksOfTrack(String trackId){
         return kafkaProducer.requestReply(
                 IdDTO.of(trackId),
                 CoreMessageType.GET_TASKS_OF_TRACK,
@@ -52,7 +52,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callCreateTask(CreateTaskRequest dto){
+    public Body<?> callCreateTask(CreateTaskRequest dto){
         return kafkaProducer.requestReply(
                 dto,
                 CoreMessageType.CREATE_TASK,
@@ -60,7 +60,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callChangeTask(ChangeTaskDTO dto){
+    public Body<?> callChangeTask(ChangeTaskDTO dto){
         return kafkaProducer.requestReply(
                 dto,
                 CoreMessageType.CHANGE_TASK,
@@ -68,7 +68,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callPlanTaskSprint(PlanTaskSprintDTO dto){
+    public Body<?> callPlanTaskSprint(PlanTaskSprintDTO dto){
         return kafkaProducer.requestReply(
                 dto,
                 CoreMessageType.PLAN_TASK_SPRINT,
@@ -76,7 +76,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callPlanTaskDate(PlanTaskDateDTO dto){
+    public Body<?> callPlanTaskDate(PlanTaskDateDTO dto){
         return kafkaProducer.requestReply(
                 dto,
                 CoreMessageType.PLAN_TASK_DATE,
@@ -84,7 +84,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callCompleteTask(String taskId){
+    public Body<?> callCompleteTask(String taskId){
         return kafkaProducer.requestReply(
                 IdDTO.of(taskId),
                 CoreMessageType.COMPLETE_TASK,
@@ -92,7 +92,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callTaskToBacklog(String taskId){
+    public Body<?> callTaskToBacklog(String taskId){
         return kafkaProducer.requestReply(
                 IdDTO.of(taskId),
                 CoreMessageType.MOVE_TASK_TO_BACKLOG,
@@ -100,7 +100,7 @@ public class CoreTaskService {
         );
     }
 
-    public Body callDeleteTask(String taskId){
+    public Body<?> callDeleteTask(String taskId){
         return kafkaProducer.requestReply(
                 IdDTO.of(taskId),
                 CoreMessageType.DELETE_TASK,

@@ -82,8 +82,7 @@ public class KafkaTaskConsumer {
                     }
                 }
             }
-            String replyPayload = rep.type() == CoreMessageType.ERROR ?
-                    rep.body().error() : objectMapper.writeValueAsString(rep.body());
+            String replyPayload = objectMapper.writeValueAsString(rep.body());
 
             kafkaProducer.reply(replyPayload, rep.type(), correlationId, traceId);
 

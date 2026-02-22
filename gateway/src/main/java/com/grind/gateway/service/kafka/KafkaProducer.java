@@ -102,8 +102,8 @@ public class KafkaProducer {
         publish(null, type, null, topic, correlationId);
     }
 
-    public Body retrieveResponse(String correlationId) {
-        CompletableFuture<Body> future = pendingRegistry.get(correlationId);
+    public Body<?> retrieveResponse(String correlationId) {
+        CompletableFuture<Body<?>> future = pendingRegistry.get(correlationId);
         if (future == null) {
             throw new IllegalStateException("No pending request with correlationId: " + correlationId);
         }
@@ -112,23 +112,23 @@ public class KafkaProducer {
             return future.get(responseTimeoutMs, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             future.cancel(false);
-            return Body.of("Gateway timeout exceeded", HttpStatus.GATEWAY_TIMEOUT);
+            return Body.err("Gateway timeout exceeded", HttpStatus.GATEWAY_TIMEOUT);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return Body.of("Interrupted while waiting for response", HttpStatus.INTERNAL_SERVER_ERROR);
+            return Body.err("Interrupted while waiting for response", HttpStatus.INTERNAL_SERVER_ERROR);
 
         } catch (ExecutionException e) {
             // причина из бизнес-логики/обработчика ответа
             Throwable cause = e.getCause();
-            return Body.of("Could not handle Kafka response: " + (cause != null ? cause.getMessage() : e.getMessage()),
+            return Body.err("Could not handle Kafka response: " + (cause != null ? cause.getMessage() : e.getMessage()),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             pendingRegistry.remove(correlationId);
         }
     }
 
-    public Body requestReply(Object body, CoreMessageType type, String topic) {
+    public Body<?> requestReply(Object body, CoreMessageType type, String topic) {
         String correlationId = UUID.randomUUID().toString();
         try {
             publish(
@@ -138,7 +138,7 @@ public class KafkaProducer {
                     correlationId
             );
         } catch (JsonProcessingException e) {
-            return Body.of("Request serialization exception", HttpStatus.INTERNAL_SERVER_ERROR);
+            return Body.err("Request serialization exception", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return retrieveResponse(correlationId);
     }

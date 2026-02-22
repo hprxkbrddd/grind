@@ -23,8 +23,8 @@ public class KafkaResponseListener {
             @Payload String payload,
             @Header(KafkaHeaders.CORRELATION_ID) String correlationId
     ) throws JsonProcessingException {
-        Body response = objectMapper.readValue(payload, Body.class);
-        CompletableFuture<Body> future = pendingRegistry.remove(correlationId);
+        Body<?> response = objectMapper.readValue(payload, Body.class);
+        CompletableFuture<Body<?>> future = pendingRegistry.remove(correlationId);
         if (future!=null){
             future.complete(response);
         } else {

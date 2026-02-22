@@ -58,8 +58,8 @@ public class Task {
         return new TaskDTO(
                 id,
                 title,
-                sprint == null ? "" : sprint.getId(),
-                track == null ? "" : track.getId(),
+                sprint == null ? "00000000-0000-0000-0000-000000000000" : sprint.getId(),
+                track == null ? "00000000-0000-0000-0000-000000000000" : track.getId(),
                 plannedDate,
                 actualDate,
                 description,

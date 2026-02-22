@@ -2,14 +2,15 @@ package com.grind.statistics.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-public record CoreRecord(
+public record StatisticsEventDTO(
         @JsonProperty("event_id") String eventId,
         @JsonProperty("track_id") String trackId,
         @JsonProperty("sprint_id") String sprintId,
+        @JsonProperty("user_id") String userId,
         @JsonProperty("task_id") String taskId,
-        Integer version,
+        Long version,
         @JsonProperty("task_status") TaskStatus taskStatus,
-        @JsonProperty("changed_at") LocalDate changedAt
+        @JsonProperty("changed_at") LocalDateTime changedAt
 ) {}

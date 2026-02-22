@@ -2,7 +2,6 @@ package com.grind.statistics.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.statistics.dto.CoreRecord;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -12,8 +11,14 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
 @Repository
@@ -31,20 +36,6 @@ public class ClickhouseRepository {
 
     private final ObjectMapper objectMapper;
 
-    private static final String trackCompletionPercentQuery = """
-            SELECT
-                track_id,
-                round(
-                    countIf(task_status = 'COMPLETED') / count() * 100,
-                    2
-                ) AS completion_percent,
-                count() AS total_tasks
-            FROM analytics.task_actual_state_v
-            WHERE track_id = {track:UInt64}
-            GROUP BY track_id
-            FORMAT JSONEachRow
-            """;
-
     @PostConstruct
     public void init() {
         this.webClient = WebClient.builder()
@@ -53,35 +44,84 @@ public class ClickhouseRepository {
                 .build();
     }
 
-    public void postEvent(List<CoreRecord> batch) throws JsonProcessingException {
-        if (batch.isEmpty()) return;
-        StringJoiner joiner = new StringJoiner("\n");
-        for (CoreRecord coreRecord : batch) {
-            joiner.add(objectMapper.writeValueAsString(coreRecord));
-        }
-        String body = joiner + "\n";
+    public Mono<Void> requestInsert(
+            String query,
+            Map<String, String> params,
+            List<? extends Record> payload
+    ) {
+        return Mono.defer(() -> {
+            try {
+                String body = buildBody(payload);
 
-        log.info(body);
+                return webClient.post()
+                        .uri(uriBuilder -> buildUri(uriBuilder, query, params))
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .bodyValue(body)
+                        .retrieve()
+                        .onStatus(HttpStatusCode::is5xxServerError,
+                                resp -> {
+                                    log.error(body);
+                                    return resp.bodyToMono(String.class)
+                                            .flatMap(msg -> Mono.error(new RuntimeException("ClickHouse 5xx: " + msg)));
+                                }
+                        )
+                        .onStatus(HttpStatusCode::is4xxClientError,
+                                resp -> {
+                                    log.error(body);
+                                    return resp.bodyToMono(String.class)
+                                            .flatMap(msg -> Mono.error(new IllegalStateException("ClickHouse 4xx: " + msg)));
+                                }
+                        )
+                        .toBodilessEntity()
+                        .then();
 
-        webClient.post()
-                .uri(uriBuilder ->
-                        uriBuilder
-                                .queryParam("database", "analytics")
-                                .queryParam("query", "INSERT INTO raw FORMAT JSONEachRow\n")
-                                .queryParam("input_format_skip_unknown_fields", 1)
-                                .build()
+            } catch (JsonProcessingException e) {
+                return Mono.error(new IllegalStateException("Serialization failed", e));
+            }
+        });
+    }
 
-                )
-                .contentType(MediaType.TEXT_PLAIN)
-                .bodyValue(body)
+    public <T> Flux<T> requestSelect(
+            String query,
+            Map<String, String> params,
+            Class<T> expectedRes
+    ) {
+        return webClient.get()
+                .uri(uriBuilder -> buildUri(uriBuilder, query, params))
                 .retrieve()
                 .onStatus(HttpStatusCode::is5xxServerError,
                         resp -> resp.bodyToMono(String.class)
-                                .map(msg -> new RuntimeException("ClickHouse 5xx: " + msg)))
+                                .flatMap(msg -> Mono.error(new RuntimeException("ClickHouse 5xx: " + msg)))
+                )
                 .onStatus(HttpStatusCode::is4xxClientError,
                         resp -> resp.bodyToMono(String.class)
-                                .map(msg -> new IllegalStateException("ClickHouse 4xx: " + msg)))
-                .toBodilessEntity()
-                .block();
+                                .flatMap(msg ->
+                                        Mono.error(new IllegalStateException("ClickHouse 4xx: " + msg))
+                                ))
+                .bodyToFlux(expectedRes);
+    }
+
+    private String buildBody(List<? extends Record> payload) throws JsonProcessingException {
+        String body = "";
+        if (payload != null && !payload.isEmpty()) {
+            StringJoiner joiner = new StringJoiner("\n");
+            for (Record statEv : payload) {
+                joiner.add(objectMapper.writeValueAsString(statEv));
+            }
+            body = joiner + "\n";
+        }
+        return body;
+    }
+
+    private URI buildUri(
+            UriBuilder uriBuilder,
+            String query,
+            Map<String, String> params
+    ) {
+        uriBuilder.queryParam("query", query);
+        if (params != null && !params.isEmpty()) {
+            params.forEach(uriBuilder::queryParam);
+        }
+        return uriBuilder.build();
     }
 }

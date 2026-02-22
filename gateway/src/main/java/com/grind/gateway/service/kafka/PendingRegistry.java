@@ -8,17 +8,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class PendingRegistry {
-    private final ConcurrentHashMap<String, CompletableFuture<Body>> pending = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CompletableFuture<Body<?>>> pending = new ConcurrentHashMap<>();
 
-    public CompletableFuture<Body> get(String correlationId){
+    public CompletableFuture<Body<?>> get(String correlationId){
         return pending.get(correlationId);
     }
 
-    public void put(String correlationId, CompletableFuture<Body> future){
+    public void put(String correlationId, CompletableFuture<Body<?>> future){
         pending.put(correlationId, future);
     }
 
-    public CompletableFuture<Body> remove(String correlationId){
+    public CompletableFuture<Body<?>> remove(String correlationId){
         return pending.remove(correlationId);
     }
 }

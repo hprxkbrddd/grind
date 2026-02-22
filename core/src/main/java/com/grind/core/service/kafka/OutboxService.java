@@ -2,21 +2,27 @@ package com.grind.core.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.dto.entity.OutboxRecord;
+import com.grind.core.dto.entity.StatisticsEventDTO;
 import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.enums.CoreMessageType;
 import com.grind.core.model.OutboxEvent;
+import com.grind.core.model.Task;
 import com.grind.core.repository.OutboxRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +31,7 @@ public class OutboxService {
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
     private final KafkaProducer kafkaProducer;
+    private final EntityManager entityManager;
 
     @Value("${kafka.topic.core.event.task}")
     private String coreEvTaskTopic;
@@ -72,28 +79,32 @@ public class OutboxService {
     }
 
     public void genEvent(TaskDTO dto, CoreMessageType type, String traceId) {
-        outboxRepository.save(toEvent(dto, type, traceId));
+        outboxRepository.save(toOutbox(dto, type, traceId));
     }
 
     public void genEvents(List<TaskDTO> dtoList, CoreMessageType type, String traceId) {
         outboxRepository.saveAll(
                 dtoList.stream()
-                        .map(dto -> toEvent(dto, type, traceId))
+                        .map(dto -> toOutbox(dto, type, traceId))
                         .toList()
         );
     }
 
-    private OutboxEvent toEvent(TaskDTO dto, CoreMessageType type, String traceId) {
+    private OutboxEvent toOutbox(TaskDTO dto, CoreMessageType type, String traceId) {
+
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info(">>>>> USER ID: {}", userId);
 
         try {
             String payload = objectMapper.writeValueAsString(
-                    new OutboxRecord(
+                    new StatisticsEventDTO(
                             dto.track_id(),
                             dto.sprint_id(),
+                            userId,
                             dto.id(),
                             dto.version(),
                             dto.status(),
-                            Instant.now()
+                            LocalDateTime.now()
                     )
             );
 
