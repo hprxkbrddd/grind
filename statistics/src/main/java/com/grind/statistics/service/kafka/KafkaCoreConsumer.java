@@ -42,7 +42,7 @@ public class KafkaCoreConsumer {
     @Value("${kafka.topic.core.event.task}")
     private String coreEvTaskTopic;
 
-    @KafkaListener(containerFactory = "kafkaListenerContainerFactory", topics = "${kafka.topic.core.event.task}")
+    @KafkaListener(containerFactory = "kafkaBatchListenerContainerFactory", topics = "${kafka.topic.core.event.task}")
     public void listenCore(
             List<ConsumerRecord<String, String>> records, Acknowledgment ack
     ) throws JsonProcessingException {

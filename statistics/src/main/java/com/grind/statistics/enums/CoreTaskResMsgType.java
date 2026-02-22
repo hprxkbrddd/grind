@@ -1,8 +1,6 @@
 package com.grind.statistics.enums;
 
-import com.grind.statistics.dto.wrap.MessageType;
-
-public enum CoreTaskResMsgType implements MessageType {
+public enum CoreTaskResMsgType {
     TASKS_OF_TRACK,
     TASKS_OF_SPRINT,
     TASK,
@@ -12,11 +10,5 @@ public enum CoreTaskResMsgType implements MessageType {
     TASK_PLANNED,
     TASK_COMPLETED,
     TASK_AT_BACKLOG,
-    TASK_DELETED,
-    ;
-
-    @Override
-    public String code() {
-        return name();
-    }
+    TASK_DELETED
 }

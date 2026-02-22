@@ -21,7 +21,7 @@ public class CoreTaskController {
     public ResponseEntity<Object> getAllTasks() {
         Body<?> body = taskService.callGetAllTasks();
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -30,7 +30,7 @@ public class CoreTaskController {
     public ResponseEntity<Object> getTask(@PathVariable String taskId) {
         Body<?> body = taskService.callGetTask(taskId);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -39,7 +39,7 @@ public class CoreTaskController {
     public ResponseEntity<Object> getTasksOfSprint(@PathVariable String sprintId) {
         Body<?> body = taskService.callGetTasksOfSprint(sprintId);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -48,7 +48,7 @@ public class CoreTaskController {
     public ResponseEntity<Object> getTasksOfTrack(@PathVariable String trackId) {
         Body<?> body = taskService.callGetTasksOfTrack(trackId);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -57,7 +57,7 @@ public class CoreTaskController {
     public ResponseEntity<?> create(@RequestBody CreateTaskRequest dto) {
         Body<?> body = taskService.callCreateTask(dto);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -67,7 +67,7 @@ public class CoreTaskController {
         dto.setTaskId(id);
         Body<?> body = taskService.callChangeTask(dto);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -77,7 +77,7 @@ public class CoreTaskController {
         dto.setTaskId(taskId);
         Body<?> body = taskService.callPlanTaskSprint(dto);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -87,7 +87,7 @@ public class CoreTaskController {
         dto.setTaskId(taskId);
         Body<?> body = taskService.callPlanTaskDate(dto);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -96,7 +96,7 @@ public class CoreTaskController {
     public ResponseEntity<?> completeTask(@PathVariable String taskId) {
         Body<?> body = taskService.callCompleteTask(taskId);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -105,7 +105,7 @@ public class CoreTaskController {
     public ResponseEntity<?> moveTaskToBackLog(@PathVariable String taskId) {
         Body<?> body = taskService.callTaskToBacklog(taskId);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }
@@ -114,7 +114,7 @@ public class CoreTaskController {
     public ResponseEntity<?> delete(@PathVariable String id) {
         Body<?> body = taskService.callDeleteTask(id);
         return ResponseEntity.status(body.status())
-                .body(body.error()==null ?
+                .body(body.error() == null ?
                         body.payload() : body.error()
                 );
     }

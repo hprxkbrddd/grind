@@ -10,7 +10,7 @@ public class ClickhouseQueries {
                 ) AS completion_percent,
                 count() AS total_tasks
             FROM analytics.task_actual_state_v
-            WHERE track_id = {track:UInt64}
+            WHERE track_id = {track:UUID}
             GROUP BY track_id
             FORMAT JSONEachRow
             """;

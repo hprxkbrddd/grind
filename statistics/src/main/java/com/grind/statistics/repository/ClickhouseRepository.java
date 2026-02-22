@@ -86,18 +86,21 @@ public class ClickhouseRepository {
             Map<String, String> params,
             Class<T> expectedRes
     ) {
-        return webClient.get()
-                .uri(uriBuilder -> buildUri(uriBuilder, query, params))
+        return webClient.post()
+                .uri(uriBuilder -> {
+                    uriBuilder.queryParam("database", "analytics");
+//                    uriBuilder.queryParam("query", query);
+                    if (params != null) params.forEach(uriBuilder::queryParam);
+                    return uriBuilder.build();
+                })
+                .bodyValue(query)
                 .retrieve()
                 .onStatus(HttpStatusCode::is5xxServerError,
                         resp -> resp.bodyToMono(String.class)
-                                .flatMap(msg -> Mono.error(new RuntimeException("ClickHouse 5xx: " + msg)))
-                )
+                                .flatMap(msg -> Mono.error(new RuntimeException("ClickHouse 5xx: " + msg))))
                 .onStatus(HttpStatusCode::is4xxClientError,
                         resp -> resp.bodyToMono(String.class)
-                                .flatMap(msg ->
-                                        Mono.error(new IllegalStateException("ClickHouse 4xx: " + msg))
-                                ))
+                                .flatMap(msg -> Mono.error(new IllegalStateException("ClickHouse 4xx: " + msg))))
                 .bodyToFlux(expectedRes);
     }
 
@@ -122,6 +125,7 @@ public class ClickhouseRepository {
         if (params != null && !params.isEmpty()) {
             params.forEach(uriBuilder::queryParam);
         }
+        log.info(uriBuilder.toUriString());
         return uriBuilder.build();
     }
 }

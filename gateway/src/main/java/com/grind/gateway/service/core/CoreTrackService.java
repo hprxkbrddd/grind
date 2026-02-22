@@ -19,57 +19,57 @@ public class CoreTrackService {
     @Value("${kafka.topic.core.request.track}")
     private String coreReqTrackTopic;
 
-    public Body callGetAllTracks() {
+    public Body<?> callGetAllTracks() {
         return kafkaProducer.requestReply(
                 null,
-                CoreMessageType.GET_ALL_TRACKS,
+                CoreMessageType.GET_ALL_TRACKS.name(),
                 coreReqTrackTopic
         );
     }
-    public Body callGetTracksOfUser() {
+    public Body<?> callGetTracksOfUser() {
         return kafkaProducer.requestReply(
                 null,
-                CoreMessageType.GET_TRACKS_OF_USER,
+                CoreMessageType.GET_TRACKS_OF_USER.name(),
                 coreReqTrackTopic
         );
     }
 
-    public Body callGetTrack(String trackId){
+    public Body<?> callGetTrack(String trackId){
         return kafkaProducer.requestReply(
                 IdDTO.of(trackId),
-                CoreMessageType.GET_TRACK,
+                CoreMessageType.GET_TRACK.name(),
                 coreReqTrackTopic
         );
     }
 
-    public Body callGetSprintsOfTrack(String trackId){
+    public Body<?> callGetSprintsOfTrack(String trackId){
         return kafkaProducer.requestReply(
                 IdDTO.of(trackId),
-                CoreMessageType.GET_SPRINTS_OF_TRACK,
+                CoreMessageType.GET_SPRINTS_OF_TRACK.name(),
                 coreReqTrackTopic
         );
     }
 
-    public Body callCreateTrack(CreateTrackRequest dto){
+    public Body<?> callCreateTrack(CreateTrackRequest dto){
         return kafkaProducer.requestReply(
                 dto,
-                CoreMessageType.CREATE_TRACK,
+                CoreMessageType.CREATE_TRACK.name(),
                 coreReqTrackTopic
         );
     }
 
-    public Body callChangeTrack(ChangeTrackDTO dto){
+    public Body<?> callChangeTrack(ChangeTrackDTO dto){
         return kafkaProducer.requestReply(
                 dto,
-                CoreMessageType.CHANGE_TRACK,
+                CoreMessageType.CHANGE_TRACK.name(),
                 coreReqTrackTopic
         );
     }
 
-    public Body callDeleteTrack(String trackId){
+    public Body<?> callDeleteTrack(String trackId){
         return kafkaProducer.requestReply(
                 IdDTO.of(trackId),
-                CoreMessageType.DELETE_TRACK,
+                CoreMessageType.DELETE_TRACK.name(),
                 coreReqTrackTopic
         );
     }

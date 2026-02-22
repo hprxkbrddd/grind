@@ -43,7 +43,6 @@ public class KafkaProducer {
 
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
-        String jsonValue;
 
         System.out.println(">>>>> Trace id: " + traceId);
 

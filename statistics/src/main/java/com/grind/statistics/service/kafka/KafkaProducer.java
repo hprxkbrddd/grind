@@ -33,12 +33,11 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String key, String traceId, String topic) {
+    public void publish(String value, String key, String traceId, String topic) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
-        String jsonValue;
 
         System.out.println(">>>>> Trace id: " + traceId);
 
@@ -51,15 +50,9 @@ public class KafkaProducer {
                     .collect(Collectors.joining(","));
         }
 
-        try {
-            jsonValue = objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            jsonValue = value.toString();
-        }
-
         kafkaTemplate.send(
                 formMessage(
-                        jsonValue,
+                        value,
                         topic,
                         key,
                         traceId,
@@ -106,10 +99,10 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publish(List<Object> values, String traceId, String topic) {
+    public void publish(List<String> values, String traceId, String topic) {
         String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
 
-        for (Object value : values) {
+        for (String value : values) {
             publish(value, trId, topic);
         }
     }
@@ -119,7 +112,7 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, String traceId, String topic) {
+    public void publish(String value, String traceId, String topic) {
         publish(value, null,
                 traceId == null ? UUID.randomUUID().toString() : traceId,
                 topic
@@ -132,26 +125,18 @@ public class KafkaProducer {
      *
      * @param values
      */
-    public void publishOrdered(List<Object> values, String traceId, String topic) {
+    public void publishOrdered(List<String> values, String traceId, String topic) {
         String key = UUID.randomUUID().toString();
         String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
-        for (Object value : values) {
+        for (String value : values) {
             publish(value, key, trId);
         }
     }
 
-    public void reply(Object value, String correlationId, String traceId) {
-        String jsonValue;
-
-        try {
-            jsonValue = objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            jsonValue = value.toString();
-        }
-
+    public void reply(String value, String correlationId, String traceId) {
         kafkaTemplate.send(
                 formMessage(
-                        jsonValue,
+                        value,
                         responseTopic,
                         null,
                         traceId,

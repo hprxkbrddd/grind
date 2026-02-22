@@ -22,6 +22,9 @@ public class KafkaTopicConfig {
     @Value("${kafka.topic.core.event.track}")
     private String coreEvTrackTopic;
 
+    @Value("${kafka.topic.statistics.request}")
+    private String statReq;
+
     @Bean
     public NewTopic response() {
         return TopicBuilder.name(response)
@@ -59,6 +62,14 @@ public class KafkaTopicConfig {
         return TopicBuilder
                 .name(coreEvTrackTopic)
                 .partitions(3)
+                .build();
+    }
+
+    @Bean
+    public NewTopic statsReqTopic() {
+        return TopicBuilder.name(statReq)
+                .partitions(3)
+                .replicas(1)
                 .build();
     }
 }

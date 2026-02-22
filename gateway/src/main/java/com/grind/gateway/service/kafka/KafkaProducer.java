@@ -45,7 +45,7 @@ public class KafkaProducer {
      */
     public void publish(
             Object value,
-            CoreMessageType type,
+            String type,
             String key,
             String topic,
             String correlationId
@@ -94,11 +94,11 @@ public class KafkaProducer {
      *
      * @param value
      */
-    public void publish(Object value, CoreMessageType type, String topic, String correlationId) {
+    public void publish(Object value, String type, String topic, String correlationId) {
         publish(value, type, null, topic, correlationId);
     }
 
-    public void publishBodiless(CoreMessageType type, String topic, String correlationId) {
+    public void publishBodiless(String type, String topic, String correlationId) {
         publish(null, type, null, topic, correlationId);
     }
 
@@ -128,7 +128,7 @@ public class KafkaProducer {
         }
     }
 
-    public Body<?> requestReply(Object body, CoreMessageType type, String topic) {
+    public Body<?> requestReply(Object body, String type, String topic) {
         String correlationId = UUID.randomUUID().toString();
         try {
             publish(

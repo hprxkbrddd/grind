@@ -40,8 +40,8 @@ clickhouse:
 kafka.topic:
   core:
     request:
-      task: 'core.requestInsert.task'
-      track: 'core.requestInsert.track'
+      task: 'core.request.task'
+      track: 'core.request.track'
     event:
       task: 'core.event.task'
       track: 'core.event.track'

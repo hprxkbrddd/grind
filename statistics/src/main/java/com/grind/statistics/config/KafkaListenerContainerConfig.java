@@ -14,7 +14,7 @@ import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 @EnableKafka
 public class KafkaListenerContainerConfig {
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaBatchListenerContainerFactory(
             ConsumerFactory<String, String> consumerFactory,
             CommonErrorHandler errorHandler
     ) {
@@ -61,5 +61,24 @@ public class KafkaListenerContainerConfig {
         // handler.addNotRetryableExceptions(DeserializationException.class, ...);
 
         return handler;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaSingleListenerContainerFactory(
+            ConsumerFactory<String, String> consumerFactory,
+            CommonErrorHandler errorHandler
+    ) {
+        var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
+        factory.setConsumerFactory(consumerFactory);
+
+
+        factory.setBatchListener(false);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+
+        factory.setConcurrency(1); // в dev лучше 1, в prod поднимешь
+
+        factory.setCommonErrorHandler(errorHandler);
+
+        return factory;
     }
 }
