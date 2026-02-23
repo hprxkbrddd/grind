@@ -3,12 +3,14 @@ package com.grind.core.service.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.entity.SprintDTO;
 import com.grind.core.dto.entity.TrackDTO;
+import com.grind.core.dto.entity.TrackWithCountDTO;
 import com.grind.core.dto.request.track.ChangeTrackRequest;
 import com.grind.core.dto.request.track.CreateTrackRequest;
 import com.grind.core.dto.wrap.Reply;
 import com.grind.core.enums.CoreMessageType;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
+import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.service.application.TrackService;
 import com.grind.core.util.ActionReplyExecutor;
 import com.grind.core.util.IdParser;
@@ -53,7 +55,7 @@ public class TrackReplyHandler {
         }
     }
 
-    private Reply<List<TrackDTO>> handleGetTracksOfUser() {
+    private Reply<List<TrackWithCountDTO>> handleGetTracksOfUser() {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         CoreMessageType.TRACKS_OF_USER,
@@ -61,13 +63,13 @@ public class TrackReplyHandler {
                                         SecurityContextHolder.getContext().getAuthentication().getName()
                                 )
                                 .stream()
-                                .map(Track::mapDTO)
+                                .map(TrackWithCount::mapDTO)
                                 .toList()
                 )
         );
     }
 
-    private Reply<TrackDTO> handleGetTrack(String payload) {
+    private Reply<TrackWithCountDTO> handleGetTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         CoreMessageType.TRACK,
@@ -78,12 +80,12 @@ public class TrackReplyHandler {
         );
     }
 
-    private Reply<List<TrackDTO>> handleGetAllTracks() {
+    private Reply<List<TrackWithCountDTO>> handleGetAllTracks() {
         return exec.withErrorMapping(() ->
                 Reply.ok(CoreMessageType.ALL_TRACKS,
-                        service.getAllTracks()
+                        service.getAllTracksWithCount()
                                 .stream()
-                                .map(Track::mapDTO)
+                                .map(TrackWithCount::mapDTO)
                                 .toList()
                 )
         );

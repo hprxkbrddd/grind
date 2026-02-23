@@ -1,5 +1,6 @@
 package com.grind.core.service.application;
 
+import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.enums.TrackStatus;
 import com.grind.core.exception.TaskNotFoundException;
 import com.grind.core.exception.TrackNotFoundException;
@@ -38,18 +39,18 @@ class TrackServiceTest {
     // ----- GET BY ID -----
     @Test
     void getById_shouldReturnTrack() {
-        Track track = new Track();
-        when(trackRepository.findById("t1"))
+        TrackWithCount track = new TrackWithCount(new Track(), 0L);
+        when(trackRepository.findByIdWithTaskCount("t1"))
                 .thenReturn(Optional.of(track));
 
-        Track result = trackService.getById("t1");
+        TrackWithCount result = trackService.getById("t1");
 
         assertEquals(track, result);
     }
 
     @Test
     void getById_shouldThrowIfNotFound() {
-        when(trackRepository.findById("t1"))
+        when(trackRepository.findByIdWithTaskCount("t1"))
                 .thenReturn(Optional.empty());
 
         assertThrows(TrackNotFoundException.class,
@@ -83,9 +84,9 @@ class TrackServiceTest {
     @Test
     void getByUserId_shouldReturnTracks() {
         when(trackRepository.findByUserId("u1"))
-                .thenReturn(List.of(new Track(), new Track()));
+                .thenReturn(List.of(new TrackWithCount(new Track(), 0L), new TrackWithCount(new Track(), 0L)));
 
-        List<Track> result = trackService.getByUserId("u1");
+        List<TrackWithCount> result = trackService.getByUserId("u1");
 
         assertEquals(2, result.size());
     }

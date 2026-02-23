@@ -123,4 +123,18 @@ public class ClickhouseService {
 
         return list.get(0);
     }
+
+    public TrackCompletedLastMonthDTO getCompletedLastWeek(String trackId) {
+        List<TrackCompletedLastMonthDTO> list = repository.requestSelect(
+                Q_COMPLETED_LAST_WEEK,
+                Map.of("param_track", trackId),
+                TrackCompletedLastMonthDTO.class
+        ).collectList().block();
+
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("track id is not in stats db");
+        }
+
+        return list.get(0);
+    }
 }

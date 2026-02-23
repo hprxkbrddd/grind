@@ -12,15 +12,16 @@ public class ClickhouseQueries {
             FROM analytics.task_actual_state_v
             WHERE track_id = {track:UUID}
             GROUP BY track_id
-            FORMAT JSONEachRow
+            FORMAT JSONEachRow;
             """;
     public static final String Q_REMAINING_LOAD = """
             SELECT
                 track_id,
                 countIf(task_status != 'COMPLETED') AS remaining_tasks
             FROM analytics.task_actual_state_v
-            WHERE track_id = {track:UInt64}
-            GROUP BY track_id;
+            WHERE track_id = {track:UUID}
+            GROUP BY track_id
+            FORMAT JSONEachRow;
             """;
     public static final String Q_OVERDUE_PRESSURE = """
             SELECT
@@ -30,8 +31,9 @@ public class ClickhouseQueries {
                     2
                 ) AS overdue_percent
             FROM analytics.task_actual_state_v
-            WHERE track_id = {track:UInt64}
-            GROUP BY track_id;
+            WHERE track_id = {track:UUID}
+            GROUP BY track_id
+            FORMAT JSONEachRow;
             """;
     public static final String Q_ACTIVE_TASKS_AGING = """
             SELECT
@@ -40,16 +42,18 @@ public class ClickhouseQueries {
                     dateDiff('day', changed_at, now())
                 ) AS avg_active_age_days
             FROM analytics.task_actual_state_v
-            WHERE task_status != 'COMPLETED' AND track_id = {track:UInt64}
-            GROUP BY track_id;
+            WHERE task_status != 'COMPLETED' AND track_id = {track:UUID}
+            GROUP BY track_id
+            FORMAT JSONEachRow;
             """;
     public static final String Q_WORK_IN_PROGRESS = """
             SELECT
                 track_id,
                 countIf(task_status = 'PLANNED') AS active_wip
             FROM analytics.task_actual_state_v
-            WHERE track_id = {track:UInt64}
-            GROUP BY track_id;
+            WHERE track_id = {track:UUID}
+            GROUP BY track_id
+            FORMAT JSONEachRow;
             """;
     public static final String Q_OVERDUE_AMONG_COMPLETED = """
             SELECT
@@ -62,8 +66,9 @@ public class ClickhouseQueries {
                     2
                 ) AS overdue_among_active_percent
             FROM analytics.task_actual_state_v
-            WHERE track_id = {track:UInt64}
-            GROUP BY track_id;
+            WHERE track_id = {track:UUID}
+            GROUP BY track_id
+            FORMAT JSONEachRow;
             """;
     public static final String Q_COMPLETED_LAST_MONTH = """
             SELECT
@@ -72,8 +77,20 @@ public class ClickhouseQueries {
             FROM analytics.raw
             WHERE task_status = 'COMPLETED'
               AND changed_at >= now() - INTERVAL 30 DAY
-            WHERE track_id = {track:UInt64}
-            GROUP BY track_id;
+              AND track_id = {track:UUID}
+            GROUP BY track_id
+            FORMAT JSONEachRow;
+            """;
+    public static final String Q_COMPLETED_LAST_WEEK = """
+            SELECT
+                track_id,
+                count() AS completed_last_30d
+            FROM analytics.raw
+            WHERE task_status = 'COMPLETED'
+              AND changed_at >= now() - INTERVAL 7 DAY
+              AND track_id = {track:UUID}
+            GROUP BY track_id
+            FORMAT JSONEachRow;
             """;
     public static final String Q_INGEST_EVENT = """
             INSERT

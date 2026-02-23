@@ -4,6 +4,7 @@ import com.grind.core.enums.TrackStatus;
 import com.grind.core.exception.TrackNotFoundException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
+import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.repository.TrackRepository;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +27,15 @@ public class TrackService {
     private final SprintService sprintService;
 
     @PreAuthorize("hasRole('ADMIN')")
-    public List<Track> getAllTracks() {
-        return trackRepository.findAll();
+    public List<TrackWithCount> getAllTracksWithCount() {
+        return trackRepository.findAllWithTaskCount();
     }
 
-    public Track getById(
+    public TrackWithCount getById(
             @NotBlank(message = "Track id must be not null or blank")
             String id
     ) {
-        return trackRepository.findById(id)
+        return trackRepository.findByIdWithTaskCount(id)
                 .orElseThrow(() -> new TrackNotFoundException(id));
     }
 
@@ -47,7 +48,7 @@ public class TrackService {
         return sprintService.getByTrackId(trackId);
     }
 
-    public List<Track> getByUserId(
+    public List<TrackWithCount> getByUserId(
             @NotBlank(message = "User id must be not null or blank")
             String userId
     ) {

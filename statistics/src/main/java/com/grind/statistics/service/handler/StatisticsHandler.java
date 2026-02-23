@@ -43,6 +43,9 @@ public class StatisticsHandler {
             case GET_COMPLETED_LAST_MONTH -> {
                 return handleGetCompletedLastMonth(payload);
             }
+            case GET_COMPLETED_LAST_WEEK -> {
+                return handleGetCompletedLastWeek(payload);
+            }
             default -> throw new UnsupportedOperationException("Message type is not related to statistics");
         }
     }
@@ -62,6 +65,17 @@ public class StatisticsHandler {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         StatisticsMessageType.COMPLETED_LAST_MONTH,
+                        clickhouseService.getCompletedLastMonth(
+                                IdParser.run(payload)
+                        )
+                )
+        );
+    }
+
+    private Reply<?> handleGetCompletedLastWeek(String payload) {
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.COMPLETED_LAST_WEEK,
                         clickhouseService.getCompletedLastMonth(
                                 IdParser.run(payload)
                         )
