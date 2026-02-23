@@ -1,6 +1,6 @@
 package com.grind.statistics.repository;
 
-public class ClickhouseQueries {
+public class TrackQueries {
     public static final String Q_TRACK_COMPLETION = """
             SELECT
                 track_id,
@@ -14,7 +14,7 @@ public class ClickhouseQueries {
             GROUP BY track_id
             FORMAT JSONEachRow;
             """;
-    public static final String Q_REMAINING_LOAD = """
+    public static final String Q_TRACK_REMAINING_LOAD = """
             SELECT
                 track_id,
                 countIf(task_status != 'COMPLETED') AS remaining_tasks
@@ -23,7 +23,7 @@ public class ClickhouseQueries {
             GROUP BY track_id
             FORMAT JSONEachRow;
             """;
-    public static final String Q_OVERDUE_PRESSURE = """
+    public static final String Q_TRACK_OVERDUE_PRESSURE = """
             SELECT
                 track_id,
                 round(
@@ -35,7 +35,7 @@ public class ClickhouseQueries {
             GROUP BY track_id
             FORMAT JSONEachRow;
             """;
-    public static final String Q_ACTIVE_TASKS_AGING = """
+    public static final String Q_TRACK_ACTIVE_TASKS_AGING = """
             SELECT
                 track_id,
                 avg(
@@ -46,7 +46,7 @@ public class ClickhouseQueries {
             GROUP BY track_id
             FORMAT JSONEachRow;
             """;
-    public static final String Q_WORK_IN_PROGRESS = """
+    public static final String Q_TRACK_WORK_IN_PROGRESS = """
             SELECT
                 track_id,
                 countIf(task_status = 'PLANNED') AS active_wip
@@ -55,7 +55,7 @@ public class ClickhouseQueries {
             GROUP BY track_id
             FORMAT JSONEachRow;
             """;
-    public static final String Q_OVERDUE_AMONG_COMPLETED = """
+    public static final String Q_TRACK_OVERDUE_AMONG_COMPLETED = """
             SELECT
                 track_id,
                 round(
@@ -92,10 +92,4 @@ public class ClickhouseQueries {
             GROUP BY track_id
             FORMAT JSONEachRow;
             """;
-    public static final String Q_INGEST_EVENT = """
-            INSERT
-            INTO analytics.raw
-            FORMAT JSONEachRow;
-            """;
-
 }

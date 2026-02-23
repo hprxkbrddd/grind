@@ -1,7 +1,6 @@
 package com.grind.statistics.service.application;
 
-import com.grind.statistics.dto.request.StatisticsEventDTO;
-import com.grind.statistics.dto.response.*;
+import com.grind.statistics.dto.response.track.*;
 import com.grind.statistics.repository.ClickhouseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,21 +9,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
-import static com.grind.statistics.repository.ClickhouseQueries.*;
+import static com.grind.statistics.repository.TrackQueries.*;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ClickhouseService {
+public class TrackService {
     private final ClickhouseRepository repository;
-
-    public void postEvent(List<StatisticsEventDTO> batch) {
-        repository.requestInsert(
-                Q_INGEST_EVENT,
-                Map.of(),
-                batch
-        ).block();
-    }
 
     public TrackCompletionDTO getTrackCompletion(String trackId) {
         List<TrackCompletionDTO> list = repository.requestSelect(
@@ -42,7 +33,7 @@ public class ClickhouseService {
 
     public TrackRemainingLoadDTO getRemainingLoad(String trackId) {
         List<TrackRemainingLoadDTO> list = repository.requestSelect(
-                Q_REMAINING_LOAD,
+                Q_TRACK_REMAINING_LOAD,
                 Map.of("param_track", trackId),
                 TrackRemainingLoadDTO.class
         ).collectList().block();
@@ -56,7 +47,7 @@ public class ClickhouseService {
 
     public TrackOverduePressureDTO getOverduePressure(String trackId) {
         List<TrackOverduePressureDTO> list = repository.requestSelect(
-                Q_OVERDUE_PRESSURE,
+                Q_TRACK_OVERDUE_PRESSURE,
                 Map.of("param_track", trackId),
                 TrackOverduePressureDTO.class
         ).collectList().block();
@@ -70,7 +61,7 @@ public class ClickhouseService {
 
     public TrackActiveTasksAgingDTO getActiveTasksAging(String trackId) {
         List<TrackActiveTasksAgingDTO> list = repository.requestSelect(
-                Q_ACTIVE_TASKS_AGING,
+                Q_TRACK_ACTIVE_TASKS_AGING,
                 Map.of("param_track", trackId),
                 TrackActiveTasksAgingDTO.class
         ).collectList().block();
@@ -84,7 +75,7 @@ public class ClickhouseService {
 
     public TrackWIPDTO getWIP(String trackId) {
         List<TrackWIPDTO> list = repository.requestSelect(
-                Q_WORK_IN_PROGRESS,
+                Q_TRACK_WORK_IN_PROGRESS,
                 Map.of("param_track", trackId),
                 TrackWIPDTO.class
         ).collectList().block();
@@ -98,7 +89,7 @@ public class ClickhouseService {
 
     public TrackOverdueAmongCompletedDTO getOverdueAmongCompleted(String trackId) {
         List<TrackOverdueAmongCompletedDTO> list = repository.requestSelect(
-                Q_OVERDUE_AMONG_COMPLETED,
+                Q_TRACK_OVERDUE_AMONG_COMPLETED,
                 Map.of("param_track", trackId),
                 TrackOverdueAmongCompletedDTO.class
         ).collectList().block();

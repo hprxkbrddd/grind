@@ -1,10 +1,9 @@
 package com.grind.statistics.service.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.statistics.enums.StatisticsMessageType;
-import com.grind.statistics.dto.response.TrackCompletionDTO;
+import com.grind.statistics.dto.response.track.TrackCompletionDTO;
 import com.grind.statistics.dto.wrap.Reply;
-import com.grind.statistics.service.application.ClickhouseService;
+import com.grind.statistics.service.application.TrackService;
 import com.grind.statistics.util.ActionReplyExecutor;
 import com.grind.statistics.util.IdParser;
 import lombok.RequiredArgsConstructor;
@@ -14,10 +13,9 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class StatisticsHandler {
+public class TrackStatisticsHandler {
 
-    private final ClickhouseService clickhouseService;
-    private final ObjectMapper objectMapper;
+    private final TrackService trackService;
     private final ActionReplyExecutor exec;
 
     public Reply<?> routeReply(StatisticsMessageType type, String payload) {
@@ -25,19 +23,19 @@ public class StatisticsHandler {
             case GET_TRACK_COMPLETION -> {
                 return handleGetTrackCompletion(payload);
             }
-            case GET_REMAINING_LOAD -> {
+            case GET_TRACK_REMAINING_LOAD -> {
                 return handleGetRemainingLoad(payload);
             }
-            case GET_OVERDUE_PRESSURE -> {
+            case GET_TRACK_OVERDUE_PRESSURE -> {
                 return handleGetOverduePressure(payload);
             }
-            case GET_ACTIVE_TASKS_AGING -> {
+            case GET_TRACK_ACTIVE_TASKS_AGING -> {
                 return handleActiveTasksAging(payload);
             }
-            case GET_WORK_IN_PROGRESS -> {
+            case GET_TRACK_WORK_IN_PROGRESS -> {
                 return handleGetWorkInProgress(payload);
             }
-            case GET_OVERDUE_AMONG_COMPLETED -> {
+            case GET_TRACK_OVERDUE_AMONG_COMPLETED -> {
                 return handleOverdueAmongCompleted(payload);
             }
             case GET_COMPLETED_LAST_MONTH -> {
@@ -46,7 +44,7 @@ public class StatisticsHandler {
             case GET_COMPLETED_LAST_WEEK -> {
                 return handleGetCompletedLastWeek(payload);
             }
-            default -> throw new UnsupportedOperationException("Message type is not related to statistics");
+            default -> throw new UnsupportedOperationException("Message type is not related to track statistics");
         }
     }
 
@@ -54,7 +52,7 @@ public class StatisticsHandler {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         StatisticsMessageType.TRACK_COMPLETION,
-                        clickhouseService.getTrackCompletion(
+                        trackService.getTrackCompletion(
                                 IdParser.run(payload)
                         )
                 )
@@ -65,7 +63,7 @@ public class StatisticsHandler {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         StatisticsMessageType.COMPLETED_LAST_MONTH,
-                        clickhouseService.getCompletedLastMonth(
+                        trackService.getCompletedLastMonth(
                                 IdParser.run(payload)
                         )
                 )
@@ -76,7 +74,7 @@ public class StatisticsHandler {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         StatisticsMessageType.COMPLETED_LAST_WEEK,
-                        clickhouseService.getCompletedLastMonth(
+                        trackService.getCompletedLastWeek(
                                 IdParser.run(payload)
                         )
                 )
@@ -86,8 +84,8 @@ public class StatisticsHandler {
     private Reply<?> handleOverdueAmongCompleted(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        StatisticsMessageType.OVERDUE_AMONG_COMPLETED,
-                        clickhouseService.getOverdueAmongCompleted(
+                        StatisticsMessageType.TRACK_OVERDUE_AMONG_COMPLETED,
+                        trackService.getOverdueAmongCompleted(
                                 IdParser.run(payload)
                         )
                 )
@@ -97,8 +95,8 @@ public class StatisticsHandler {
     private Reply<?> handleGetWorkInProgress(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        StatisticsMessageType.WORK_IN_PROGRESS,
-                        clickhouseService.getWIP(
+                        StatisticsMessageType.TRACK_WORK_IN_PROGRESS,
+                        trackService.getWIP(
                                 IdParser.run(payload)
                         )
                 )
@@ -108,8 +106,8 @@ public class StatisticsHandler {
     private Reply<?> handleActiveTasksAging(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        StatisticsMessageType.ACTIVE_TASKS_AGING,
-                        clickhouseService.getActiveTasksAging(
+                        StatisticsMessageType.TRACK_ACTIVE_TASKS_AGING,
+                        trackService.getActiveTasksAging(
                                 IdParser.run(payload)
                         )
                 )
@@ -119,8 +117,8 @@ public class StatisticsHandler {
     private Reply<?> handleGetOverduePressure(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        StatisticsMessageType.OVERDUE_PRESSURE,
-                        clickhouseService.getOverduePressure(
+                        StatisticsMessageType.TRACK_OVERDUE_PRESSURE,
+                        trackService.getOverduePressure(
                                 IdParser.run(payload)
                         )
                 )
@@ -130,8 +128,8 @@ public class StatisticsHandler {
     private Reply<?> handleGetRemainingLoad(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
-                        StatisticsMessageType.REMAINING_LOAD,
-                        clickhouseService.getRemainingLoad(
+                        StatisticsMessageType.TRACK_REMAINING_LOAD,
+                        trackService.getRemainingLoad(
                                 IdParser.run(payload)
                         )
                 )

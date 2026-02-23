@@ -1,7 +1,7 @@
 package com.grind.statistics.controller;
 
 import com.grind.statistics.dto.request.StatisticsEventDTO;
-import com.grind.statistics.service.application.ClickhouseService;
+import com.grind.statistics.service.application.TrackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TestController {
 
-    private final ClickhouseService service;
+    private final TrackService service;
 
     @PostMapping
     public ResponseEntity<Void> insert(@RequestBody List<StatisticsEventDTO> rec){
