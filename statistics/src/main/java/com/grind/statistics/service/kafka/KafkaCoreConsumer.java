@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.statistics.dto.request.OutboxRecord;
 import com.grind.statistics.dto.request.StatisticsEventDTO;
 import com.grind.statistics.enums.CoreMessageType;
-import com.grind.statistics.service.application.GenericService;
+import com.grind.statistics.service.application.QueryService;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ public class KafkaCoreConsumer {
     private static final Logger log = LoggerFactory.getLogger(KafkaCoreConsumer.class);
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
-    private final GenericService service;
+    private final QueryService service;
     private static final List<CoreMessageType> events = List.of(
             CoreMessageType.TASK_CREATED,
             CoreMessageType.TASK_DELETED,

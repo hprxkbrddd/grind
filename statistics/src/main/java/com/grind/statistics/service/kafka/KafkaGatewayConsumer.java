@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.statistics.dto.wrap.Reply;
 import com.grind.statistics.enums.StatisticsMessageType;
-import com.grind.statistics.service.handler.SprintStatisticsHandler;
-import com.grind.statistics.service.handler.TrackStatisticsHandler;
+import com.grind.statistics.service.handler.StatisticsHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -25,28 +24,9 @@ import static com.grind.statistics.util.ConsumerHelper.authenticate;
 @RequiredArgsConstructor
 public class KafkaGatewayConsumer {
 
-    private final TrackStatisticsHandler trackStatisticsHandler;
-    private final SprintStatisticsHandler sprintStatisticsHandler;
+    private final StatisticsHandler statisticsHandler;
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
-    private static final List<StatisticsMessageType> trackStats = List.of(
-            GET_TRACK_COMPLETION,
-            GET_TRACK_REMAINING_LOAD,
-            GET_TRACK_OVERDUE_PRESSURE,
-            GET_TRACK_ACTIVE_TASKS_AGING,
-            GET_TRACK_WORK_IN_PROGRESS,
-            GET_TRACK_OVERDUE_AMONG_COMPLETED,
-            GET_COMPLETED_LAST_MONTH,
-            GET_COMPLETED_LAST_WEEK
-    );
-    private static final List<StatisticsMessageType> sprintStats = List.of(
-            GET_SPRINT_COMPLETION,
-            GET_SPRINT_REMAINING_LOAD,
-            GET_SPRINT_OVERDUE_PRESSURE,
-            GET_SPRINT_ACTIVE_TASKS_AGING,
-            GET_SPRINT_WORK_IN_PROGRESS,
-            GET_SPRINT_OVERDUE_AMONG_COMPLETED
-    );
 
     @KafkaListener(id = "stats-server", topics = "statistics.request", containerFactory = "kafkaSingleListenerContainerFactory")
     public void listen(
@@ -64,13 +44,7 @@ public class KafkaGatewayConsumer {
             // HANDLING REQUEST
             StatisticsMessageType type = StatisticsMessageType.valueOf(messageType);
 
-            Reply<?> rep;
-
-            if (trackStats.contains(type))
-                rep = trackStatisticsHandler.routeReply(type, payload);
-            else if (sprintStats.contains(type))
-                rep = sprintStatisticsHandler.routeReply(type, payload);
-            else throw new UnsupportedOperationException("Message type is not instance of 'StatisticsMessageType'");
+            Reply<?> rep = statisticsHandler.routeReply(type, payload);
 
             String replyPayload = objectMapper.writeValueAsString(rep.body());
 
