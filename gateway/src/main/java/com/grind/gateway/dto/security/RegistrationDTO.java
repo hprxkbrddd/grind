@@ -1,4 +1,4 @@
-package io.github.hprxkbrddd.security_autoconfiguration.core;
+package com.grind.gateway.dto.security;
 
 /**
  * User Registration DTO

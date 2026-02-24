@@ -1,13 +1,14 @@
-package io.github.hprxkbrddd.security_autoconfiguration.spring.component;
+package com.grind.gateway.component;
 
-import io.github.hprxkbrddd.security_autoconfiguration.autoconfiguration.LibraryProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.List;
@@ -15,13 +16,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Jwt converter
- */
 @RequiredArgsConstructor
+@Component
 public class JwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
-    private final LibraryProperties props;
+    @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
+    private String clientId;
 
     /**
      * Convert the source object of type {@code S} to target type {@code T}.
@@ -35,7 +35,6 @@ public class JwtConverter implements Converter<Jwt, AbstractAuthenticationToken>
     @Override
     public AbstractAuthenticationToken convert(Jwt source) {
         Map<String, Map<String, List<String>>> resourceAccess = source.getClaim("resource_access");
-        String clientId = props.oauth2.client.registration.keycloak.clientId;
         Set<GrantedAuthority> grantedAuthorities;
         try {
             List<String> roles = resourceAccess.get(clientId).get("roles");

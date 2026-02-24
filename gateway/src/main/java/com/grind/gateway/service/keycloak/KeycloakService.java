@@ -1,16 +1,18 @@
-package io.github.hprxkbrddd.security_autoconfiguration.spring.service;
+package com.grind.gateway.service.keycloak;
 
-import io.github.hprxkbrddd.security_autoconfiguration.autoconfiguration.LibraryProperties;
-import io.github.hprxkbrddd.security_autoconfiguration.core.KeycloakException;
-import io.github.hprxkbrddd.security_autoconfiguration.core.RegistrationDTO;
-import io.github.hprxkbrddd.security_autoconfiguration.core.TokenIntrospectionResponse;
-import io.github.hprxkbrddd.security_autoconfiguration.core.TokenResponseDTO;
+import com.grind.gateway.dto.security.RegistrationDTO;
+import com.grind.gateway.dto.security.TokenIntrospectionResponse;
+import com.grind.gateway.dto.security.TokenResponseDTO;
+import com.grind.gateway.exception.KeycloakException;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -32,56 +34,32 @@ import java.util.Objects;
  * </ul>
  *
  * <p>
- * Configuration values (URLs, client credentials, admin user) are read from
- * {@link LibraryProperties}. Web clients are initialized after construction via
+ * Web clients are initialized after construction via
  * {@link #init()}.
  * </p>
  */
+@Service
+@RequiredArgsConstructor
 public class KeycloakService {
 
-    private final String keycloakPublicUrl;
-    private final String keycloakAdminUrl;
+    @Value("${keycloak.url.public}")
+    private String keycloakPublicUrl;
+    @Value("${keycloak.url.admin}")
+    private String keycloakAdminUrl;
 
     private WebClient webClientPublic;
     private WebClient webClientAdmin;
 
-    private final String clientId;
-    private final String clientSecret;
-    private final String adminUsername;
-    private final String adminPassword;
-
     /**
      * Construct KeycloakService
      * Initializes Keycloak URLs, client credentials and admin credentials
-     * using {@link LibraryProperties} default values.
      *
      * <p>
      * Note: {@link WebClient} instances are created later in {@link #init()}.
      * </p>
      */
-    public KeycloakService() {
-        LibraryProperties props = new LibraryProperties();
-        this.keycloakAdminUrl = props.keycloak.url.adminUrl;
-        this.keycloakPublicUrl = props.keycloak.url.publicUrl;
-
-        this.clientId = props.oauth2.client.registration.keycloak.clientId;
-        this.clientSecret = props.oauth2.client.registration.keycloak.clientSecret;
-
-        this.adminUsername = props.keycloak.adminUsername;
-        this.adminPassword = props.keycloak.adminPassword;
-    }
-
-    /**
-     * Initialize WebClient Instances
-     * Called after construction to create and configure two {@link WebClient}
-     * instances:
-     * <ul>
-     *     <li><b>webClientPublic</b> – for public OIDC endpoints (token, introspect)</li>
-     *     <li><b>webClientAdmin</b> – for admin endpoints (user management)</li>
-     * </ul>
-     */
     @PostConstruct
-    public void init() {
+    public void init(){
         this.webClientPublic = WebClient.builder()
                 .baseUrl(keycloakPublicUrl)
                 .build();
@@ -89,11 +67,18 @@ public class KeycloakService {
                 .baseUrl(keycloakAdminUrl)
                 .build();
     }
+    @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
+    private String clientId;
+    @Value("${spring.security.oauth2.client.registration.keycloak.client-secret}")
+    private String clientSecret;
+    @Value("${keycloak.admin-username}")
+    private String adminUsername;
+    @Value("${keycloak.admin-password}")
+    private String adminPassword;
 
     /**
      * Get Admin Token
-     * Obtains a Keycloak access token using admin credentials configured in
-     * {@link LibraryProperties}.
+     * Obtains a Keycloak access token using admin credentials
      *
      * @return reactive publisher that emits {@link TokenResponseDTO} for admin user
      */

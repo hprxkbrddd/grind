@@ -1,20 +1,13 @@
-package io.github.hprxkbrddd.security_autoconfiguration.autoconfiguration;
+package com.grind.gateway.config;
 
-import io.github.hprxkbrddd.security_autoconfiguration.spring.component.JwtConverter;
-import io.github.hprxkbrddd.security_autoconfiguration.spring.exception.SecurityExceptionHandler;
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
+import com.grind.gateway.component.JwtConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,47 +16,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@ConditionalOnClass(SecurityFilterChain.class)
-@EnableConfigurationProperties(LibraryProperties.class)
-@EnableMethodSecurity
-@RequiredArgsConstructor
-public class GrindSecurityAutoConfig {
-
-    private final LibraryProperties props;
-
-    // JWT beans
-    // ----------------------------------------
-
-    /**
-     * JWT Decoder
-     * Creates a {@link JwtDecoder} bean if none is already defined in the application context.
-     * <p>
-     * Decoder is initialized using issuer URI defined in {@link LibraryProperties}.
-     *
-     * <p><b>Main responsibilities:</b></p>
-     * <ul>
-     *     <li>Validate incoming JWT tokens</li>
-     *     <li>Decode token payload</li>
-     *     <li>Ensure issuer matches configured value</li>
-     * </ul>
-     *
-     * @return configured {@link JwtDecoder}
-     */
-    @Bean
-    @ConditionalOnMissingBean(JwtDecoder.class)
-    public JwtDecoder jwtDecoder() {
-        return JwtDecoders.fromIssuerLocation(
-                props.oauth2.resourceserver.jwt.issuerUri
-        );
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(JwtConverter.class)
-    public JwtConverter jwtConverter() {
-        return new JwtConverter(props);
-    }
-    // ----------------------------------------
-
+public class SecurityConfig {
     /**
      * Spring Security Filter Chain
      * Configures the default {@link SecurityFilterChain} for the application,
@@ -89,7 +42,6 @@ public class GrindSecurityAutoConfig {
      * @throws Exception if Spring Security fails to build the configuration
      */
     @Bean
-    @ConditionalOnMissingBean(SecurityFilterChain.class)
     public SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
             JwtConverter jwtConverter) throws Exception {
@@ -100,6 +52,9 @@ public class GrindSecurityAutoConfig {
                         .requestMatchers(
                                 "/grind/keycloak/**",
                                 "/grind/keycloak/register",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
                                 "/actuator/**",
                                 "/test/**"
                         ).permitAll()
@@ -114,10 +69,6 @@ public class GrindSecurityAutoConfig {
                 .build();
     }
 
-    /**
-     * cors config
-     * @return
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -132,23 +83,5 @@ public class GrindSecurityAutoConfig {
         source.registerCorsConfiguration("/**", config);
 
         return source;
-    }
-
-    /**
-     * Security Exception Handler
-     * Registers a global {@link SecurityExceptionHandler} bean if one is not already present.
-     *
-     * <p><b>Responsibilities:</b></p>
-     * <ul>
-     *     <li>Handle authentication and authorization errors</li>
-     *     <li>Convert Spring Security exceptions into user-friendly JSON responses</li>
-     * </ul>
-     *
-     * @return new instance of {@link SecurityExceptionHandler}
-     */
-    @Bean
-    @ConditionalOnMissingBean(SecurityExceptionHandler.class)
-    public SecurityExceptionHandler securityExceptionHandler() {
-        return new SecurityExceptionHandler();
     }
 }

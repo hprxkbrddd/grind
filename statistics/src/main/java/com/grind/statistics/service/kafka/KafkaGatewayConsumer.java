@@ -14,9 +14,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
-import static com.grind.statistics.enums.StatisticsMessageType.*;
 import static com.grind.statistics.util.ConsumerHelper.authenticate;
 
 @Slf4j

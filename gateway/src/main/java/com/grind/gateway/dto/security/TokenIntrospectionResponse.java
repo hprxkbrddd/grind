@@ -1,4 +1,4 @@
-package io.github.hprxkbrddd.security_autoconfiguration.core;
+package com.grind.gateway.dto.security;
 
 /**
  * Token Introspection Response
@@ -18,15 +18,15 @@ package io.github.hprxkbrddd.security_autoconfiguration.core;
  * @param client_id  ID of the OAuth2 client that generated the token
  */
 public record TokenIntrospectionResponse(
-         boolean active,
-         String sub,
-         String username,
-         String email,
-         Long exp,
-         Long iat,
-         String scope,
-         String token_type,
-         String client_id
+        boolean active,
+        String sub,
+        String username,
+        String email,
+        Long exp,
+        Long iat,
+        String scope,
+        String token_type,
+        String client_id
 
 ) {
 }

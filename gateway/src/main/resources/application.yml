@@ -1,12 +1,42 @@
 spring:
   application:
     name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuerUri: http://localhost:8085/realms/grind
+          jwk-set-uri: http://localhost:8085/realms/grind/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak:
+            clientId: "grind_client"
+            clientSecret: "b5fk9Hdmxn7kFgJDao2SFFkfVoypa60g"
+            authorizationGrantType: "authorization_code"
+            scope: "openid,profile,email"
+            redirectUri: "{baseUrl}/login/oauth2/keycloak"
+        provider:
+          keycloak:
+            issuerUri: "http://localhost:8085/realms/grind"
+            userNameAttribute: "preferred_username"
   kafka:
     producer:
       bootstrap-servers: localhost:9092
       key-deserializer: org.apache.kafka.common.serialization.StringSerializer
       value-deserializer: org.apache.kafka.common.serialization.StringSerializer
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+keycloak:
+  adminUsername: administrator
+  adminPassword: admin
+  url:
+    admin: http://localhost:8085/admin/realms/grind
+    public: http://localhost:8085/realms/grind/protocol/openid-connect
 
 grind:
   auth:

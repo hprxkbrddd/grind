@@ -31,7 +31,6 @@ import java.util.List;
 @Validated
 public class TaskService {
 
-    private static final Logger log = LoggerFactory.getLogger(TaskService.class);
     private final TaskRepository taskRepository;
     private final TrackRepository trackRepository;
     private final SprintRepository sprintRepository;

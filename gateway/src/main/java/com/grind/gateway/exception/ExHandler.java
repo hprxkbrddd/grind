@@ -26,4 +26,21 @@ public class ExHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex);
     }
+
+    /**
+     * Handle KeycloakException
+     * Converts a {@link KeycloakException} into an HTTP 400 Bad Request response.
+     *
+     * <p>Triggered when any part of the authentication/authorization flow throws
+     * {@link KeycloakException}.</p>
+     *
+     * @param ex exception instance containing the error details
+     * @return HTTP 400 response with human-readable message
+     */
+    @ExceptionHandler(KeycloakException.class)
+    public ResponseEntity<String> handleKeycloakException(KeycloakException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body("Keycloak exception: " + ex.getMessage());
+    }
 }
