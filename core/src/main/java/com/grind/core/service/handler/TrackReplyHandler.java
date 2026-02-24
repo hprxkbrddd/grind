@@ -2,15 +2,16 @@ package com.grind.core.service.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.entity.SprintDTO;
+import com.grind.core.dto.entity.SprintWithCountDTO;
 import com.grind.core.dto.entity.TrackDTO;
 import com.grind.core.dto.entity.TrackWithCountDTO;
+import com.grind.core.dto.request.SprintWithCount;
 import com.grind.core.dto.request.track.ChangeTrackRequest;
 import com.grind.core.dto.request.track.CreateTrackRequest;
+import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.dto.wrap.Reply;
 import com.grind.core.enums.CoreMessageType;
 import com.grind.core.model.Sprint;
-import com.grind.core.model.Track;
-import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.service.application.TrackService;
 import com.grind.core.util.ActionReplyExecutor;
 import com.grind.core.util.IdParser;
@@ -91,13 +92,13 @@ public class TrackReplyHandler {
         );
     }
 
-    private Reply<List<SprintDTO>> handleGetSprintsOfTrack(String payload) {
+    private Reply<List<SprintWithCountDTO>> handleGetSprintsOfTrack(String payload) {
         return exec.withErrorMapping(() ->
                 Reply.ok(
                         CoreMessageType.SPRINTS_OF_TRACK,
-                        service.getSprintsOfTrack(
+                        service.getSprintsOfTrackWithCount(
                                 IdParser.run(payload)
-                        ).stream().map(Sprint::mapDTO).toList()
+                        ).stream().map(SprintWithCount::mapDTO).toList()
                 )
         );
     }

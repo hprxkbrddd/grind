@@ -1,5 +1,6 @@
 package com.grind.core.service.application;
 
+import com.grind.core.dto.request.SprintWithCount;
 import com.grind.core.exception.InvalidAggregateStateException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
@@ -40,13 +41,13 @@ class SprintServiceTest {
     // ----- GET BY TRACK -----
     @Test
     void getByTrackId_shouldReturnSprints() {
-        Sprint s1 = new Sprint();
-        Sprint s2 = new Sprint();
+        SprintWithCount s1 = new SprintWithCount(new Sprint(), 0L, "track-id");
+        SprintWithCount s2 = new SprintWithCount(new Sprint(), 0L, "track-id");
 
-        when(sprintRepository.findByTrackIdOrderByStartDate("t1"))
+        when(sprintRepository.findByTrackIdOrderByStartDateWithCount("t1"))
                 .thenReturn(List.of(s1, s2));
 
-        List<Sprint> result = sprintService.getByTrackId("t1");
+        List<SprintWithCount> result = sprintService.getByTrackIdWithCount("t1");
 
         assertEquals(2, result.size());
         assertEquals(s1, result.get(0));

@@ -1,5 +1,6 @@
 package com.grind.core.service.application;
 
+import com.grind.core.dto.request.SprintWithCount;
 import com.grind.core.exception.InvalidAggregateStateException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
@@ -8,6 +9,7 @@ import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import lombok.With;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,15 +29,17 @@ public class SprintService {
         return sprintRepository.findAll();
     }
 
-    public List<Sprint> getByTrackId(
+
+    public List<SprintWithCount> getByTrackIdWithCount(
             @NotBlank(message = "Track id must be not null or blank")
             String trackId
     ) {
-        List<Sprint> res = sprintRepository.findByTrackIdOrderByStartDate(trackId);
+        List<SprintWithCount> res = sprintRepository.findByTrackIdOrderByStartDateWithCount(trackId);
         if (res.isEmpty())
             throw new InvalidAggregateStateException(Track.class, Sprint.class);
         return res;
     }
+
 
     public List<Sprint> createSprintsForTrack(Track track) {
         List<Sprint> sprints = new ArrayList<>();

@@ -1,7 +1,7 @@
 package com.grind.core.repository;
 
-import com.grind.core.model.Track;
 import com.grind.core.dto.request.track.TrackWithCount;
+import com.grind.core.model.Track;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -31,6 +31,7 @@ public interface TrackRepository extends JpaRepository<Track, String> {
             FROM Track t
             LEFT JOIN t.tasks task
             WHERE t.id = :trackId
+            GROUP BY t
             """)
     Optional<TrackWithCount> findByIdWithTaskCount(String trackId);
 

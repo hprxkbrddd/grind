@@ -1,10 +1,11 @@
 package com.grind.core.service.application;
 
+import com.grind.core.dto.request.SprintWithCount;
+import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.enums.TrackStatus;
 import com.grind.core.exception.TrackNotFoundException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Track;
-import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.repository.TrackRepository;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -39,13 +40,13 @@ public class TrackService {
                 .orElseThrow(() -> new TrackNotFoundException(id));
     }
 
-    public List<Sprint> getSprintsOfTrack(
+    public List<SprintWithCount> getSprintsOfTrackWithCount(
             @NotBlank(message = "Track id must be not null or blank")
             String trackId
     ) {
         if (!trackRepository.existsById(trackId))
             throw new TrackNotFoundException(trackId);
-        return sprintService.getByTrackId(trackId);
+        return sprintService.getByTrackIdWithCount(trackId);
     }
 
     public List<TrackWithCount> getByUserId(

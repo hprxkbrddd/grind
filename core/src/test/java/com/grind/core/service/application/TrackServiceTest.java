@@ -1,5 +1,6 @@
 package com.grind.core.service.application;
 
+import com.grind.core.dto.request.SprintWithCount;
 import com.grind.core.dto.request.track.TrackWithCount;
 import com.grind.core.enums.TrackStatus;
 import com.grind.core.exception.TaskNotFoundException;
@@ -61,13 +62,13 @@ class TrackServiceTest {
     @Test
     void getSprintsOfTrack_shouldDelegate() {
         when(trackRepository.existsById("t1")).thenReturn(true);
-        when(sprintService.getByTrackId("t1"))
-                .thenReturn(List.of(new Sprint()));
+        when(sprintService.getByTrackIdWithCount("t1"))
+                .thenReturn(List.of(new SprintWithCount(new Sprint(), 0L, "track-id")));
 
-        List<Sprint> result = trackService.getSprintsOfTrack("t1");
+        List<SprintWithCount> result = trackService.getSprintsOfTrackWithCount("t1");
 
         assertEquals(1, result.size());
-        verify(sprintService).getByTrackId("t1");
+        verify(sprintService).getByTrackIdWithCount("t1");
     }
 
     @Test
@@ -75,7 +76,7 @@ class TrackServiceTest {
         when(trackRepository.existsById("t1")).thenReturn(false);
 
         assertThrows(TrackNotFoundException.class,
-                () -> trackService.getSprintsOfTrack("t1"));
+                () -> trackService.getSprintsOfTrackWithCount("t1"));
 
         verifyNoInteractions(sprintService);
     }

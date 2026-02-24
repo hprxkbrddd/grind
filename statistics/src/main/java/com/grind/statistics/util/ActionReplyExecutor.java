@@ -3,7 +3,6 @@ package com.grind.statistics.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.grind.statistics.dto.wrap.Reply;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.function.ThrowingSupplier;
 
