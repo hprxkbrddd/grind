@@ -1,6 +1,7 @@
 package com.grind.gateway.dto.security;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Token Response DTO
@@ -21,16 +22,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param session_state       session identifier inside Keycloak
  * @param scope               space-delimited list of granted scopes
  */
+@Schema(description = "Keycloak token response")
 public record TokenResponseDTO(
+        @Schema(description = "Access token (JWT)")
         String access_token,
+        @Schema(description = "Access token expiry (seconds)")
         Integer expires_in,
+        @Schema(description = "Refresh token expiry (seconds)")
         Integer refresh_expires_in,
+        @Schema(description = "Refresh token")
         String refresh_token,
+        @Schema(description = "Token type")
         String token_type,
+        @Schema(description = "ID token")
         String id_token,
         @JsonProperty("not-before-policy")
+        @Schema(description = "Not-before policy")
         Integer not_before_policy,
+        @Schema(description = "Session state")
         String session_state,
+        @Schema(description = "Granted scopes")
         String scope
 ) {
 }

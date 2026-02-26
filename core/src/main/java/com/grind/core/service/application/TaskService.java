@@ -4,6 +4,7 @@ import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.enums.TaskStatus;
 import com.grind.core.exception.SprintNotFoundException;
 import com.grind.core.exception.TaskNotFoundException;
+import com.grind.core.exception.TaskNotModifiedException;
 import com.grind.core.exception.TrackNotFoundException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
@@ -216,7 +217,7 @@ public class TaskService {
         }
 
         if (!changed) {
-            throw new IllegalStateException("Task was not modified");
+            throw new TaskNotModifiedException();
         }
 
         return task;
