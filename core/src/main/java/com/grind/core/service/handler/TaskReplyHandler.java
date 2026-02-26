@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Routes task-related Kafka requests to task service operations.
+ */
 @Service
 @RequiredArgsConstructor
 public class TaskReplyHandler {

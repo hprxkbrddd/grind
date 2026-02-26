@@ -21,6 +21,10 @@ import java.util.List;
 
 import static com.grind.statistics.util.ConsumerHelper.headerAsString;
 
+/**
+ * Consumes core outbox events and persists them to ClickHouse.
+ * Batches records and acknowledges offsets after ingest.
+ */
 @Configuration
 @RequiredArgsConstructor
 public class KafkaCoreConsumer {
@@ -40,6 +44,12 @@ public class KafkaCoreConsumer {
     @Value("${kafka.topic.core.event.task}")
     private String coreEvTaskTopic;
 
+    /**
+     * Handles a batch of core task events and writes statistics rows.
+     *
+     * @param records batch of Kafka records
+     * @param ack acknowledgment handle
+     */
     @KafkaListener(containerFactory = "kafkaBatchListenerContainerFactory", topics = "${kafka.topic.core.event.task}")
     public void listenCore(
             List<ConsumerRecord<String, String>> records, Acknowledgment ack

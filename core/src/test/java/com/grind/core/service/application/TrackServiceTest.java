@@ -26,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link TrackService}.
+ */
 @ExtendWith(MockitoExtension.class)
 class TrackServiceTest {
 

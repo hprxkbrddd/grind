@@ -14,6 +14,9 @@ import java.util.Map;
 
 import static com.grind.statistics.repository.ClickhouseQueries.*;
 
+/**
+ * Provides ClickHouse query and ingest operations for statistics data.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor

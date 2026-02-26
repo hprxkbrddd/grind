@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Sends statistics requests from the gateway to the statistics service.
+ */
 @Service
 @RequiredArgsConstructor
 public class StatisticsService {

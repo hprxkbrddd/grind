@@ -20,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Publishes outbox events to Kafka in scheduled batches.
+ * Persists updated outbox status after delivery attempts.
+ */
 @Service
 @RequiredArgsConstructor
 public class OutboxService {
@@ -36,6 +40,9 @@ public class OutboxService {
 
     // TODO add retry for 'FAILED' outbox events
 
+    /**
+     * Sends a batch of pending outbox events to Kafka.
+     */
     @Scheduled(fixedDelay = 1000)
     public void sendOutbox() {
 
@@ -64,20 +71,44 @@ public class OutboxService {
         updateStatuses(batch);
     }
 
+    /**
+     * Locks and returns the next batch of pending outbox events.
+     *
+     * @return list of events to send
+     */
     @Transactional
     public List<OutboxEvent> fetchBatch() {
         return outboxRepository.lockBatch(batchSize);
     }
 
+    /**
+     * Persists updated event statuses after sending.
+     *
+     * @param events processed outbox events
+     */
     @Transactional
     public void updateStatuses(List<OutboxEvent> events) {
         outboxRepository.saveAll(events);
     }
 
+    /**
+     * Stores a single outbox event derived from a task.
+     *
+     * @param dto task payload
+     * @param type core message type
+     * @param traceId tracing identifier
+     */
     public void genEvent(TaskDTO dto, CoreMessageType type, String traceId) {
         outboxRepository.save(toOutbox(dto, type, traceId));
     }
 
+    /**
+     * Stores multiple outbox events derived from tasks.
+     *
+     * @param dtoList task payloads
+     * @param type core message type
+     * @param traceId tracing identifier
+     */
     public void genEvents(List<TaskDTO> dtoList, CoreMessageType type, String traceId) {
         outboxRepository.saveAll(
                 dtoList.stream()

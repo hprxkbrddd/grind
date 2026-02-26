@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * Routes statistics Kafka requests to query operations.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor

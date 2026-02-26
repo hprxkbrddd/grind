@@ -21,6 +21,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Routes track-related Kafka requests to track service operations.
+ */
 @Service
 @RequiredArgsConstructor
 public class TrackReplyHandler {

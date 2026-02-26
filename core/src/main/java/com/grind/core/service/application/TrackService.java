@@ -19,6 +19,9 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+/**
+ * Manages track retrieval, updates, and sprint regeneration.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

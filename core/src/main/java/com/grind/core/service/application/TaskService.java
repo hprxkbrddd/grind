@@ -27,6 +27,9 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+/**
+ * Provides task lifecycle operations, planning, and status updates.
+ */
 @Service
 @RequiredArgsConstructor
 @Validated

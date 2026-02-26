@@ -12,12 +12,22 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Listens for Kafka responses and completes pending futures.
+ * Expects correlation id header to match stored requests.
+ */
 @Service
 @RequiredArgsConstructor
 public class KafkaResponseListener {
     private final ObjectMapper objectMapper;
     private final PendingRegistry pendingRegistry;
 
+    /**
+     * Handles responses and completes pending requests by correlation id.
+     *
+     * @param payload serialized response body
+     * @param correlationId correlation id for request-reply
+     */
     @KafkaListener(id = "gateway", topics = "response")
     public void handleResponse(
             @Payload String payload,

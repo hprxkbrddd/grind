@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Produces Kafka responses and events for the statistics service.
+ * Adds trace, user, and role headers from the security context.
+ */
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
@@ -26,11 +30,13 @@ public class KafkaProducer {
     private final ObjectMapper objectMapper;
 
     /**
-     * Publishes single with key message. <br>
-     * Messages with one key will be published to the same partition. <br>
-     * That means messages will be published and consumed in turn (from first to last)
+     * Publishes a single message with an optional partitioning key.
+     * Messages with the same key stay in order on one partition.
      *
-     * @param value
+     * @param value serialized payload
+     * @param key optional partition key
+     * @param traceId tracing identifier
+     * @param topic target Kafka topic
      */
     public void publish(String value, String key, String traceId, String topic) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -94,9 +100,11 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes a group of messages
+     * Publishes a batch of messages with a shared trace id.
      *
-     * @param values
+     * @param values serialized payloads
+     * @param traceId tracing identifier
+     * @param topic target Kafka topic
      */
     public void publish(List<String> values, String traceId, String topic) {
         String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
@@ -107,9 +115,11 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes single message
+     * Publishes a single message and generates trace id if missing.
      *
-     * @param value
+     * @param value serialized payload
+     * @param traceId tracing identifier
+     * @param topic target Kafka topic
      */
     public void publish(String value, String traceId, String topic) {
         publish(value, null,
@@ -119,10 +129,12 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes a group of messages to the same partition <br>
-     * That means messages will be published and consumed in turn (from first to last)
+     * Publishes a batch of messages with a shared partition key.
+     * Messages stay in order on one partition.
      *
-     * @param values
+     * @param values serialized payloads
+     * @param traceId tracing identifier
+     * @param topic target Kafka topic
      */
     public void publishOrdered(List<String> values, String traceId, String topic) {
         String key = UUID.randomUUID().toString();
@@ -132,6 +144,13 @@ public class KafkaProducer {
         }
     }
 
+    /**
+     * Sends a reply message to the configured response topic.
+     *
+     * @param value serialized response payload
+     * @param correlationId request-reply correlation id
+     * @param traceId tracing identifier
+     */
     public void reply(String value, String correlationId, String traceId) {
         kafkaTemplate.send(
                 formMessage(

@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Sends track-related requests from the gateway to the core service.
+ */
 @Service
 @RequiredArgsConstructor
 public class CoreTrackService {

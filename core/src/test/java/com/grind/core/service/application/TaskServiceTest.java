@@ -25,6 +25,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link TaskService}.
+ */
 @ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 

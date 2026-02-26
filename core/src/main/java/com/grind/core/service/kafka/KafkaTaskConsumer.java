@@ -21,6 +21,10 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Consumes task requests from Kafka and sends replies/events.
+ * Initializes the security context from Kafka headers per request.
+ */
 @Service
 @RequiredArgsConstructor
 public class KafkaTaskConsumer {
@@ -38,6 +42,16 @@ public class KafkaTaskConsumer {
             CoreMessageType.DELETE_TASK
     );
 
+    /**
+     * Handles task requests, optionally publishing outbox events on success.
+     *
+     * @param payload serialized request body
+     * @param correlationId request-reply correlation id
+     * @param traceId tracing identifier
+     * @param userId authenticated user id header
+     * @param roles optional roles header
+     * @param messageType message type header
+     */
     @KafkaListener(id = "core-server-task", topics = "core.request.task")
     public void listen(
             @Payload String payload,

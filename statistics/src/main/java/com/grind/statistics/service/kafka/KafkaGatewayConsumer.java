@@ -16,6 +16,10 @@ import org.springframework.stereotype.Service;
 
 import static com.grind.statistics.util.ConsumerHelper.authenticate;
 
+/**
+ * Consumes gateway statistics requests and publishes replies.
+ * Sets the security context from Kafka headers per request.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,6 +29,16 @@ public class KafkaGatewayConsumer {
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Handles a single statistics request and responds to the gateway.
+     *
+     * @param payload serialized request body
+     * @param correlationId request-reply correlation id
+     * @param traceId tracing identifier
+     * @param userId authenticated user id header
+     * @param roles optional roles header
+     * @param messageType message type header
+     */
     @KafkaListener(id = "stats-server", topics = "statistics.request", containerFactory = "kafkaSingleListenerContainerFactory")
     public void listen(
             @Payload String payload,

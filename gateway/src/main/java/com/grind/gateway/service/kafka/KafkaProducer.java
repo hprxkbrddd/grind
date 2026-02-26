@@ -24,6 +24,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+/**
+ * Publishes gateway Kafka requests and handles request-reply workflows.
+ * Maintains pending futures for correlation-based responses.
+ */
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
@@ -37,11 +41,14 @@ public class KafkaProducer {
     private long responseTimeoutMs;
 
     /**
-     * Publishes single with key message. <br>
-     * Messages with one key will be published to the same partition. <br>
-     * That means messages will be published and consumed in turn (from first to last)
+     * Publishes a single message with an optional partitioning key.
+     * Messages with the same key stay in order on one partition.
      *
-     * @param value
+     * @param value payload object (serialized before sending)
+     * @param type message type header value
+     * @param key optional partition key
+     * @param topic target Kafka topic
+     * @param correlationId request-reply correlation id
      */
     public void publish(
             Object value,
@@ -90,18 +97,34 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes single message
+     * Publishes a message without an explicit partition key.
      *
-     * @param value
+     * @param value payload object (serialized before sending)
+     * @param type message type header value
+     * @param topic target Kafka topic
+     * @param correlationId request-reply correlation id
      */
     public void publish(Object value, String type, String topic, String correlationId) {
         publish(value, type, null, topic, correlationId);
     }
 
+    /**
+     * Publishes a message with an empty payload.
+     *
+     * @param type message type header value
+     * @param topic target Kafka topic
+     * @param correlationId request-reply correlation id
+     */
     public void publishBodiless(String type, String topic, String correlationId) {
         publish(null, type, null, topic, correlationId);
     }
 
+    /**
+     * Waits for a response or timeout for the given correlation id.
+     *
+     * @param correlationId request-reply correlation id
+     * @return response body
+     */
     public Body<?> retrieveResponse(String correlationId) {
         CompletableFuture<Body<?>> future = pendingRegistry.get(correlationId);
         if (future == null) {
@@ -128,6 +151,14 @@ public class KafkaProducer {
         }
     }
 
+    /**
+     * Sends a request and waits for a response.
+     *
+     * @param body request payload
+     * @param type message type header value
+     * @param topic target Kafka topic
+     * @return response body
+     */
     public Body<?> requestReply(Object body, String type, String topic) {
         String correlationId = UUID.randomUUID().toString();
         try {

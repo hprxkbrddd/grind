@@ -20,6 +20,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Produces Kafka messages for core responses and events.
+ * Adds trace, user, and role headers from the security context.
+ */
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
@@ -31,11 +35,14 @@ public class KafkaProducer {
     private final ObjectMapper objectMapper;
 
     /**
-     * Publishes single with key message. <br>
-     * Messages with one key will be published to the same partition. <br>
-     * That means messages will be published and consumed in turn (from first to last)
+     * Publishes a single message with an optional partitioning key.
+     * Messages with the same key stay in order on one partition.
      *
-     * @param value
+     * @param value serialized payload
+     * @param type message type header value
+     * @param key optional partition key
+     * @param traceId tracing identifier
+     * @param topic target Kafka topic
      */
     public void publish(String value, CoreMessageType type, String key, String traceId, String topic) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -105,9 +112,12 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes single message
+     * Publishes a single message and generates trace id if missing.
      *
-     * @param value
+     * @param value serialized payload
+     * @param type message type header value
+     * @param traceId tracing identifier
+     * @param topic target Kafka topic
      */
     public void publish(String value, CoreMessageType type, String traceId, String topic) {
         publish(value, type, null,
@@ -117,9 +127,12 @@ public class KafkaProducer {
     }
 
     /**
-     * Publishes a group of messages
+     * Publishes a batch of messages with a shared correlation id.
      *
-     * @param values
+     * @param values serialized payloads
+     * @param type message type header value
+     * @param topic target Kafka topic
+     * @param correlationId correlation id to propagate
      */
     public void publish(List<String> values, CoreMessageType type, String topic, String correlationId) {
         for (String value : values) {
@@ -127,6 +140,14 @@ public class KafkaProducer {
         }
     }
 
+    /**
+     * Sends a reply message to the configured response topic.
+     *
+     * @param value serialized response payload
+     * @param type message type header value
+     * @param correlationId correlation id for request-reply
+     * @param traceId tracing identifier
+     */
     public void reply(String value, CoreMessageType type, String correlationId, String traceId) {
         kafkaTemplate.send(
                 formMessage(

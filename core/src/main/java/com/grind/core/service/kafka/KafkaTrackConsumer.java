@@ -22,6 +22,10 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Consumes track requests from Kafka and sends replies.
+ * Initializes the security context from Kafka headers per request.
+ */
 @Service
 @RequiredArgsConstructor
 public class KafkaTrackConsumer {
@@ -37,6 +41,16 @@ public class KafkaTrackConsumer {
     @Value("${kafka.topic.core.event.track}")
     private String coreEvTrackTopic;
 
+    /**
+     * Handles track requests and sends replies to the response topic.
+     *
+     * @param payload serialized request body
+     * @param correlationId request-reply correlation id
+     * @param traceId tracing identifier
+     * @param userId authenticated user id header
+     * @param roles optional roles header
+     * @param messageType message type header
+     */
     @KafkaListener(id = "core-server-track", topics = "core.request.track")
     public void listen(
             @Payload String payload,

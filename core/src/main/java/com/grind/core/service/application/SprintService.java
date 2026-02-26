@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Manages sprint retrieval and generation for tracks.
+ */
 @Service
 @RequiredArgsConstructor
 public class SprintService {

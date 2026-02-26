@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Sends task-related requests from the gateway to the core service.
+ */
 @Service
 @RequiredArgsConstructor
 public class CoreTaskService {
