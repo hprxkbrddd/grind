@@ -42,4 +42,20 @@ public class StatisticsService {
                 statReqTopic
         );
     }
+
+    public Body<?> callGetTrackStatsPerDay(String trackId) {
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_STATS_PER_DAY.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetTrackStatsPerWeek(String trackId) {
+        return kafkaProducer.requestReply(
+                IdDTO.of(trackId),
+                StatisticsMessageType.GET_STATS_PER_WEEK.name(),
+                statReqTopic
+        );
+    }
 }

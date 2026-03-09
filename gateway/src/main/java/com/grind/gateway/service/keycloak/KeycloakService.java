@@ -19,8 +19,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Objects;
-
 /**
  * Keycloak Service
  * Responsible for communication with a Keycloak server using
@@ -182,14 +180,13 @@ public class KeycloakService {
         formData.add("scope", "openid");
         System.out.println("get JWT endpoint: body prepared");
         System.out.println("get JWT endpoint: sending HTTP to keycloak server");
-        Mono<TokenResponseDTO> resp = webClientPublic.post()
+        return webClientPublic.post()
                 .uri("/token")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(formData)
                 .retrieve()
-                .bodyToMono(TokenResponseDTO.class);
-        System.out.println(Objects.requireNonNull(resp.block()).access_token());
-        return resp;
+                .bodyToMono(TokenResponseDTO.class)
+                .doOnNext(token -> System.out.println(token.access_token()));
     }
 
     /**

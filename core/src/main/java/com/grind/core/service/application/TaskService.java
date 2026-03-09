@@ -1,6 +1,7 @@
 package com.grind.core.service.application;
 
 import com.grind.core.dto.entity.TaskDTO;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.enums.TaskStatus;
 import com.grind.core.exception.SprintNotFoundException;
 import com.grind.core.exception.TaskNotFoundException;
@@ -11,12 +12,12 @@ import com.grind.core.model.Task;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
 import com.grind.core.repository.TrackRepository;
+import com.grind.core.service.kafka.OutboxService;
+import com.grind.core.util.TraceContext;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TrackRepository trackRepository;
     private final SprintRepository sprintRepository;
+    private final OutboxService outboxService;
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<Task> getAllTasks() {
@@ -92,6 +94,7 @@ public class TaskService {
         task.setDescription(description);
         task.setStatus(TaskStatus.CREATED);
         taskRepository.save(task);
+        publishTaskEvent(task, CoreMessageType.TASK_CREATED);
         return task;
     }
 
@@ -119,6 +122,7 @@ public class TaskService {
         task.setPlannedDate(plannedDate);
         task.setSprint(sprint);
         task.setStatus(TaskStatus.PLANNED);
+        publishTaskEvent(task, CoreMessageType.TASK_PLANNED);
         return task;
     }
 
@@ -140,6 +144,7 @@ public class TaskService {
         task.setPlannedDate(date);
         task.setSprint(sprint);
         task.setStatus(TaskStatus.PLANNED);
+        publishTaskEvent(task, CoreMessageType.TASK_PLANNED);
         return task;
     }
 
@@ -154,6 +159,7 @@ public class TaskService {
             throw new IllegalStateException("Task is not marked as completed; you have to plan it first");
         task.setActualDate(LocalDate.now());
         task.setStatus(TaskStatus.COMPLETED);
+        publishTaskEvent(task, CoreMessageType.TASK_COMPLETED);
         return task;
     }
 
@@ -165,12 +171,17 @@ public class TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException("Task has not been moved to backlog"));
         TaskStatus status = task.getStatus();
-        if (status == TaskStatus.CREATED) return task;
+        if (status == TaskStatus.CREATED) {
+            publishTaskEvent(task, CoreMessageType.TASK_AT_BACKLOG);
+            return task;
+        }
         if (status == TaskStatus.COMPLETED) task.setActualDate(null);
 
         task.setPlannedDate(null);
         task.setSprint(null);
         task.setStatus(TaskStatus.CREATED);
+
+        publishTaskEvent(task, CoreMessageType.TASK_AT_BACKLOG);
 
         return task;
     }
@@ -190,7 +201,8 @@ public class TaskService {
     ) {
         Task task = taskRepository.findById(taskId)
                         .orElseThrow(() -> new TaskNotFoundException(taskId));
-        taskRepository.deleteById(taskId);
+        publishTaskEvent(task, CoreMessageType.TASK_DELETED);
+        taskRepository.delete(task);
         return task;
     }
 
@@ -224,5 +236,9 @@ public class TaskService {
         }
 
         return task;
+    }
+
+    private void publishTaskEvent(Task task, CoreMessageType type) {
+        outboxService.genEvent(task.mapDTO(), type, TraceContext.getTraceId());
     }
 }

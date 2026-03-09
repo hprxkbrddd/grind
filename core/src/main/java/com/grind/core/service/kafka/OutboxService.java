@@ -129,6 +129,7 @@ public class OutboxService {
                             dto.sprint_id(),
                             userId,
                             dto.id(),
+                            dto.plannedDate(),
                             dto.version(),
                             dto.status(),
                             LocalDateTime.now()

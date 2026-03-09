@@ -2,6 +2,9 @@ package com.grind.statistics.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.statistics.dto.response.ddl.CountResponse;
+import com.grind.statistics.dto.response.ddl.DdlResponse;
+import com.grind.statistics.dto.response.ddl.DescribeTableResponse;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -18,7 +21,10 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
+
+import static com.grind.statistics.repository.ClickhouseQueries.ANALYTICS_DB;
 
 @Repository
 @RequiredArgsConstructor
@@ -31,6 +37,7 @@ public class ClickhouseRepository {
     private String chUsername;
     @Value("${clickhouse.password}")
     private String chPassword;
+
     private WebClient webClient;
 
     private final ObjectMapper objectMapper;
@@ -88,7 +95,6 @@ public class ClickhouseRepository {
         return webClient.post()
                 .uri(uriBuilder -> {
                     uriBuilder.queryParam("database", "analytics");
-//                    uriBuilder.queryParam("query", query);
                     if (params != null) params.forEach(uriBuilder::queryParam);
                     return uriBuilder.build();
                 })
@@ -101,6 +107,110 @@ public class ClickhouseRepository {
                         resp -> resp.bodyToMono(String.class)
                                 .flatMap(msg -> Mono.error(new IllegalStateException("ClickHouse 4xx: " + msg))))
                 .bodyToFlux(expectedRes);
+    }
+
+    public Mono<Boolean> databaseExists(String databaseName) {
+        String query = """
+                SELECT count() AS cnt
+                FROM system.databases
+                WHERE name = '%s'
+                FORMAT JSONEachRow
+                """.formatted(databaseName);
+        return existsByQuery(query);
+    }
+
+    public Mono<Boolean> tableExists(String databaseName, String tableName) {
+        String query = """
+                SELECT count() AS cnt
+                FROM system.tables
+                WHERE database = '%s'
+                  AND name = '%s'
+                FORMAT JSONEachRow
+                """.formatted(databaseName, tableName);
+        return existsByQuery(query);
+    }
+
+    public Mono<Boolean> tableExists(String tableName) {
+        return tableExists(ANALYTICS_DB, tableName);
+    }
+
+    public Mono<String> fetchDatabaseDdl(String databaseName) {
+        String query = "SHOW CREATE DATABASE " + databaseName + " FORMAT JSONEachRow";
+        return fetchDdl(query);
+    }
+
+    public Mono<String> fetchTableDdl(String databaseName, String tableName) {
+        String query = "SHOW CREATE TABLE " + databaseName + "." + tableName + " FORMAT JSONEachRow";
+        return fetchDdl(query);
+    }
+
+    public Mono<Void> executeStatement(String statement) {
+        return executeSql(statement)
+                .toBodilessEntity()
+                .then();
+    }
+
+    public Flux<DescribeTableResponse> describeTable(String databaseName, String tableName) {
+        String query = "DESCRIBE TABLE " + databaseName + "." + tableName + " FORMAT JSONEachRow";
+        return executeSql(query)
+                .bodyToFlux(DescribeTableResponse.class);
+    }
+
+    private Mono<String> fetchDdl(String query) {
+        return executeSql(query)
+                .bodyToMono(String.class)
+                .flatMap(body -> extractDdl(body)
+                        .map(Mono::just)
+                        .orElseGet(Mono::empty));
+    }
+
+    private Mono<Boolean> existsByQuery(String query) {
+        return executeSql(query)
+                .bodyToMono(String.class)
+                .map(this::extractCount)
+                .map(count -> count > 0);
+    }
+
+    private WebClient.ResponseSpec executeSql(String sql) {
+        return webClient.post()
+                .uri(UriBuilder::build)
+                .contentType(MediaType.TEXT_PLAIN)
+                .bodyValue(sql)
+                .retrieve()
+                .onStatus(HttpStatusCode::is5xxServerError,
+                        resp -> resp.bodyToMono(String.class)
+                                .flatMap(msg -> Mono.error(new RuntimeException("ClickHouse 5xx: " + msg))))
+                .onStatus(HttpStatusCode::is4xxClientError,
+                        resp -> resp.bodyToMono(String.class)
+                                .flatMap(msg -> Mono.error(new IllegalStateException("ClickHouse 4xx: " + msg))));
+    }
+
+    private long extractCount(String responseBody) {
+        String payload = responseBody.lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Empty ClickHouse response for exists query"));
+
+        try {
+            return objectMapper.readValue(payload, CountResponse.class).cnt();
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to parse ClickHouse exists response", e);
+        }
+    }
+
+    private Optional<String> extractDdl(String responseBody) {
+        return responseBody.lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .map(line -> {
+                    try {
+                        return objectMapper.readValue(line, DdlResponse.class).statement();
+                    } catch (JsonProcessingException e) {
+                        throw new IllegalStateException("Failed to parse ClickHouse DDL response", e);
+                    }
+                })
+                .findFirst();
     }
 
     private String buildBody(List<? extends Record> payload) throws JsonProcessingException {

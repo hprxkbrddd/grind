@@ -42,4 +42,22 @@ public class StatisticsController {
                         body.payload() : body.error()
                 );
     }
+
+    @GetMapping("/track/{trackId}/per-day")
+    public ResponseEntity<?> getTrackStatsPerDay(@PathVariable String trackId) {
+        Body<?> body = statisticsService.callGetTrackStatsPerDay(trackId);
+        return ResponseEntity.status(body.status())
+                .body(body.error()==null ?
+                        body.payload() : body.error()
+                );
+    }
+
+    @GetMapping("/track/{trackId}/per-week")
+    public ResponseEntity<?> getTrackStatsPerWeek(@PathVariable String trackId) {
+        Body<?> body = statisticsService.callGetTrackStatsPerWeek(trackId);
+        return ResponseEntity.status(body.status())
+                .body(body.error()==null ?
+                        body.payload() : body.error()
+                );
+    }
 }

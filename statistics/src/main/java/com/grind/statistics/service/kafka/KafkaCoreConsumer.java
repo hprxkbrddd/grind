@@ -72,6 +72,7 @@ public class KafkaCoreConsumer {
                             msg.sprintId(),
                             msg.userId(),
                             msg.taskId(),
+                            msg.plannedDate(),
                             msg.version(),
                             msg.taskStatus(),
                             msg.changedAt().truncatedTo(ChronoUnit.MILLIS)

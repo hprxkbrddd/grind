@@ -1,5 +1,6 @@
 package com.grind.statistics.service.handler;
 
+import com.grind.statistics.dto.response.diagram.DiagramDTO;
 import com.grind.statistics.dto.response.sprint.SprintStatsDTO;
 import com.grind.statistics.dto.response.track.TrackActualStateStatsDTO;
 import com.grind.statistics.dto.response.track.TrackRawStatsDTO;
@@ -34,6 +35,12 @@ public class StatisticsHandler {
             case GET_SPRINT_STATS -> {
                 return handleGetSprintStats(payload);
             }
+            case GET_STATS_PER_WEEK -> {
+                return handleGetStatsPerWeek(payload);
+            }
+            case GET_STATS_PER_DAY -> {
+                return handleGetStatsPerDay(payload);
+            }
             default -> throw new UnsupportedOperationException("Message type is not related to track statistics");
         }
     }
@@ -65,6 +72,28 @@ public class StatisticsHandler {
                 Reply.ok(
                         StatisticsMessageType.SPRINT_STATS,
                         queryService.getSprintStats(
+                                IdParser.run(payload)
+                        )
+                )
+        );
+    }
+
+    private Reply<DiagramDTO> handleGetStatsPerWeek(String payload) {
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.STATS_PER_WEEK,
+                        queryService.getDiagramDataPerWeek(
+                                IdParser.run(payload)
+                        )
+                )
+        );
+    }
+
+    private Reply<DiagramDTO> handleGetStatsPerDay(String payload) {
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.STATS_PER_DAY,
+                        queryService.getDiagramDataPerDay(
                                 IdParser.run(payload)
                         )
                 )

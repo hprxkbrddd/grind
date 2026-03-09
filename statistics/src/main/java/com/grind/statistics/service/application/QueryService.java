@@ -1,6 +1,8 @@
 package com.grind.statistics.service.application;
 
 import com.grind.statistics.dto.request.StatisticsEventDTO;
+import com.grind.statistics.dto.response.diagram.DiagramDTO;
+import com.grind.statistics.dto.response.diagram.DiagramUnit;
 import com.grind.statistics.dto.response.sprint.SprintStatsDTO;
 import com.grind.statistics.dto.response.track.TrackActualStateStatsDTO;
 import com.grind.statistics.dto.response.track.TrackRawStatsDTO;
@@ -23,7 +25,7 @@ import static com.grind.statistics.repository.ClickhouseQueries.*;
 public class QueryService {
     private final ClickhouseRepository repository;
 
-    public TrackActualStateStatsDTO getActualStateStats(String trackId){
+    public TrackActualStateStatsDTO getActualStateStats(String trackId) {
         List<TrackActualStateStatsDTO> list = repository.requestSelect(
                 Q_TRACK_STATS_ACTUAL_STATE,
                 Map.of("param_track", trackId),
@@ -36,7 +38,8 @@ public class QueryService {
 
         return list.get(0);
     }
-    public TrackRawStatsDTO getRawStats(String trackId){
+
+    public TrackRawStatsDTO getRawStats(String trackId) {
         List<TrackRawStatsDTO> list = repository.requestSelect(
                 Q_TRACK_STATS_RAW,
                 Map.of("param_track", trackId),
@@ -62,6 +65,34 @@ public class QueryService {
         }
 
         return list.get(0);
+    }
+
+    public DiagramDTO getDiagramDataPerDay(String trackId) {
+        List<DiagramUnit> list = repository.requestSelect(
+                Q_STATS_PER_DAY,
+                Map.of("param_track", trackId),
+                DiagramUnit.class
+        ).collectList().block();
+
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("track id is not in stats db");
+        }
+
+        return new DiagramDTO(list);
+    }
+
+    public DiagramDTO getDiagramDataPerWeek(String trackId) {
+        List<DiagramUnit> list = repository.requestSelect(
+                Q_STATS_PER_WEEK,
+                Map.of("param_track", trackId),
+                DiagramUnit.class
+        ).collectList().block();
+
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("track id is not in stats db");
+        }
+
+        return new DiagramDTO(list);
     }
 
     public void postEvent(List<StatisticsEventDTO> batch) {

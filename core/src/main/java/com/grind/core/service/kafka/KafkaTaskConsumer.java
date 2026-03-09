@@ -2,12 +2,11 @@ package com.grind.core.service.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.dto.wrap.Reply;
 import com.grind.core.enums.CoreMessageType;
 import com.grind.core.service.handler.TaskReplyHandler;
+import com.grind.core.util.TraceContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -22,8 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Consumes task requests from Kafka and sends replies/events.
- * Initializes the security context from Kafka headers per request.
+ * Consumes task requests from Kafka and sends replies.
+ * Initializes the security and trace context from Kafka headers.
  */
 @Service
 @RequiredArgsConstructor
@@ -32,18 +31,9 @@ public class KafkaTaskConsumer {
     private final KafkaProducer kafkaProducer;
     private final TaskReplyHandler replyHandler;
     private final ObjectMapper objectMapper;
-    private final OutboxService outboxService;
-    private final static List<CoreMessageType> TO_PUBLISH_EVENT = List.of(
-            CoreMessageType.CREATE_TASK,
-            CoreMessageType.PLAN_TASK_DATE,
-            CoreMessageType.PLAN_TASK_SPRINT,
-            CoreMessageType.COMPLETE_TASK,
-            CoreMessageType.MOVE_TASK_TO_BACKLOG,
-            CoreMessageType.DELETE_TASK
-    );
 
     /**
-     * Handles task requests, optionally publishing outbox events on success.
+     * Handles task requests and sends replies to the gateway.
      *
      * @param payload serialized request body
      * @param correlationId request-reply correlation id
@@ -76,26 +66,11 @@ public class KafkaTaskConsumer {
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            TraceContext.setTraceId(traceId);
 
             // HANDLING REQUEST
             CoreMessageType type = CoreMessageType.valueOf(messageType);
             Reply<?> rep = replyHandler.routeReply(type, payload);
-            if (TO_PUBLISH_EVENT.contains(type) && rep.body().status() == HttpStatus.OK) {
-                Object repPayload = rep.body().payload();
-
-                if (repPayload instanceof TaskDTO dto) {
-                    outboxService.genEvent(dto, rep.type(), traceId);
-                } else if (repPayload instanceof List<?> list) {
-                    List<TaskDTO> dtoList = list.stream()
-                            .filter(TaskDTO.class::isInstance)
-                            .map(TaskDTO.class::cast)
-                            .toList();
-
-                    if (!dtoList.isEmpty()) {
-                        outboxService.genEvents(dtoList, rep.type(), traceId);
-                    }
-                }
-            }
             String replyPayload = objectMapper.writeValueAsString(rep.body());
 
             kafkaProducer.reply(replyPayload, rep.type(), correlationId, traceId);
@@ -105,6 +80,7 @@ public class KafkaTaskConsumer {
             throw new RuntimeException(e);
         } finally {
             SecurityContextHolder.clearContext();
+            TraceContext.clear();
         }
     }
 }

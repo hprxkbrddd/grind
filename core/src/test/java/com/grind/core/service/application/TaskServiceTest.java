@@ -10,6 +10,7 @@ import com.grind.core.model.Track;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
 import com.grind.core.repository.TrackRepository;
+import com.grind.core.service.kafka.OutboxService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +38,8 @@ class TaskServiceTest {
     SprintRepository sprintRepository;
     @Mock
     TrackRepository trackRepository;
+    @Mock
+    OutboxService outboxService;
 
     @InjectMocks
     TaskService taskService;

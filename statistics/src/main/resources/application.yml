@@ -33,7 +33,14 @@ management:
       enabled: true
 
 clickhouse:
-  baseUrl: http://localhost:8123/
+  baseUrl: http://85.217.170.243:8123/
+  database: analytics
+  table:
+    raw: analytics.raw
+    task-as: analytics.task_actual_state
+  view:
+    task-as-mv: analytics.task_actual_state_mv
+    task-as-v: analytics.task_actual_state_v
   username: grind
   password: grind
 
