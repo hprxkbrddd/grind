@@ -19,7 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.grind.statistics.util.ConsumerHelper.headerAsString;
+import static com.grind.statistics.util.ConsumerHelper.headerAsLong;
 
 /**
  * Consumes core outbox events and persists them to ClickHouse.
@@ -60,7 +60,10 @@ public class KafkaCoreConsumer {
             String payload = rec.value();
 
             // SAFE HEADER PARSING
-            String eventId = headerAsString(rec, "X-Event-Id");
+            Long eventId = headerAsLong(rec, "X-Event-Id");
+            if (eventId == null) {
+                throw new IllegalStateException("Missing required header X-Event-Id");
+            }
 
             // PARSING PAYLOAD
             OutboxRecord msg = objectMapper.readValue(payload, OutboxRecord.class);

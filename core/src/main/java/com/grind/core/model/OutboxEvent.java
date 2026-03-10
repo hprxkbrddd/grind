@@ -8,7 +8,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -21,7 +20,8 @@ import java.util.UUID;
 )
 public class OutboxEvent {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "aggregate_id", nullable = false)
     private String aggregateId;
@@ -61,10 +61,6 @@ public class OutboxEvent {
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
-
-    public OutboxEvent() {
-        this.id = UUID.randomUUID().toString();
-    }
 
     public void markSent() {
         this.status = OutboxStatus.SENT;

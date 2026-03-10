@@ -33,4 +33,16 @@ public class ConsumerHelper {
         var h = rec.headers().lastHeader(name);
         return (h == null || h.value() == null) ? null : new String(h.value(), StandardCharsets.UTF_8);
     }
+
+    public static Long headerAsLong(ConsumerRecord<?, ?> rec, String name) {
+        String value = headerAsString(rec, name);
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid header " + name + ": " + value, e);
+        }
+    }
 }

@@ -58,7 +58,8 @@ public class OutboxService {
                         ev.getPayload(),
                         ev.getEventType(),
                         ev.getTraceId(),
-                        ev.getTopic()
+                        ev.getTopic(),
+                        ev.getId()
                 );
                 ev.markSent();
                 log.info("OUTBOX EVENT SENT");

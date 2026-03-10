@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record StatisticsEventDTO(
-        @JsonProperty("event_id") String eventId,
+        @JsonProperty("event_id") Long eventId,
         @JsonProperty("track_id") String trackId,
         @JsonProperty("sprint_id") String sprintId,
         @JsonProperty("user_id") String userId,

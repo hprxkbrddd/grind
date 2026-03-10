@@ -10,12 +10,12 @@ public class ClickhouseQueries {
 
     public static final String DDL_CREATE_TABLES = """
             CREATE TABLE IF NOT EXISTS analytics.raw(
-                event_id UUID,
+                event_id Int64,
                 user_id UUID,
                 track_id UUID,
                 sprint_id Nullable(UUID),
                 task_id UUID,
-                planned_date DateTime64(3, 'UTC'),
+                planned_date Nullable(DateTime64(3, 'UTC')),
                 version UInt64,
                 task_status Enum8(
                         'UNKNOWN' = 0,
@@ -49,7 +49,7 @@ public class ClickhouseQueries {
                   ),
                   UInt64
               ),
-              planned_date_state AggregateFunction(max, DateTime64(3, 'UTC')),
+              planned_date_state AggregateFunction(argMax, Nullable(DateTime64(3, 'UTC')), UInt64),
               changed_at_state AggregateFunction(max, DateTime64(3, 'UTC'))
             )
             ENGINE = AggregatingMergeTree
@@ -70,7 +70,7 @@ public class ClickhouseQueries {
                 ) AS sprint_state,
                 argMaxState(task_status, version)  AS status_state,
                 maxState(changed_at)               AS changed_at_state,
-                maxState(planned_date)             AS planned_date_state
+                argMaxState(planned_date, version) AS planned_date_state
             FROM analytics.raw
             GROUP BY
                 task_id,
@@ -85,7 +85,7 @@ public class ClickhouseQueries {
                 argMaxMerge(sprint_state)  AS sprint_id,
                 argMaxMerge(status_state)  AS task_status,
                 maxMerge(changed_at_state) AS changed_at,
-                maxMerge(planned_date_state) AS planned_date,
+                argMaxMerge(planned_date_state) AS planned_date,
                 toYYYYMM(maxMerge(changed_at_state)) AS changed_month
             FROM analytics.task_actual_state
             GROUP BY
@@ -145,6 +145,7 @@ public class ClickhouseQueries {
                     uniqExact(task_id) AS planned,
                     0 AS completed
                 FROM task_actual_state_v
+                WHERE planned_date IS NOT NULL
                 GROUP BY day
 
                 UNION ALL

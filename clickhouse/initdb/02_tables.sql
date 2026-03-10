@@ -1,9 +1,10 @@
 CREATE TABLE IF NOT EXISTS analytics.raw(
-    event_id UUID,
+    event_id Int64,
     user_id UUID,
     track_id UUID,
     sprint_id Nullable(UUID),
     task_id UUID,
+    planned_date Nullable(DateTime64(3, 'UTC')),
     version UInt64,
     task_status Enum8(
             'UNKNOWN' = 0,
@@ -37,6 +38,7 @@ CREATE TABLE analytics.task_actual_state
       ),
       UInt64
   ),
+  planned_date_state AggregateFunction(argMax, Nullable(DateTime64(3, 'UTC')), UInt64),
   changed_at_state AggregateFunction(max, DateTime64(3, 'UTC'))
 )
 ENGINE = AggregatingMergeTree

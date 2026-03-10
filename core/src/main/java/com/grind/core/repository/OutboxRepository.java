@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface OutboxRepository extends JpaRepository<OutboxEvent, String> {
+public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
 
     @Query(
             value = """
@@ -36,5 +36,5 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, String> {
                     """,
             nativeQuery = true
     )
-    void updateBatch(@Param("event_ids") List<String> eventIds);
+    void updateBatch(@Param("event_ids") List<Long> eventIds);
 }

@@ -45,6 +45,10 @@ public class KafkaProducer {
      * @param topic target Kafka topic
      */
     public void publish(String value, CoreMessageType type, String key, String traceId, String topic) {
+        publish(value, type, key, traceId, topic, null);
+    }
+
+    public void publish(String value, CoreMessageType type, String key, String traceId, String topic, Long eventId) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userId = null;
@@ -70,7 +74,8 @@ public class KafkaProducer {
                         traceId,
                         userId,
                         roles,
-                        null
+                        null,
+                        eventId
                 )
         );
     }
@@ -83,7 +88,8 @@ public class KafkaProducer {
             String traceId,
             String userId,
             String roles,
-            String correlationId
+            String correlationId,
+            Long eventId
     ) {
         MessageBuilder<String> builder = MessageBuilder
                 .withPayload(payload)
@@ -104,7 +110,8 @@ public class KafkaProducer {
         if (correlationId != null && !correlationId.isBlank())
             builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
 
-        builder.setHeader("X-Event-Id", UUID.randomUUID().toString());
+        if (eventId != null)
+            builder.setHeader("X-Event-Id", eventId.toString());
 
         builder.setHeader("X-Message-Type", Objects.requireNonNullElse(type, com.grind.core.enums.CoreMessageType.UNDEFINED));
 
@@ -123,6 +130,14 @@ public class KafkaProducer {
         publish(value, type, null,
                 traceId == null ? UUID.randomUUID().toString() : traceId,
                 topic
+        );
+    }
+
+    public void publish(String value, CoreMessageType type, String traceId, String topic, Long eventId) {
+        publish(value, type, null,
+                traceId == null ? UUID.randomUUID().toString() : traceId,
+                topic,
+                eventId
         );
     }
 
@@ -158,7 +173,8 @@ public class KafkaProducer {
                         traceId,
                         null,
                         null,
-                        correlationId
+                        correlationId,
+                        null
                 )
         );
     }

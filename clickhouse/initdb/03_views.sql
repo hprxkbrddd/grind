@@ -10,7 +10,8 @@ SELECT
         version
     ) AS sprint_state,
     argMaxState(task_status, version)  AS status_state,
-    maxState(changed_at)               AS changed_at_state
+    maxState(changed_at)               AS changed_at_state,
+    argMaxState(planned_date, version) AS planned_date_state
 FROM analytics.raw
 GROUP BY
     task_id,
@@ -25,8 +26,9 @@ SELECT
     argMaxMerge(sprint_state)  AS sprint_id,
     argMaxMerge(status_state)  AS task_status,
     maxMerge(changed_at_state) AS changed_at,
+    argMaxMerge(planned_date_state) AS planned_date,
     toYYYYMM(maxMerge(changed_at_state)) AS changed_month
-FROM analytics.task_actual_state_mv
+FROM analytics.task_actual_state
 GROUP BY
     task_id,
     track_id,

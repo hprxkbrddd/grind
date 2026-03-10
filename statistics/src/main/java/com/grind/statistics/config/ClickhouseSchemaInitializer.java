@@ -228,12 +228,12 @@ public class ClickhouseSchemaInitializer {
 
         String createStatement = ("""
                 CREATE TABLE IF NOT EXISTS %s (
-                    event_id UUID,
+                    event_id Int64,
                     user_id UUID,
                     track_id UUID,
                     sprint_id Nullable(UUID),
                     task_id UUID,
-                    planned_date DateTime64(3, 'UTC'),
+                    planned_date Nullable(DateTime64(3, 'UTC')),
                     version UInt64,
                     task_status Enum8(
                             'UNKNOWN' = 0,
@@ -252,12 +252,12 @@ public class ClickhouseSchemaInitializer {
         ).formatted(qualified);
 
         List<ColumnDefinition> columns = List.of(
-                new ColumnDefinition("event_id", "UUID", null),
+                new ColumnDefinition("event_id", "Int64", null),
                 new ColumnDefinition("user_id", "UUID", null),
                 new ColumnDefinition("track_id", "UUID", null),
                 new ColumnDefinition("sprint_id", "Nullable(UUID)", null),
                 new ColumnDefinition("task_id", "UUID", null),
-                new ColumnDefinition("planned_date", "DateTime64(3, 'UTC')", null),
+                new ColumnDefinition("planned_date", "Nullable(DateTime64(3, 'UTC'))", null),
                 new ColumnDefinition("version", "UInt64", null),
                 new ColumnDefinition("task_status", "Enum8('UNKNOWN' = 0, 'CREATED' = 1, 'PLANNED' = 2, 'COMPLETED' = 3, 'OVERDUE' = 4)", null),
                 new ColumnDefinition("changed_at", "DateTime64(3, 'UTC')", null),
@@ -277,7 +277,6 @@ public class ClickhouseSchemaInitializer {
                   task_id UUID,
                   track_id UUID,
                   user_id UUID,
-                  planned_date_state AggregateFunction(max, DateTime64(3, 'UTC')),
                   sprint_state AggregateFunction(argMax, UUID, UInt64),
                   status_state AggregateFunction(
                       argMax,
@@ -290,6 +289,7 @@ public class ClickhouseSchemaInitializer {
                       ),
                       UInt64
                   ),
+                  planned_date_state AggregateFunction(argMax, Nullable(DateTime64(3, 'UTC')), UInt64),
                   changed_at_state AggregateFunction(max, DateTime64(3, 'UTC'))
                 )
                 ENGINE = AggregatingMergeTree
@@ -301,9 +301,9 @@ public class ClickhouseSchemaInitializer {
                 new ColumnDefinition("task_id", "UUID", null),
                 new ColumnDefinition("track_id", "UUID", null),
                 new ColumnDefinition("user_id", "UUID", null),
-                new ColumnDefinition("planned_date_state", "AggregateFunction(max, DateTime64(3, 'UTC'))", null),
                 new ColumnDefinition("sprint_state", "AggregateFunction(argMax, UUID, UInt64)", null),
                 new ColumnDefinition("status_state", "AggregateFunction(argMax, Enum8('UNKNOWN' = 0, 'CREATED' = 1, 'PLANNED' = 2, 'COMPLETED' = 3, 'OVERDUE' = 4), UInt64)", null),
+                new ColumnDefinition("planned_date_state", "AggregateFunction(argMax, Nullable(DateTime64(3, 'UTC')), UInt64)", null),
                 new ColumnDefinition("changed_at_state", "AggregateFunction(max, DateTime64(3, 'UTC'))", null)
         );
 
@@ -327,7 +327,7 @@ public class ClickhouseSchemaInitializer {
                     ) AS sprint_state,
                     argMaxState(task_status, version)  AS status_state,
                     maxState(changed_at)               AS changed_at_state,
-                    maxState(planned_date)             AS planned_date_state
+                    argMaxState(planned_date, version) AS planned_date_state
                 FROM %s
                 GROUP BY
                     task_id,
@@ -352,7 +352,7 @@ public class ClickhouseSchemaInitializer {
                     argMaxMerge(sprint_state)  AS sprint_id,
                     argMaxMerge(status_state)  AS task_status,
                     maxMerge(changed_at_state) AS changed_at,
-                    maxMerge(planned_date_state) AS planned_date,
+                    argMaxMerge(planned_date_state) AS planned_date,
                     toYYYYMM(maxMerge(changed_at_state)) AS changed_month
                 FROM %s
                 GROUP BY
