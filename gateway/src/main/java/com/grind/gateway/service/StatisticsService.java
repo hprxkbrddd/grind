@@ -58,4 +58,12 @@ public class StatisticsService {
                 statReqTopic
         );
     }
+
+    public void syncDatabases(){
+        kafkaProducer.requestReply(
+                null,
+                StatisticsMessageType.SYNC_DATABASES.name(),
+                statReqTopic
+        );
+    }
 }

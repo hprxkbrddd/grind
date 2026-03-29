@@ -102,4 +102,18 @@ public class QueryService {
                 batch
         ).block();
     }
+
+    public Long getLastEventId(){
+        List<Long> list = repository.requestSelect(
+                Q_LAST_EVENT,
+                Map.of(),
+                Long.class
+        ).collectList().block();
+
+        if (list == null || list.isEmpty()) {
+            return 0L;
+        }
+
+        return list.get(0);
+    }
 }

@@ -1,7 +1,8 @@
 package com.grind.statistics.service.kafka;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -23,11 +24,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
+    private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class);
+
     @Value("${kafka.topic.response}")
     private String responseTopic;
 
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
 
     /**
      * Publishes a single message with an optional partitioning key.
@@ -44,7 +46,7 @@ public class KafkaProducer {
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
 
-        System.out.println(">>>>> Trace id: " + traceId);
+        log.debug("Publishing Kafka message with traceId={}", traceId);
 
         if (auth instanceof UsernamePasswordAuthenticationToken upAuth) {
             userId = (String) upAuth.getPrincipal();
@@ -140,7 +142,7 @@ public class KafkaProducer {
         String key = UUID.randomUUID().toString();
         String trId = traceId == null ? UUID.randomUUID().toString() : traceId;
         for (String value : values) {
-            publish(value, key, trId);
+            publish(value, key, trId, topic);
         }
     }
 

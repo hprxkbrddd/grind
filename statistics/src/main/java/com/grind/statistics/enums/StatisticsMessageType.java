@@ -13,5 +13,9 @@ public enum StatisticsMessageType {
     STATS_PER_WEEK,
     STATS_PER_DAY,
 
+    SYNC_DATABASES,
+    DATABASES_SYNCED,
+    RETRIEVE_POSTGRES,
+    POSTGRES_RETRIEVED,
     ERROR
 }

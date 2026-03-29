@@ -8,6 +8,10 @@ public class ClickhouseQueries {
             CREATE DATABASE IF NOT EXISTS analytics;
             """;
 
+    public static final String Q_LAST_EVENT = """
+            SELECT max(event_id) FROM analytics.raw;
+            """;
+
     public static final String DDL_CREATE_TABLES = """
             CREATE TABLE IF NOT EXISTS analytics.raw(
                 event_id Int64,

@@ -13,5 +13,6 @@ public enum StatisticsMessageType {
     STATS_PER_WEEK,
     STATS_PER_DAY,
 
+    SYNC_DATABASES,
     ERROR
 }

@@ -50,8 +50,12 @@ kafka.topic:
     event:
       task: 'core.event.task'
       track: 'core.event.track'
+    system:
+      request: 'core.system.request'
+      response: 'core.system.response'
   statistics:
     request: 'statistics.request'
+    event: 'statistics.event'
   response: 'response'
 
 server:

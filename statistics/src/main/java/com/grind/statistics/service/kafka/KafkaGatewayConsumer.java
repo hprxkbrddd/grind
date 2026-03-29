@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.statistics.dto.wrap.Reply;
 import com.grind.statistics.enums.StatisticsMessageType;
 import com.grind.statistics.service.handler.StatisticsHandler;
+import com.grind.statistics.util.TraceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -56,6 +57,7 @@ public class KafkaGatewayConsumer {
             StatisticsMessageType type = StatisticsMessageType.valueOf(messageType);
 
             Reply<?> rep = statisticsHandler.routeReply(type, payload);
+            TraceContext.setTraceId(traceId);
 
             String replyPayload = objectMapper.writeValueAsString(rep.body());
 

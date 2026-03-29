@@ -7,6 +7,7 @@ import com.grind.statistics.dto.response.track.TrackRawStatsDTO;
 import com.grind.statistics.dto.wrap.Reply;
 import com.grind.statistics.enums.StatisticsMessageType;
 import com.grind.statistics.service.application.QueryService;
+import com.grind.statistics.service.application.SynchronizationService;
 import com.grind.statistics.util.ActionReplyExecutor;
 import com.grind.statistics.util.IdParser;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class StatisticsHandler {
 
     private final QueryService queryService;
+    private final SynchronizationService synchronizationService;
     private final ActionReplyExecutor exec;
 
     public Reply<?> routeReply(StatisticsMessageType type, String payload) {
@@ -40,6 +42,9 @@ public class StatisticsHandler {
             }
             case GET_STATS_PER_DAY -> {
                 return handleGetStatsPerDay(payload);
+            }
+            case SYNC_DATABASES -> {
+                return handleSync();
             }
             default -> throw new UnsupportedOperationException("Message type is not related to track statistics");
         }
@@ -96,6 +101,15 @@ public class StatisticsHandler {
                         queryService.getDiagramDataPerDay(
                                 IdParser.run(payload)
                         )
+                )
+        );
+    }
+
+    private Reply<?> handleSync(){
+        return exec.withErrorMapping(() ->
+                Reply.ok(
+                        StatisticsMessageType.DATABASES_SYNCED,
+                        synchronizationService.synchronizeDatabases()
                 )
         );
     }

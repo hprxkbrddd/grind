@@ -1,6 +1,5 @@
 package com.grind.core.service.kafka;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.enums.CoreMessageType;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -32,7 +31,6 @@ public class KafkaProducer {
     private String responseTopic;
 
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
 
     /**
      * Publishes a single message with an optional partitioning key.
@@ -54,7 +52,7 @@ public class KafkaProducer {
         String userId = null;
         String roles = null; // not collection, cuz only strings can be provided in headers
 
-        System.out.println(">>>>> Trace id: " + traceId);
+        log.debug("Publishing Kafka message with traceId={}", traceId);
 
         if (auth instanceof UsernamePasswordAuthenticationToken upAuth) {
             userId = (String) upAuth.getPrincipal();
@@ -151,7 +149,19 @@ public class KafkaProducer {
      */
     public void publish(List<String> values, CoreMessageType type, String topic, String correlationId) {
         for (String value : values) {
-            publish(value, type, topic, correlationId);
+            kafkaTemplate.send(
+                    formMessage(
+                            value,
+                            type,
+                            topic,
+                            null,
+                            null,
+                            null,
+                            null,
+                            correlationId,
+                            null
+                    )
+            );
         }
     }
 

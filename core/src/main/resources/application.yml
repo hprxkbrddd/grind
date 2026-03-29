@@ -4,8 +4,8 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     producer:
-      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
-      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
       group-id: core-consumer-group
       auto-offset-reset: earliest
@@ -55,8 +55,12 @@ kafka:
       event:
         task: 'core.event.task'
         track: 'core.event.track'
+      system:
+        request: 'core.system.request'
+        response: 'core.system.response'
     statistics:
       request: 'statistics.request'
+      event: 'statistics.event'
     response: 'response'
 
 server:
