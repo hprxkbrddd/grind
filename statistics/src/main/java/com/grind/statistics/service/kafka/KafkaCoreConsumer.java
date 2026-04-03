@@ -30,7 +30,6 @@ import static com.grind.statistics.util.ConsumerHelper.headerAsLong;
 public class KafkaCoreConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaCoreConsumer.class);
-    private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
     private final QueryService service;
     private static final List<CoreMessageType> events = List.of(
@@ -52,6 +51,12 @@ public class KafkaCoreConsumer {
      */
     @KafkaListener(containerFactory = "kafkaBatchListenerContainerFactory", topics = "${kafka.topic.core.event.task}")
     public void listenCore(
+            List<ConsumerRecord<String, String>> records, Acknowledgment ack
+    ) throws JsonProcessingException {
+        consumeCoreRecords(records, ack);
+    }
+
+    public void consumeCoreRecords(
             List<ConsumerRecord<String, String>> records, Acknowledgment ack
     ) throws JsonProcessingException {
         List<StatisticsEventDTO> batch = new ArrayList<>();

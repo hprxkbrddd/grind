@@ -35,6 +35,8 @@ public class OutboxService {
 
     @Value("${kafka.topic.core.event.task}")
     private String coreEvTaskTopic;
+    @Value("${kafka.topic.core.system.response}")
+    private String coreSystemResTopic;
     @Value("${kafka.outbox-batch-size}")
     private Integer batchSize;
 
@@ -95,8 +97,8 @@ public class OutboxService {
     /**
      * Stores a single outbox event derived from a task.
      *
-     * @param dto task payload
-     * @param type core message type
+     * @param dto     task payload
+     * @param type    core message type
      * @param traceId tracing identifier
      */
     public void genEvent(TaskDTO dto, CoreMessageType type, String traceId) {
@@ -107,7 +109,7 @@ public class OutboxService {
      * Stores multiple outbox events derived from tasks.
      *
      * @param dtoList task payloads
-     * @param type core message type
+     * @param type    core message type
      * @param traceId tracing identifier
      */
     public void genEvents(List<TaskDTO> dtoList, CoreMessageType type, String traceId) {
@@ -150,6 +152,33 @@ public class OutboxService {
 
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize OutboxRecord", e);
+        }
+    }
+
+    public void resendEventsAfter(Long eventId) {
+        List<OutboxEvent> eventsToRepublish = eventId == null ?
+                outboxRepository.getAllEvents() :
+                outboxRepository.getEventsAfter(eventId);
+
+        if (eventsToRepublish.isEmpty()) {
+            return;
+        }
+
+        for (OutboxEvent ev : eventsToRepublish) {
+            try {
+                kafkaProducer.publish(
+                        ev.getPayload(),
+                        ev.getEventType(),
+                        ev.getTraceId(),
+                        coreSystemResTopic,
+                        ev.getId()
+                );
+                ev.markSent();
+                log.info("OUTBOX EVENT RESENT");
+            } catch (Exception ex) {
+                ev.markFailed(ex.getMessage());
+                log.warn(ex.getMessage());
+            }
         }
     }
 }

@@ -37,4 +37,22 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
             nativeQuery = true
     )
     void updateBatch(@Param("event_ids") List<Long> eventIds);
+
+    @Query(
+            value = """
+                        SELECT *
+                        FROM outbox
+                        WHERE processed_at > (
+                            SELECT o.processed_at
+                            FROM outbox o
+                            WHERE o.id = :eventId
+                        )
+                        AND processed_at IS NOT NULL
+                    """,
+            nativeQuery = true
+    )
+    List<OutboxEvent> getEventsAfter(@Param("eventId") Long eventId);
+
+    @Query("SELECT e FROM OutboxEvent e")
+    List<OutboxEvent> getAllEvents();
 }

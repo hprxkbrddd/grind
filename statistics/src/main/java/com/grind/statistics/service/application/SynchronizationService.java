@@ -6,6 +6,8 @@ import com.grind.statistics.dto.request.StatCoreSyncDTO;
 import com.grind.statistics.service.kafka.KafkaProducer;
 import com.grind.statistics.util.TraceContext;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SynchronizationService {
 
+    private static final Logger log = LoggerFactory.getLogger(SynchronizationService.class);
     private final QueryService queryService;
     private final KafkaProducer kafkaProducer;
     private final ObjectMapper objectMapper;
@@ -20,9 +23,8 @@ public class SynchronizationService {
     @Value("${kafka.topic.core.system.request}")
     public String coreSystemRequestTopic;
 
-    public String synchronizeDatabases(){
+    public void synchronizeDatabases(){
         Long eventId = queryService.getLastEventId();
-
         try {
             kafkaProducer.publish(
                     objectMapper.writeValueAsString(new StatCoreSyncDTO(eventId)),
@@ -32,7 +34,5 @@ public class SynchronizationService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e); // TODO introduce better handling
         }
-
-        return null;
     }
 }

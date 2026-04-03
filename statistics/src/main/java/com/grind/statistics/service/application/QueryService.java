@@ -1,5 +1,6 @@
 package com.grind.statistics.service.application;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.grind.statistics.dto.request.StatisticsEventDTO;
 import com.grind.statistics.dto.response.diagram.DiagramDTO;
 import com.grind.statistics.dto.response.diagram.DiagramUnit;
@@ -104,16 +105,22 @@ public class QueryService {
     }
 
     public Long getLastEventId(){
-        List<Long> list = repository.requestSelect(
+        LastEventIdRow row = repository.requestSelect(
                 Q_LAST_EVENT,
                 Map.of(),
-                Long.class
-        ).collectList().block();
+                LastEventIdRow.class
+        ).next().block();
 
-        if (list == null || list.isEmpty()) {
-            return 0L;
+        if (row == null || row.eventId() == null) {
+            return null;
         }
 
-        return list.get(0);
+        return row.eventId();
+    }
+
+    private record LastEventIdRow(
+            @JsonProperty("event_id")
+            Long eventId
+    ) {
     }
 }

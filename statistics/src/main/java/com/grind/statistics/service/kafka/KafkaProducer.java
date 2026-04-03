@@ -124,6 +124,7 @@ public class KafkaProducer {
      * @param topic target Kafka topic
      */
     public void publish(String value, String traceId, String topic) {
+        log.info("33333333333333RAAAAAAAAAAAAAAAAAAAAAAWWWWWWWWWWWR");
         publish(value, null,
                 traceId == null ? UUID.randomUUID().toString() : traceId,
                 topic

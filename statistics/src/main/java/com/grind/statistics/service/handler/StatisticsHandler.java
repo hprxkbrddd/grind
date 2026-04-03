@@ -105,12 +105,14 @@ public class StatisticsHandler {
         );
     }
 
-    private Reply<?> handleSync(){
-        return exec.withErrorMapping(() ->
-                Reply.ok(
-                        StatisticsMessageType.DATABASES_SYNCED,
-                        synchronizationService.synchronizeDatabases()
-                )
+    private Reply<?> handleSync() {
+        return exec.withErrorMapping(() -> {
+                    synchronizationService.synchronizeDatabases();
+                    return Reply.ok(
+                            StatisticsMessageType.DATABASES_SYNCED,
+                            "CHIWAPCHICHI"
+                    );
+                }
         );
     }
 }

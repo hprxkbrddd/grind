@@ -9,7 +9,10 @@ public class ClickhouseQueries {
             """;
 
     public static final String Q_LAST_EVENT = """
-            SELECT max(event_id) FROM analytics.raw;
+            SELECT
+                maxOrNull(event_id) AS event_id
+            FROM analytics.raw
+            FORMAT JSONEachRow;
             """;
 
     public static final String DDL_CREATE_TABLES = """
@@ -181,8 +184,8 @@ public class ClickhouseQueries {
                 FROM analytics.raw
                 WHERE track_id = {track:UUID}
             )
-            GROUP BY week
-            ORDER BY week
+            GROUP BY day
+            ORDER BY day
             FORMAT JSONEachRow;
             """;
 

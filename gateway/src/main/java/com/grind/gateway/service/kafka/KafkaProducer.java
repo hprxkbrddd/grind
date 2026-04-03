@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.gateway.dto.Body;
 import com.grind.gateway.enums.CoreMessageType;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class KafkaProducer {
+    private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class);
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final PendingRegistry pendingRegistry;
@@ -44,14 +47,14 @@ public class KafkaProducer {
      * Publishes a single message with an optional partitioning key.
      * Messages with the same key stay in order on one partition.
      *
-     * @param value payload object (serialized before sending)
+     * @param value serialized payload
      * @param type message type header value
      * @param key optional partition key
      * @param topic target Kafka topic
      * @param correlationId request-reply correlation id
      */
     public void publish(
-            Object value,
+            String value,
             String type,
             String key,
             String topic,
@@ -71,17 +74,45 @@ public class KafkaProducer {
                     .collect(Collectors.joining(","));
         }
 
-        if (value == null) value = "";
-        MessageBuilder<Object> builder = MessageBuilder
-                .withPayload(value)
+        String traceId = UUID.randomUUID().toString();
+        log.debug("Publishing Kafka message with traceId={}", traceId);
+
+        kafkaTemplate.send(
+                formMessage(
+                        value == null ? "" : value,
+                        type,
+                        topic,
+                        key,
+                        traceId,
+                        userId,
+                        roles,
+                        correlationId
+                )
+        );
+    }
+
+    private Message<String> formMessage(
+            String payload,
+            String type,
+            String topic,
+            String key,
+            String traceId,
+            String userId,
+            String roles,
+            String correlationId
+    ) {
+        MessageBuilder<String> builder = MessageBuilder
+                .withPayload(payload)
                 .setHeader(KafkaHeaders.TOPIC, topic);
 
         if (key != null && !key.isBlank())
             builder.setHeader(KafkaHeaders.KEY, key);
 
-        builder.setHeader("X-Trace-Id", UUID.randomUUID().toString());
+        if (traceId != null && !traceId.isBlank())
+            builder.setHeader("X-Trace-Id", traceId);
 
-        builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
+        if (correlationId != null && !correlationId.isBlank())
+            builder.setHeader(KafkaHeaders.CORRELATION_ID, correlationId);
 
         if (userId != null && !userId.isBlank())
             builder.setHeader("X-User-Id", userId);
@@ -91,20 +122,18 @@ public class KafkaProducer {
 
         builder.setHeader("X-Message-Type", Objects.requireNonNullElse(type, CoreMessageType.UNDEFINED).toString());
 
-        Message<Object> message = builder.build();
-
-        kafkaTemplate.send(message);
+        return builder.build();
     }
 
     /**
      * Publishes a message without an explicit partition key.
      *
-     * @param value payload object (serialized before sending)
+     * @param value serialized payload
      * @param type message type header value
      * @param topic target Kafka topic
      * @param correlationId request-reply correlation id
      */
-    public void publish(Object value, String type, String topic, String correlationId) {
+    public void publish(String value, String type, String topic, String correlationId) {
         publish(value, type, null, topic, correlationId);
     }
 
@@ -116,7 +145,7 @@ public class KafkaProducer {
      * @param correlationId request-reply correlation id
      */
     public void publishBodiless(String type, String topic, String correlationId) {
-        publish(null, type, null, topic, correlationId);
+        publish("", type, null, topic, correlationId);
     }
 
     /**
