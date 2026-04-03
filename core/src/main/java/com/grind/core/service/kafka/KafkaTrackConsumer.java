@@ -6,6 +6,7 @@ import com.grind.core.dto.entity.TrackDTO;
 import com.grind.core.dto.wrap.Reply;
 import com.grind.core.enums.CoreMessageType;
 import com.grind.core.service.handler.TrackReplyHandler;
+import com.grind.core.util.TraceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -75,26 +76,11 @@ public class KafkaTrackConsumer {
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
+            TraceContext.setTraceId(traceId);
 
             // HANDLING REQUEST
             CoreMessageType type = CoreMessageType.valueOf(messageType);
             Reply<?> rep = replyHandler.routeReply(type, payload);
-            if (TO_PUBLISH_EVENT.contains(type) && rep.body().status() == HttpStatus.OK) {
-//                TODO publish events for all tasks, which are connected with sprints of this track
-                Object repPayload = rep.body().payload();
-
-                if (repPayload instanceof TrackDTO dto) {
-                    // someService.findTasksWhichChangedAndGenEvents()
-                    return;
-                }
-//                kafkaProducer.publish(
-//                        rep.body(),
-//                        rep.type(),
-//                        traceId,
-//                        coreEvTrackTopic
-//                );
-            }
             String replyPayload = objectMapper.writeValueAsString(rep.body());
             kafkaProducer.reply(replyPayload, rep.type(), correlationId, traceId);
         } catch (JsonProcessingException e) {

@@ -2,11 +2,15 @@ package com.grind.core.service.application;
 
 import com.grind.core.dto.request.SprintWithCount;
 import com.grind.core.dto.request.track.TrackWithCount;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.enums.TrackStatus;
 import com.grind.core.exception.TrackNotFoundException;
 import com.grind.core.model.Sprint;
+import com.grind.core.model.Task;
 import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
+import com.grind.core.service.kafka.OutboxService;
+import com.grind.core.util.TraceContext;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +33,7 @@ public class TrackService {
 
     private final TrackRepository trackRepository;
     private final SprintService sprintService;
+    private final OutboxService outboxService;
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<TrackWithCount> getAllTracksWithCount() {
@@ -93,6 +98,13 @@ public class TrackService {
     public Track deleteTrack(String id) {
         Track track = trackRepository.findById(id)
                         .orElseThrow(() -> new TrackNotFoundException(id));
+        outboxService.genEvents(
+                track.getTasks()
+                        .stream()
+                        .map(Task::mapDTO)
+                        .toList(),
+                CoreMessageType.TASK_DELETED,
+                TraceContext.getTraceId());
         trackRepository.deleteById(id);
         return track;
     }

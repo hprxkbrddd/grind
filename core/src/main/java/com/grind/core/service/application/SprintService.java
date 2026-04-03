@@ -1,12 +1,15 @@
 package com.grind.core.service.application;
 
 import com.grind.core.dto.request.SprintWithCount;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.exception.InvalidAggregateStateException;
 import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
 import com.grind.core.model.Track;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
+import com.grind.core.service.kafka.OutboxService;
+import com.grind.core.util.TraceContext;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
@@ -27,6 +30,7 @@ public class SprintService {
 
     private final SprintRepository sprintRepository;
     private final TaskRepository taskRepository;
+    private final OutboxService outboxService;
 
     public List<Sprint> getAllSprints() {
         return sprintRepository.findAll();
@@ -91,6 +95,11 @@ public class SprintService {
             t.setSprint(newSprint);
             toSave.add(t);
         }
+        outboxService.genEvents(
+                toSave.stream().map(Task::mapDTO).toList(),
+                CoreMessageType.TASK_PLANNED,
+                TraceContext.getTraceId()
+        );
         taskRepository.saveAll(toSave);
 
         // удаляем старые спринты после переназначения задач
