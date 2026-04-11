@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Aligns the ClickHouse schema with expected DDL without destroying existing data.
@@ -42,6 +43,8 @@ public class ClickhouseSchemaInitializer {
     private String mViewActualState;
     @Value("${clickhouse.view.task-as-v}")
     private String viewActualState;
+    @Value("${clickhouse.view.task-visible-v}")
+    private String viewVisibleState;
 
     @PostConstruct
     public void synchronizeSchema() {
@@ -50,12 +53,30 @@ public class ClickhouseSchemaInitializer {
 
         TableDefinition rawTableDefinition = buildRawTableDefinition();
         TableDefinition actualStateDefinition = buildActualStateTableDefinition();
+        MaterializedViewDefinition materializedViewDefinition = buildMaterializedViewDefinition();
+        ViewDefinition actualStateViewDefinition = buildActualStateViewDefinition();
+        ViewDefinition visibleStateViewDefinition = buildVisibleStateViewDefinition();
 
-        ensureTableAligned(rawTableDefinition);
-        ensureTableAligned(actualStateDefinition);
+        boolean rawTableRebuilt = ensureTableAligned(
+                rawTableDefinition,
+                materializedViewDefinition,
+                actualStateViewDefinition,
+                visibleStateViewDefinition
+        );
+        boolean actualStateRebuilt = ensureTableAligned(
+                actualStateDefinition,
+                materializedViewDefinition,
+                actualStateViewDefinition,
+                visibleStateViewDefinition
+        );
 
-        ensureMaterializedView(buildMaterializedViewDefinition());
-        ensureView(buildActualStateViewDefinition());
+        ensureMaterializedView(materializedViewDefinition);
+        ensureView(actualStateViewDefinition);
+        ensureView(visibleStateViewDefinition);
+
+        if (rawTableRebuilt || actualStateRebuilt) {
+            backfillActualState(materializedViewDefinition);
+        }
     }
 
     private void ensureDatabase() {
@@ -64,7 +85,12 @@ public class ClickhouseSchemaInitializer {
         clickhouseRepository.executeStatement(statement).block();
     }
 
-    private void ensureTableAligned(TableDefinition definition) {
+    private boolean ensureTableAligned(
+            TableDefinition definition,
+            MaterializedViewDefinition materializedViewDefinition,
+            ViewDefinition actualStateViewDefinition,
+            ViewDefinition visibleStateViewDefinition
+    ) {
         log.info("Checking table {}", definition.qualifiedName());
         boolean exists = Boolean.TRUE.equals(
                 clickhouseRepository.tableExists(definition.database(), definition.name()).block()
@@ -72,7 +98,7 @@ public class ClickhouseSchemaInitializer {
         if (!exists) {
             log.warn("Table {} is missing; creating via configured DDL", definition.qualifiedName());
             clickhouseRepository.executeStatement(definition.createStatement()).block();
-            return;
+            return isActualStateTable(definition);
         }
 
         List<DescribeTableResponse> describe = clickhouseRepository.describeTable(definition.database(), definition.name())
@@ -95,13 +121,42 @@ public class ClickhouseSchemaInitializer {
             }
 
             if (!typesCompatible(expected.type(), actual.type())) {
-                log.warn(
-                        "Column {}.{} has type '{}' but '{}' is expected. Manual intervention required; skipping automatic change.",
-                        definition.qualifiedName(),
-                        expected.name(),
-                        actual.type(),
-                        expected.type()
-                );
+                if (requiresActualStateRebuild(definition, expected, actual)) {
+                    rebuildActualStateStorage(
+                            definition,
+                            materializedViewDefinition,
+                            actualStateViewDefinition,
+                            visibleStateViewDefinition
+                    );
+                    return true;
+                } else if (isRawTable(definition)) {
+                    try {
+                        updateColumnType(definition, expected);
+                    } catch (RuntimeException ex) {
+                        rebuildRawStorage(
+                                definition,
+                                actualByName,
+                                materializedViewDefinition,
+                                actualStateViewDefinition,
+                                visibleStateViewDefinition
+                        );
+                        return true;
+                    }
+                } else if (canAutoUpdateType(expected.type(), actual.type())) {
+                    try {
+                        updateColumnType(definition, expected);
+                    } catch (RuntimeException ex) {
+                        throw ex;
+                    }
+                } else {
+                    log.warn(
+                            "Column {}.{} has type '{}' but '{}' is expected. Manual intervention required; skipping automatic change.",
+                            definition.qualifiedName(),
+                            expected.name(),
+                            actual.type(),
+                            expected.type()
+                    );
+                }
             }
 
             if (expected.defaultExpression() != null
@@ -111,6 +166,8 @@ public class ClickhouseSchemaInitializer {
 
             previousColumn = expected.name();
         }
+
+        return false;
     }
 
     private void addColumn(TableDefinition definition, ColumnDefinition column, String previousColumn) {
@@ -141,6 +198,104 @@ public class ClickhouseSchemaInitializer {
                 .formatted(definition.qualifiedName(), column.name(), column.type(), column.defaultExpression());
         log.info("Updating default expression for {}.{}", definition.qualifiedName(), column.name());
         clickhouseRepository.executeStatement(statement).block();
+    }
+
+    private void updateColumnType(TableDefinition definition, ColumnDefinition column) {
+        String statement = "ALTER TABLE %s MODIFY COLUMN %s %s"
+                .formatted(definition.qualifiedName(), column.name(), column.type());
+        log.info("Updating column type for {}.{}", definition.qualifiedName(), column.name());
+        clickhouseRepository.executeStatement(statement).block();
+    }
+
+    private void rebuildActualStateStorage(
+            TableDefinition definition,
+            MaterializedViewDefinition materializedViewDefinition,
+            ViewDefinition actualStateViewDefinition,
+            ViewDefinition visibleStateViewDefinition
+    ) {
+        if (materializedViewDefinition == null || actualStateViewDefinition == null || visibleStateViewDefinition == null) {
+            throw new IllegalStateException("Materialized/view definitions must be provided for task_actual_state rebuild");
+        }
+        log.warn("Rebuilding {} due to incompatible AggregateFunction(Enum8) type change", definition.qualifiedName());
+        dropActualStateStorage(materializedViewDefinition, actualStateViewDefinition, visibleStateViewDefinition);
+        clickhouseRepository.executeStatement(definition.createStatement()).block();
+    }
+
+    private void rebuildRawStorage(
+            TableDefinition definition,
+            Map<String, DescribeTableResponse> actualByName,
+            MaterializedViewDefinition materializedViewDefinition,
+            ViewDefinition actualStateViewDefinition,
+            ViewDefinition visibleStateViewDefinition
+    ) {
+        if (materializedViewDefinition == null || actualStateViewDefinition == null || visibleStateViewDefinition == null) {
+            throw new IllegalStateException("Materialized/view definitions must be provided for raw rebuild");
+        }
+        String rawQualified = definition.qualifiedName();
+        String tempName = definition.name() + "__enum_mig_tmp";
+        String tempQualified = definition.database() + "." + tempName;
+
+        log.warn("Rebuilding {} due to unsupported enum conversion", rawQualified);
+        dropActualStateStorage(materializedViewDefinition, actualStateViewDefinition, visibleStateViewDefinition);
+
+        clickhouseRepository.executeStatement("DROP TABLE IF EXISTS " + tempQualified).block();
+        String createTmp = definition.createStatement()
+                .replace("CREATE TABLE IF NOT EXISTS " + rawQualified,
+                        "CREATE TABLE IF NOT EXISTS " + tempQualified);
+        clickhouseRepository.executeStatement(createTmp).block();
+
+        String columnList = definition.columns().stream()
+                .map(ColumnDefinition::name)
+                .collect(Collectors.joining(", "));
+        String selectList = definition.columns().stream()
+                .map(column -> buildRawCopyExpression(column, actualByName))
+                .collect(Collectors.joining(",\n    "));
+
+        String copy = """
+                INSERT INTO %s
+                (%s)
+                SELECT
+                    %s
+                FROM %s
+                """.formatted(tempQualified, columnList, selectList, rawQualified);
+        clickhouseRepository.executeStatement(copy).block();
+
+        clickhouseRepository.executeStatement("DROP TABLE IF EXISTS " + rawQualified).block();
+        clickhouseRepository.executeStatement("RENAME TABLE " + tempQualified + " TO " + rawQualified).block();
+    }
+
+    private String buildRawCopyExpression(
+            ColumnDefinition expected,
+            Map<String, DescribeTableResponse> actualByName
+    ) {
+        DescribeTableResponse actual = actualByName.get(expected.name());
+        if (actual == null) {
+            if (expected.defaultExpression() != null) {
+                return expected.defaultExpression() + " AS " + expected.name();
+            }
+            return "CAST(NULL AS " + expected.type() + ") AS " + expected.name();
+        }
+
+        if ("task_status".equals(expected.name()) && isEnum8Type(expected.type()) && isEnum8Type(actual.type())) {
+            return "CAST(toInt8(task_status) AS " + expected.type() + ") AS task_status";
+        }
+
+        if (typesCompatible(expected.type(), actual.type())) {
+            return expected.name();
+        }
+
+        return "CAST(" + expected.name() + " AS " + expected.type() + ") AS " + expected.name();
+    }
+
+    private void dropActualStateStorage(
+            MaterializedViewDefinition materializedViewDefinition,
+            ViewDefinition actualStateViewDefinition,
+            ViewDefinition visibleStateViewDefinition
+    ) {
+        clickhouseRepository.executeStatement("DROP VIEW IF EXISTS " + visibleStateViewDefinition.qualifiedName()).block();
+        clickhouseRepository.executeStatement("DROP VIEW IF EXISTS " + actualStateViewDefinition.qualifiedName()).block();
+        clickhouseRepository.executeStatement("DROP TABLE IF EXISTS " + materializedViewDefinition.qualifiedName()).block();
+        clickhouseRepository.executeStatement("DROP TABLE IF EXISTS " + qualifiedName(tableActualState)).block();
     }
 
     private void ensureMaterializedView(MaterializedViewDefinition definition) {
@@ -198,6 +353,52 @@ public class ClickhouseSchemaInitializer {
         return normalizeWhitespace(expected).equals(normalizeWhitespace(actual));
     }
 
+    private boolean canAutoUpdateType(String expected, String actual) {
+        String expectedNorm = normalizeType(expected);
+        String actualNorm = normalizeType(actual);
+
+        return expectedNorm.startsWith("ENUM8(") && actualNorm.startsWith("ENUM8(");
+    }
+
+    private boolean requiresActualStateRebuild(
+            TableDefinition definition,
+            ColumnDefinition expected,
+            DescribeTableResponse actual
+    ) {
+        return isActualStateTable(definition)
+                && "status_state".equals(expected.name())
+                && isAggregateEnumType(expected.type())
+                && isAggregateEnumType(actual.type());
+    }
+
+    private boolean isAggregateEnumType(String type) {
+        return normalizeType(type).startsWith("AGGREGATEFUNCTION(ARGMAX,ENUM8(");
+    }
+
+    private boolean isEnum8Type(String type) {
+        return normalizeType(type).startsWith("ENUM8(");
+    }
+
+    private boolean isActualStateTable(TableDefinition definition) {
+        return definition.database().equals(extractDatabaseName(tableActualState))
+                && definition.name().equals(extractObjectName(tableActualState));
+    }
+
+    private boolean isRawTable(TableDefinition definition) {
+        return definition.database().equals(extractDatabaseName(tableRaw))
+                && definition.name().equals(extractObjectName(tableRaw));
+    }
+
+    private void backfillActualState(MaterializedViewDefinition definition) {
+        String statement = """
+                INSERT INTO %s
+                (task_id, track_id, user_id, sprint_state, status_state, planned_date_state, changed_at_state)
+                %s
+                """.formatted(definition.targetTable(), definition.selectQuery());
+        log.info("Backfilling {} from raw events", definition.targetTable());
+        clickhouseRepository.executeStatement(statement).block();
+    }
+
     private String normalizeSql(String sql) {
         if (sql == null) {
             return "";
@@ -236,9 +437,9 @@ public class ClickhouseSchemaInitializer {
                     planned_date Nullable(DateTime64(3, 'UTC')),
                     version UInt64,
                     task_status Enum8(
-                            'UNKNOWN' = 0,
-                            'CREATED'   = 1,
-                            'PLANNED'   = 2,
+                            'DELETED'  = 0,
+                            'CREATED'  = 1,
+                            'PLANNED'  = 2,
                             'COMPLETED' = 3,
                             'OVERDUE'  = 4
                         ),
@@ -259,7 +460,7 @@ public class ClickhouseSchemaInitializer {
                 new ColumnDefinition("task_id", "UUID", null),
                 new ColumnDefinition("planned_date", "Nullable(DateTime64(3, 'UTC'))", null),
                 new ColumnDefinition("version", "UInt64", null),
-                new ColumnDefinition("task_status", "Enum8('UNKNOWN' = 0, 'CREATED' = 1, 'PLANNED' = 2, 'COMPLETED' = 3, 'OVERDUE' = 4)", null),
+                new ColumnDefinition("task_status", "Enum8('DELETED' = 0, 'CREATED' = 1, 'PLANNED' = 2, 'COMPLETED' = 3, 'OVERDUE' = 4)", null),
                 new ColumnDefinition("changed_at", "DateTime64(3, 'UTC')", null),
                 new ColumnDefinition("ingested_at", "DateTime64(3, 'UTC')", "now64(3)")
         );
@@ -281,9 +482,9 @@ public class ClickhouseSchemaInitializer {
                   status_state AggregateFunction(
                       argMax,
                       Enum8(
-                          'UNKNOWN' = 0,
-                          'CREATED'   = 1,
-                          'PLANNED'   = 2,
+                          'DELETED'  = 0,
+                          'CREATED'  = 1,
+                          'PLANNED'  = 2,
                           'COMPLETED' = 3,
                           'OVERDUE'   = 4
                       ),
@@ -302,7 +503,7 @@ public class ClickhouseSchemaInitializer {
                 new ColumnDefinition("track_id", "UUID", null),
                 new ColumnDefinition("user_id", "UUID", null),
                 new ColumnDefinition("sprint_state", "AggregateFunction(argMax, UUID, UInt64)", null),
-                new ColumnDefinition("status_state", "AggregateFunction(argMax, Enum8('UNKNOWN' = 0, 'CREATED' = 1, 'PLANNED' = 2, 'COMPLETED' = 3, 'OVERDUE' = 4), UInt64)", null),
+                new ColumnDefinition("status_state", "AggregateFunction(argMax, Enum8('DELETED' = 0, 'CREATED' = 1, 'PLANNED' = 2, 'COMPLETED' = 3, 'OVERDUE' = 4), UInt64)", null),
                 new ColumnDefinition("planned_date_state", "AggregateFunction(argMax, Nullable(DateTime64(3, 'UTC')), UInt64)", null),
                 new ColumnDefinition("changed_at_state", "AggregateFunction(max, DateTime64(3, 'UTC'))", null)
         );
@@ -326,8 +527,8 @@ public class ClickhouseSchemaInitializer {
                         version
                     ) AS sprint_state,
                     argMaxState(task_status, version)  AS status_state,
-                    maxState(changed_at)               AS changed_at_state,
-                    argMaxState(planned_date, version) AS planned_date_state
+                    argMaxState(planned_date, version) AS planned_date_state,
+                    maxState(changed_at)               AS changed_at_state
                 FROM %s
                 GROUP BY
                     task_id,
@@ -359,6 +560,29 @@ public class ClickhouseSchemaInitializer {
                     task_id,
                     track_id,
                     user_id
+                """
+        ).formatted(qualifiedSource);
+
+        return new ViewDefinition(db, name, selectQuery);
+    }
+
+    private ViewDefinition buildVisibleStateViewDefinition() {
+        String db = extractDatabaseName(viewVisibleState);
+        String name = extractObjectName(viewVisibleState);
+        String qualifiedSource = qualifiedName(viewActualState);
+
+        String selectQuery = ("""
+                SELECT
+                    task_id,
+                    track_id,
+                    user_id,
+                    sprint_id,
+                    task_status,
+                    changed_at,
+                    planned_date,
+                    changed_month
+                FROM %s
+                WHERE task_status != 'DELETED'
                 """
         ).formatted(qualifiedSource);
 

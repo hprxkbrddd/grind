@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.core.dto.entity.StatisticsEventDTO;
 import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.enums.CoreMessageType;
+import com.grind.core.enums.TaskStatus;
 import com.grind.core.model.OutboxEvent;
 import com.grind.core.repository.OutboxRepository;
 import jakarta.persistence.EntityManager;
@@ -125,16 +126,25 @@ public class OutboxService {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         log.info(">>>>> USER ID: {}", userId);
 
+        String sprintId = dto.sprint_id();
+        TaskStatus taskStatus = dto.status();
+        Long version = dto.version();
+        if (type == CoreMessageType.TASK_DELETED) {
+            sprintId = null;
+            taskStatus = TaskStatus.DELETED;
+            version = nextVersion(dto.version());
+        }
+
         try {
             String payload = objectMapper.writeValueAsString(
                     new StatisticsEventDTO(
                             dto.track_id(),
-                            dto.sprint_id(),
+                            sprintId,
                             userId,
                             dto.id(),
-                            dto.plannedDate(),
-                            dto.version(),
-                            dto.status(),
+                            type == CoreMessageType.TASK_DELETED ? null : dto.plannedDate(),
+                            version,
+                            taskStatus,
                             LocalDateTime.now()
                     )
             );
@@ -142,7 +152,7 @@ public class OutboxService {
             OutboxEvent ev = new OutboxEvent();
             ev.setAggregateId(dto.id());
             ev.setAggregateType("TASK");
-            ev.setAggregateVersion(dto.version());
+            ev.setAggregateVersion(version);
             ev.setTopic(coreEvTaskTopic);
             ev.setEventType(type);
             ev.setPayload(payload);
@@ -153,6 +163,10 @@ public class OutboxService {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize OutboxRecord", e);
         }
+    }
+
+    private Long nextVersion(Long current) {
+        return current == null ? 1L : current + 1L;
     }
 
     public void resendEventsAfter(Long eventId) {

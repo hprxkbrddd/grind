@@ -4,5 +4,6 @@ public enum TaskStatus {
     CREATED,           // К выполнению
     PLANNED,    // В процессе
     COMPLETED,           // Выполнено
-    OVERDUE         // Просрочено
+    OVERDUE,         // Просрочено
+    DELETED
 }

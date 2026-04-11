@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grind.statistics.dto.request.OutboxRecord;
 import com.grind.statistics.dto.request.StatisticsEventDTO;
 import com.grind.statistics.enums.CoreMessageType;
+import com.grind.statistics.enums.TaskStatus;
 import com.grind.statistics.service.application.QueryService;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.grind.statistics.util.ConsumerHelper.headerAsLong;
+import static com.grind.statistics.util.ConsumerHelper.headerAsString;
 
 /**
  * Consumes core outbox events and persists them to ClickHouse.
@@ -63,6 +65,7 @@ public class KafkaCoreConsumer {
 
         for (ConsumerRecord<String, String> rec : records) {
             String payload = rec.value();
+            CoreMessageType messageType = parseMessageType(rec);
 
             // SAFE HEADER PARSING
             Long eventId = headerAsLong(rec, "X-Event-Id");
@@ -73,16 +76,23 @@ public class KafkaCoreConsumer {
             // PARSING PAYLOAD
             OutboxRecord msg = objectMapper.readValue(payload, OutboxRecord.class);
 
+            TaskStatus taskStatus = msg.taskStatus();
+            String sprintId = msg.sprintId();
+            if (messageType == CoreMessageType.TASK_DELETED) {
+                taskStatus = TaskStatus.DELETED;
+                sprintId = null;
+            }
+
             // FILLING BATCH
             batch.add(new StatisticsEventDTO(
                             eventId,
                             msg.trackId(),
-                            msg.sprintId(),
+                            sprintId,
                             msg.userId(),
                             msg.taskId(),
-                            msg.plannedDate(),
+                            messageType == CoreMessageType.TASK_DELETED ? null : msg.plannedDate(),
                             msg.version(),
-                            msg.taskStatus(),
+                            taskStatus,
                             msg.changedAt().truncatedTo(ChronoUnit.MILLIS)
                     )
             );
@@ -93,6 +103,18 @@ public class KafkaCoreConsumer {
         for (StatisticsEventDTO r : batch) {
             log.info("CORE RECORD: event_id={}; task_id={}; version={}; status={}",
                     r.eventId(), r.taskId(), r.version(), r.taskStatus());
+        }
+    }
+
+    private CoreMessageType parseMessageType(ConsumerRecord<String, String> rec) {
+        String rawType = headerAsString(rec, "X-Message-Type");
+        if (rawType == null || rawType.isBlank()) {
+            return CoreMessageType.UNDEFINED;
+        }
+        try {
+            return CoreMessageType.valueOf(rawType);
+        } catch (IllegalArgumentException ignored) {
+            return CoreMessageType.UNDEFINED;
         }
     }
 }

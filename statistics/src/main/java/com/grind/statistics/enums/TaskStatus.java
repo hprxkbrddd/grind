@@ -4,5 +4,6 @@ public enum TaskStatus {
     CREATED,
     PLANNED,
     COMPLETED,
-    OVERDUE
+    OVERDUE,
+    DELETED
 }

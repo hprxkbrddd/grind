@@ -7,9 +7,9 @@ CREATE TABLE IF NOT EXISTS analytics.raw(
     planned_date Nullable(DateTime64(3, 'UTC')),
     version UInt64,
     task_status Enum8(
-            'UNKNOWN' = 0,
-            'CREATED'   = 1,
-            'PLANNED'   = 2,
+            'DELETED'  = 0,
+            'CREATED'  = 1,
+            'PLANNED'  = 2,
             'COMPLETED' = 3,
             'OVERDUE'  = 4
         ),
@@ -30,9 +30,9 @@ CREATE TABLE analytics.task_actual_state
   status_state AggregateFunction(
       argMax,
       Enum8(
-          'UNKNOWN' = 0,
-          'CREATED'   = 1,
-          'PLANNED'   = 2,
+          'DELETED'  = 0,
+          'CREATED'  = 1,
+          'PLANNED'  = 2,
           'COMPLETED' = 3,
           'OVERDUE'   = 4
       ),

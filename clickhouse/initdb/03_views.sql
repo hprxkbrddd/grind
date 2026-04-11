@@ -10,8 +10,8 @@ SELECT
         version
     ) AS sprint_state,
     argMaxState(task_status, version)  AS status_state,
-    maxState(changed_at)               AS changed_at_state,
-    argMaxState(planned_date, version) AS planned_date_state
+    argMaxState(planned_date, version) AS planned_date_state,
+    maxState(changed_at)               AS changed_at_state
 FROM analytics.raw
 GROUP BY
     task_id,
@@ -33,3 +33,16 @@ GROUP BY
     task_id,
     track_id,
     user_id;
+
+CREATE VIEW analytics.task_visible_state_v AS
+SELECT
+    task_id,
+    track_id,
+    user_id,
+    sprint_id,
+    task_status,
+    changed_at,
+    planned_date,
+    changed_month
+FROM analytics.task_actual_state_v
+WHERE task_status != 'DELETED';

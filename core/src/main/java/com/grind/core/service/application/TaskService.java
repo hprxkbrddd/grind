@@ -201,6 +201,9 @@ public class TaskService {
     ) {
         Task task = taskRepository.findById(taskId)
                         .orElseThrow(() -> new TaskNotFoundException(taskId));
+        task.setSprint(null);
+        task.setPlannedDate(null);
+        task.setStatus(TaskStatus.DELETED);
         publishTaskEvent(task, CoreMessageType.TASK_DELETED);
         taskRepository.delete(task);
         return task;

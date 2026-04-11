@@ -25,9 +25,9 @@ public class ClickhouseQueries {
                 planned_date Nullable(DateTime64(3, 'UTC')),
                 version UInt64,
                 task_status Enum8(
-                        'UNKNOWN' = 0,
-                        'CREATED'   = 1,
-                        'PLANNED'   = 2,
+                        'DELETED'  = 0,
+                        'CREATED'  = 1,
+                        'PLANNED'  = 2,
                         'COMPLETED' = 3,
                         'OVERDUE'  = 4
                     ),
@@ -48,9 +48,9 @@ public class ClickhouseQueries {
               status_state AggregateFunction(
                   argMax,
                   Enum8(
-                      'UNKNOWN' = 0,
-                      'CREATED'   = 1,
-                      'PLANNED'   = 2,
+                      'DELETED'  = 0,
+                      'CREATED'  = 1,
+                      'PLANNED'  = 2,
                       'COMPLETED' = 3,
                       'OVERDUE'   = 4
                   ),
@@ -76,8 +76,8 @@ public class ClickhouseQueries {
                     version
                 ) AS sprint_state,
                 argMaxState(task_status, version)  AS status_state,
-                maxState(changed_at)               AS changed_at_state,
-                argMaxState(planned_date, version) AS planned_date_state
+                argMaxState(planned_date, version) AS planned_date_state,
+                maxState(changed_at)               AS changed_at_state
             FROM analytics.raw
             GROUP BY
                 task_id,
@@ -99,6 +99,19 @@ public class ClickhouseQueries {
                 task_id,
                 track_id,
                 user_id;
+
+            CREATE VIEW analytics.task_visible_state_v AS
+            SELECT
+                task_id,
+                track_id,
+                user_id,
+                sprint_id,
+                task_status,
+                changed_at,
+                planned_date,
+                changed_month
+            FROM analytics.task_actual_state_v
+            WHERE task_status != 'DELETED';
             """;
     public static final String Q_TRACK_STATS_ACTUAL_STATE = """
             SELECT
@@ -134,7 +147,7 @@ public class ClickhouseQueries {
                     task_status != 'COMPLETED'
                 ) AS avg_active_age_days
             
-            FROM analytics.task_actual_state_v
+            FROM analytics.task_visible_state_v
             WHERE track_id = {track:UUID}
             GROUP BY track_id
             FORMAT JSONEachRow;
@@ -148,21 +161,23 @@ public class ClickhouseQueries {
             FROM
             (
                 SELECT
-                    toDate(planned_date) AS day,
-                    uniqExact(task_id) AS planned,
+                    toDate(v.planned_date) AS day,
+                    uniqExact(v.task_id) AS planned,
                     0 AS completed
-                FROM task_actual_state_v
-                WHERE planned_date IS NOT NULL
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.planned_date IS NOT NULL
                 GROUP BY day
 
                 UNION ALL
 
                 SELECT
-                    toDate(changed_at) AS day,
+                    toDate(v.changed_at) AS day,
                     0 AS planned,
-                    uniqExact(task_id) AS completed
-                FROM analytics.raw
-                WHERE task_status = 'COMPLETED'
+                    uniqExact(v.task_id) AS completed
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.task_status = 'COMPLETED'
                 GROUP BY day
             )
             GROUP BY day
@@ -173,16 +188,29 @@ public class ClickhouseQueries {
     public static final String Q_STATS_PER_WEEK = """
             SELECT
                 day,
-                uniqExactIf(task_id, task_status = 'PLANNED')   AS planned_tasks,
-                uniqExactIf(task_id, task_status = 'COMPLETED') AS completed_tasks
+                sum(planned)   AS planned_tasks,
+                sum(completed) AS completed_tasks
             FROM
             (
                 SELECT
-                    task_id,
-                    task_status,
-                    toStartOfWeek(toDate(changed_at)) AS day
-                FROM analytics.raw
-                WHERE track_id = {track:UUID}
+                    toStartOfWeek(toDate(v.planned_date)) AS day,
+                    uniqExact(v.task_id) AS planned,
+                    0 AS completed
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.planned_date IS NOT NULL
+                GROUP BY day
+
+                UNION ALL
+
+                SELECT
+                    toStartOfWeek(toDate(v.changed_at)) AS day,
+                    0 AS planned,
+                    uniqExact(v.task_id) AS completed
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.task_status = 'COMPLETED'
+                GROUP BY day
             )
             GROUP BY day
             ORDER BY day
@@ -194,17 +222,16 @@ public class ClickhouseQueries {
                 track_id,
             
                 countIf(
-                    task_status = 'COMPLETED'
-                    AND changed_at >= now() - INTERVAL 30 DAY
+                    changed_at >= now() - INTERVAL 30 DAY
                 ) AS completed_last_30d,
             
                 countIf(
-                    task_status = 'COMPLETED'
-                    AND changed_at >= now() - INTERVAL 7 DAY
+                    changed_at >= now() - INTERVAL 7 DAY
                 ) AS completed_last_7d
             
-            FROM analytics.raw
+            FROM analytics.task_visible_state_v
             WHERE track_id = {track:UUID}
+              AND task_status = 'COMPLETED'
             GROUP BY track_id
             FORMAT JSONEachRow;
             """;
@@ -232,7 +259,7 @@ public class ClickhouseQueries {
                 round(
                     countIf(task_status = 'OVERDUE')
                     /
-                    countIf(task_status != 'COMPLETED')
+                    nullIf(countIf(task_status != 'COMPLETED'), 0)
                     * 100,
                     2
                 ) AS overdue_among_active_percent,
@@ -242,7 +269,7 @@ public class ClickhouseQueries {
                     task_status != 'COMPLETED'
                 ) AS avg_active_age_days
 
-            FROM analytics.task_actual_state_v
+            FROM analytics.task_visible_state_v
             WHERE sprint_id = {sprint:UUID}
             GROUP BY sprint_id
             FORMAT JSONEachRow;
