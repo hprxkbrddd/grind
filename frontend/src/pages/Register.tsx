@@ -1,163 +1,197 @@
+import { BadgeCheck, UserRoundPlus } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { DescriptionSection } from '../components/auth/DescriptionSection'
-import { FormButton } from '../components/ui/FormButton'
-import { FormInput } from '../components/ui/FormInput'
-import { GoBackButton } from '../components/ui/GoBackButton'
-import { useState } from 'react'
-import { axiosPublic } from '../http/axios'
+import { gatewayApi, getApiErrorMessage } from '../api/gateway'
+import { ActionButton } from '../components/app/ActionButton'
+import { Field } from '../components/app/Field'
+import { Panel } from '../components/app/Panel'
 
-const USER_REGEX = /^[A-Za-zА-Яа-яЁё0-9_-]{3,24}$/
+const USERNAME_REGEX = /^[A-Za-zА-Яа-яЁё0-9_-]{3,24}$/
 const NAME_REGEX = /^(?=.{1,24}$)[A-Za-zА-Яа-яЁё]*(-[A-Za-zА-Яа-яЁё]*)?$/
-const PASSWORD_REGEX =/^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?\/\\|]{6,24}$/
+const PASSWORD_REGEX =
+  /^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};:'",.<>?/\\|]{6,24}$/
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-const REGISTER_URL = "/grind/keycloak/register"
 
-export const Register = () => {
-    const [user, setUser] = useState('');
-    const [validUser, setValidUser] = useState(true);
-    const [email, setEmail] = useState('');
-    const [validEmail, setValidEmail] = useState(true);
-    const [password, setPassword] = useState('');
-    const [validPassword, setValidPassword] = useState(true);
-    const [matchPassword, setMatchPassword] = useState('');
-    const [validMatch, setValidMatch] = useState(true);
-    const [firstName, setFirstName] = useState('');
-    const [validFirstName, setValidFirstName] = useState(true);
-    const [lastName, setLastName] = useState('');
-    const [validLastName, setValidLastName] = useState(true);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+export function Register() {
+  const navigate = useNavigate()
+  const [form, setForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+  })
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-    const navigate = useNavigate();
+  function updateField<Key extends keyof typeof form>(key: Key, value: string) {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }))
+  }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        const resUser = USER_REGEX.test(user);
-        setValidUser(resUser);
-        const resFirstName = NAME_REGEX.test(firstName);
-        setValidFirstName(resFirstName);
-        const resLastName = NAME_REGEX.test(lastName);
-        setValidLastName(resLastName);
-        const resEmail = EMAIL_REGEX.test(email);
-        setValidEmail(resEmail);
-        const resPassword = PASSWORD_REGEX.test(password);
-        setValidPassword(resPassword);
-        const match = password === matchPassword;
-        setValidMatch(match);
-
-        if(!validUser || !validFirstName || !validLastName || !validEmail || !validPassword || !validMatch) {
-            setLoading(false);
-            return;
-        }
-        try {
-            const response = await axiosPublic.post(
-                REGISTER_URL,
-                JSON.stringify({
-                    username: user,
-                    password: password,
-                    email: email,
-                    firstname: firstName,
-                    lastname: lastName,
-                    isEnabled: true
-                    })
-            );
-
-            console.log(response?.data);
-
-            alert('Регистрация успешна');
-            navigate('/login', {replace: true});
-
-        } catch (err: any) {
-            if(!err?.response)
-                setError('Нет ответа от сервера');
-            else if (err.response?.status === 409)
-                setError('Имя занято');
-            else
-                setError('Регистрация провалена');
-        } finally {
-            setLoading(false); 
-        }
+  function validateForm() {
+    if (!USERNAME_REGEX.test(form.username)) {
+      return 'Username должен быть длиной 3-24 символа и состоять из букв, цифр, "_" или "-"'
     }
 
-    return(
-        <main className="font-jetbrains flex">
-            <section className="bg-secondary min-w-1/2 min-h-screen">
-                <div className="flex m-6.25 justify-between">
-                    <GoBackButton href="/">Назад</GoBackButton>
-                    <div className="flex gap-2">
-                        <p className="text-primary-dark">Есть аккаунт?</p>
-                        <Link className="underline underline-offset-4 text-primary" to="/login">Войдите</Link>
-                    </div>
-                </div>
-                <form className="text-primary-dark flex flex-col gap-4 mx-auto w-100 mt-75"
-                    onSubmit={handleSubmit}>
-                    <h1 className="text-5xl">Регистрация</h1>
-                    <FormInput
-                        type="text"
-                        id="username"
-                        autoComplete="off"
-                        onChange={(e) => setUser(e.target.value)}>
-                        Логин
-                    </FormInput>
-                    <p className={`text-red-600 ${validUser ? "hidden" : ""}`}>
-                        Логин должен быть 3-24 символов и может состоять только из цифр, букв, тире или подчёркивания
-                    </p>
-                    <FormInput
-                        type="text"
-                        id="firstname"
-                        autoComplete="off"
-                        onChange={(e) => setFirstName(e.target.value)}>
-                        Имя
-                    </FormInput>
-                    <p className={`text-red-600 ${validFirstName ? "hidden" : ""}`}>
-                        Имя должно быть до 24 символов и может состоять только из букв
-                    </p>
-                    <FormInput
-                        type="text"
-                        id="lastname"
-                        autoComplete="off"
-                        onChange={(e) => setLastName(e.target.value)}>
-                        Фамилия
-                    </FormInput>
-                    <p className={`text-red-600 ${validLastName ? "hidden" : ""}`}>
-                        Фамилия должна быть до 24 символов и может состоять только из букв
-                    </p>
-                    <FormInput
-                        type="email"
-                        id="email"
-                        onChange={(e) => setEmail(e.target.value)}>
-                        Почта
-                    </FormInput>
-                    <p className={`text-red-600 ${validEmail ? "hidden" : ""}`}>
-                        Неверный формат
-                    </p>
-                    <FormInput
-                        type="password"
-                        id="password"
-                        onChange={(e) => setPassword(e.target.value)}>
-                        Пароль
-                    </FormInput>
-                    <p className={`text-red-600 ${validPassword ? "hidden" : ""}`}>
-                        Пароль должен быть 6-24 символов
-                    </p>
-                    <FormInput
-                        type="password"
-                        id="matchPassword"
-                        onChange={(e) => setMatchPassword(e.target.value)}>
-                        Подтверждение пароля
-                    </FormInput>
-                    <p className={`text-red-600 ${validMatch ? "hidden" : ""}`}>
-                        Пароли не совпадают
-                    </p>
-                    <FormButton isLoading={loading} type="submit">Зарегистрироваться</FormButton>
-                    <p className={`text-red-600 ${error ? "" : "hidden"}`}>
-                        {error}
-                    </p>
-                </form>
-            </section>
-            <DescriptionSection/>
-        </main>
-    )
+    if (!NAME_REGEX.test(form.firstName) || !NAME_REGEX.test(form.lastName)) {
+      return 'Имя и фамилия должны содержать только буквы и быть не длиннее 24 символов'
+    }
+
+    if (!EMAIL_REGEX.test(form.email)) {
+      return 'Email имеет неверный формат'
+    }
+
+    if (!PASSWORD_REGEX.test(form.password)) {
+      return 'Пароль должен быть длиной 6-24 символа'
+    }
+
+    if (form.password !== form.confirmPassword) {
+      return 'Пароли не совпадают'
+    }
+
+    return ''
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const validationError = validateForm()
+
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
+    setBusy(true)
+    setError('')
+
+    try {
+      await gatewayApi.auth.register({
+        username: form.username,
+        password: form.password,
+        email: form.email,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        isEnabled: true,
+      })
+
+      navigate('/login', { replace: true })
+    } catch (submissionError) {
+      setError(getApiErrorMessage(submissionError))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1fr_0.95fr]">
+      <Panel
+        eyebrow="Registration"
+        icon={<UserRoundPlus className="h-5 w-5" />}
+        title="Регистрация пользователя"
+        description="Форма соответствует `RegistrationDTO` из `gateway`, но подана как обычный понятный onboarding без ощущения, что вы заполняете raw JSON."
+        tone="warm"
+      >
+        <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+          <Field
+            label="Username"
+            hint="3-24 символа: буквы, цифры, `_` или `-`"
+            name="username"
+            value={form.username}
+            onChange={(event) => updateField('username', event.target.value)}
+            required
+          />
+          <Field
+            label="Email"
+            hint="Нужен для Keycloak-профиля"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={(event) => updateField('email', event.target.value)}
+            required
+          />
+          <Field
+            label="First name"
+            hint="До 24 символов"
+            name="firstName"
+            value={form.firstName}
+            onChange={(event) => updateField('firstName', event.target.value)}
+            required
+          />
+          <Field
+            label="Last name"
+            hint="До 24 символов"
+            name="lastName"
+            value={form.lastName}
+            onChange={(event) => updateField('lastName', event.target.value)}
+            required
+          />
+          <Field
+            label="Password"
+            hint="Минимум 6 символов"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={(event) => updateField('password', event.target.value)}
+            required
+          />
+          <Field
+            label="Confirm password"
+            name="confirmPassword"
+            type="password"
+            value={form.confirmPassword}
+            onChange={(event) =>
+              updateField('confirmPassword', event.target.value)
+            }
+            required
+          />
+
+          {error ? (
+            <div className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="md:col-span-2 flex flex-wrap gap-3">
+            <ActionButton type="submit" busy={busy}>
+              Создать пользователя
+            </ActionButton>
+            <Link
+              className="rounded-2xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary-dark"
+              to="/login"
+            >
+              Уже есть аккаунт
+            </Link>
+          </div>
+        </form>
+      </Panel>
+
+      <section className="rounded-[32px] bg-[linear-gradient(180deg,_rgba(64,121,140,0.12),_rgba(255,255,255,0.96))] p-6 shadow-[0_18px_70px_rgba(31,54,61,0.08)]">
+        <p className="text-sm uppercase tracking-[0.32em] text-primary">
+          DTO Check
+        </p>
+        <div className="mt-5 space-y-3 text-sm text-slate-600">
+          <p>`POST /grind/keycloak/register`</p>
+          <p>Поля: `username`, `password`, `email`, `firstName`, `lastName`, `isEnabled`</p>
+          <p>
+            После успешной регистрации пользователь сразу может пройти в `/login`
+            и получить JWT для защищённых маршрутов.
+          </p>
+        </div>
+        <div className="mt-8 rounded-2xl border border-primary/12 bg-white/80 p-4 text-sm leading-6 text-slate-600">
+          <div className="flex items-center gap-2 font-semibold text-slate-800">
+            <BadgeCheck className="h-4 w-4 text-primary" />
+            Что делает форма
+          </div>
+          <p className="mt-2">
+            Проверяет формат полей на клиенте, а затем отправляет уже аккуратный
+            `RegistrationDTO` без переименований и костылей между frontend и gateway.
+          </p>
+        </div>
+      </section>
+    </div>
+  )
 }

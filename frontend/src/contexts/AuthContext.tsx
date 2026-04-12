@@ -1,29 +1,74 @@
-import { createContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react'
+import { setUnauthorizedHandler } from '../http/axios'
+import type { AuthSession } from '../types/gateway'
 
 interface AuthProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
-
-type AuthState = {
-  user: string,
-  password: string,
-  roles?: string[],
-  accessToken: string;
-} | null;
 
 interface AuthContextType {
-  auth: AuthState;
-  setAuth: React.Dispatch<React.SetStateAction<AuthState>>;
+  auth: AuthSession | null
+  setAuth: Dispatch<SetStateAction<AuthSession | null>>
+  logout: () => void
 }
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+const STORAGE_KEY = 'grind.auth'
 
-export const AuthProvider = ({children}: AuthProviderProps) => {
-    const [auth, setAuth] = useState<AuthState | null>(null);
+function readStoredAuth() {
+  const stored = localStorage.getItem(STORAGE_KEY)
 
-    return(
-        <AuthContext.Provider value={{auth, setAuth}}>
-            {children}
-        </AuthContext.Provider>
-    )
+  if (!stored) {
+    return null
+  }
+
+  try {
+    return JSON.parse(stored) as AuthSession
+  } catch {
+    localStorage.removeItem(STORAGE_KEY)
+    return null
+  }
+}
+
+export const AuthContext = createContext<AuthContextType | null>(null)
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [auth, setAuth] = useState<AuthSession | null>(() => readStoredAuth())
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setAuth(null)
+    })
+
+    return () => {
+      setUnauthorizedHandler(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (auth) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(auth))
+      return
+    }
+
+    localStorage.removeItem(STORAGE_KEY)
+  }, [auth])
+
+  const value = useMemo(
+    () => ({
+      auth,
+      setAuth,
+      logout: () => setAuth(null),
+    }),
+    [auth],
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -1,104 +1,136 @@
-import { Link, useNavigate } from 'react-router'
-import { DescriptionSection } from '../components/auth/DescriptionSection'
-import { FormButton } from '../components/ui/FormButton'
-import { FormInput } from '../components/ui/FormInput'
-import { GoBackButton } from '../components/ui/GoBackButton'
-import { CheckBox } from '../components/ui/CheckBox'
-import { useState } from 'react'
+import { KeyRound, ShieldCheck, Sparkles } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
+import { gatewayApi, getApiErrorMessage } from '../api/gateway'
+import { ActionButton } from '../components/app/ActionButton'
+import { Field } from '../components/app/Field'
+import { Panel } from '../components/app/Panel'
 import { useAuth } from '../hooks/useAuth'
-import {axiosPublic } from '../http/axios'
-import { jwtDecode, type JwtPayload } from 'jwt-decode'
+import { buildAuthSession } from '../utils/auth'
 
-interface AppJwtPayload extends JwtPayload {
-  roles: string[];
+interface NavigationState {
+  from?: string
 }
 
-const LOGIN_URL = "/grind/keycloak/token"
+export function Login() {
+  const { setAuth } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-export const Login = () => {
-    const { setAuth } = useAuth();
-    const navigate = useNavigate();
-    const [user, setUser] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const response = await axiosPublic.post(
-                LOGIN_URL,
-                JSON.stringify({ username: user, password })
-            );
-            
-            console.log(response?.data);
-            const accessToken = response?.data?.accessToken;
-            const decoded = jwtDecode<AppJwtPayload>(accessToken);
-            console.log(decoded);
-            const roles = decoded.roles ?? [];
-            setAuth({user, password, roles, accessToken});
+    try {
+      const tokenResponse = await gatewayApi.auth.login({ username, password })
+      const session = buildAuthSession(tokenResponse, username)
+      const state = location.state as NavigationState | null
 
-            setUser('');
-            setPassword('');
-            alert('Авторизация успешна');
-            navigate('/profile', {replace: true})
+      setAuth(session)
+      navigate(state?.from ?? '/home', { replace: true })
+    } catch (submissionError) {
+      setError(getApiErrorMessage(submissionError))
+    } finally {
+      setBusy(false)
+    }
+  }
 
-        } catch (err: any) {
-            if(!err?.response)
-                setError('Нет ответа от сервера');
-            else if (err.response?.status === 400)
-                setError('Отсутствует имя или пароль');
-            else if (err.response?.status === 401)
-                setError('Неавторизован');
-            else
-                setError('Авторизация провалена');
-        } finally {
-            setLoading(false);
-        }
-    };
+  return (
+    <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.92fr_1.08fr]">
+      <Panel
+        eyebrow="Sign In"
+        icon={<KeyRound className="h-5 w-5" />}
+        title="Вход в Grind"
+        description="Здесь начинается рабочая сессия: логин получает `access_token`, сохраняет его локально и открывает защищённый dashboard."
+        tone="warm"
+      >
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <Field
+            label="Username"
+            hint="Обычный username из Keycloak"
+            name="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder="testicula_user"
+            autoComplete="username"
+            required
+          />
+          <Field
+            label="Password"
+            hint="Пароль не отправляется никуда кроме `POST /grind/keycloak/token`"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            required
+          />
 
-    return(
-        <main className="font-jetbrains flex min-h-screen">
-            <section className="bg-secondary min-w-1/2">
-                <div className="flex m-6.25 justify-between">
-                    <GoBackButton href="/">Назад</GoBackButton>
-                    <div className="flex gap-2">
-                        <p className="text-primary-dark">Нет аккаунта?</p>
-                        <Link className="underline underline-offset-4 text-primary" to="/register">Зарегистрируйтесь</Link>
-                    </div>
-                </div>
-                <form className="text-primary-dark flex flex-col gap-4 mx-auto w-100 mt-75"
-                    onSubmit={handleSubmit}>
-                    <h1 className="text-5xl">Вход</h1>
-                    <FormInput
-                        type="text"
-                        id="username"
-                        onChange={(e) => setUser(e.target.value)}
-                        value={user}>
-                        Логин
-                    </FormInput>
-                    <FormInput 
-                        type="password"
-                        id="password"
-                        onChange={(e) => setPassword(e.target.value)}
-                        value={password}>
-                        Пароль
-                    </FormInput>
-                    <div className="flex justify-between">
-                        <div className="flex items-center gap-2">
-                            <CheckBox/>
-                            <p>Запомнить меня</p>
-                        </div>
-                        <a className="underline underline-offset-4 text-primary" href="#">Забыли пароль?</a>
-                    </div>
-                    <FormButton isLoading={loading} type="submit">Войти</FormButton>
-                    <p className={`text-red-600 ${error ? "" : "hidden"}`}>
-                        {error}
-                    </p>
-                </form>
-            </section>
-            <DescriptionSection/>
-        </main>
-    )
+          {error ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
+          <ActionButton className="w-full" type="submit" busy={busy}>
+            Получить токен
+          </ActionButton>
+        </form>
+      </Panel>
+
+      <section className="rounded-[32px] border border-white/60 bg-[linear-gradient(180deg,_rgba(239,248,250,0.9),_rgba(255,255,255,0.86))] p-6 shadow-[0_18px_70px_rgba(31,54,61,0.08)] backdrop-blur">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary shadow-[0_10px_20px_rgba(31,54,61,0.08)]">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <p className="text-sm uppercase tracking-[0.32em] text-primary">
+            Auth Flow
+          </p>
+        </div>
+        <h2 className="mt-4 text-3xl font-semibold text-slate-900">
+          После входа всё важное уже под рукой
+        </h2>
+        <div className="mt-6 space-y-4 text-sm leading-7 text-slate-600">
+          <p>
+            `gateway` защищает все `api/**` маршруты JWT-токеном. Этот frontend
+            подставляет `Authorization: Bearer ...` для всех защищённых вызовов.
+          </p>
+          <p>
+            Если пользователя ещё нет, сначала зарегистрируйте его через
+            отдельную форму регистрации.
+          </p>
+        </div>
+        <div className="mt-8 rounded-2xl border border-primary/12 bg-white/80 p-4 text-sm text-slate-600">
+          <div className="flex items-center gap-2 font-semibold text-slate-800">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Что дальше после логина
+          </div>
+          <p className="mt-2 leading-6">
+            Вы попадёте в dashboard, где можно загружать треки, создавать задачи,
+            планировать их по спринтам и смотреть статистику без переключения между
+            разными тестовыми страницами.
+          </p>
+        </div>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            className="rounded-2xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary-dark"
+            to="/register"
+          >
+            Перейти к регистрации
+          </Link>
+          <Link
+            className="rounded-2xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary-dark"
+            to="/"
+          >
+            На welcome
+          </Link>
+        </div>
+      </section>
+    </div>
+  )
 }
