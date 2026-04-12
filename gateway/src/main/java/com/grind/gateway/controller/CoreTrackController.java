@@ -57,7 +57,8 @@ public class CoreTrackController {
                     )))
     public ResponseEntity<?> getTracksOfUser() {
         Body<?> body = trackService.callGetTracksOfUser();
-        return ResponseEntity.status(body.status()).body(body.payload());
+        return ResponseEntity.status(body.status())
+                .body(body.error() == null ? body.payload() : body.error());
     }
 
     @GetMapping("/all")
@@ -70,7 +71,8 @@ public class CoreTrackController {
                     )))
     public ResponseEntity<?> getAllTracks() {
         Body<?> body = trackService.callGetAllTracks();
-        return ResponseEntity.status(body.status()).body(body.payload());
+        return ResponseEntity.status(body.status())
+                .body(body.error() == null ? body.payload() : body.error());
     }
 
     @GetMapping("/{trackId}")
@@ -83,7 +85,8 @@ public class CoreTrackController {
                     )))
     public ResponseEntity<?> getTrack(@PathVariable String trackId) {
         Body<?> body = trackService.callGetTrack(trackId);
-        return ResponseEntity.status(body.status()).body(body.payload());
+        return ResponseEntity.status(body.status())
+                .body(body.error() == null ? body.payload() : body.error());
     }
 
     @GetMapping("/sprints/{trackId}")
@@ -96,7 +99,8 @@ public class CoreTrackController {
                     )))
     public ResponseEntity<?> getSprintsOfTrack(@PathVariable String trackId) {
         Body<?> body = trackService.callGetSprintsOfTrack(trackId);
-        return ResponseEntity.status(body.status()).body(body.payload());
+        return ResponseEntity.status(body.status())
+                .body(body.error() == null ? body.payload() : body.error());
     }
 
     @PostMapping
@@ -109,7 +113,8 @@ public class CoreTrackController {
                     )))
     public ResponseEntity<?> create(@RequestBody CreateTrackRequest dto) {
         Body<?> body = trackService.callCreateTrack(dto);
-        return ResponseEntity.status(body.status()).body(body.payload());
+        return ResponseEntity.status(body.status())
+                .body(body.error() == null ? body.payload() : body.error());
     }
 
     @PutMapping("/{id}")
@@ -123,7 +128,8 @@ public class CoreTrackController {
     public ResponseEntity<?> changeTrack(@RequestBody ChangeTrackDTO dto, @PathVariable String id) throws JsonProcessingException {
         dto.setId(id);
         Body<?> body = trackService.callChangeTrack(dto);
-        return ResponseEntity.status(body.status()).body(body.payload());
+        return ResponseEntity.status(body.status())
+                .body(body.error() == null ? body.payload() : body.error());
     }
 
     @DeleteMapping("/{id}")
@@ -136,6 +142,7 @@ public class CoreTrackController {
                     )))
     public ResponseEntity<?> delete(@PathVariable String id) {
         Body<?> body = trackService.callDeleteTrack(id);
-        return ResponseEntity.status(body.status()).body(body.payload());
+        return ResponseEntity.status(body.status())
+                .body(body.error() == null ? body.payload() : body.error());
     }
 }

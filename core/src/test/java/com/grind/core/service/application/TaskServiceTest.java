@@ -108,6 +108,7 @@ class TaskServiceTest {
         assertEquals(track, result.getTrack());
 
         verify(taskRepository).save(result);
+        verify(outboxService).genEvent(any(), any(), any());
     }
 
     @Test
@@ -140,6 +141,7 @@ class TaskServiceTest {
 
         assertEquals(LocalDate.of(2024, 1, 3), result.getPlannedDate());
         assertEquals(TaskStatus.PLANNED, result.getStatus());
+        verify(outboxService).genEvent(any(), any(), any());
     }
 
     @Test
@@ -181,6 +183,7 @@ class TaskServiceTest {
     @Test
     void completeTask_shouldMarkCompleted() {
         Task task = new Task();
+        task.setStatus(TaskStatus.PLANNED);
         when(taskRepository.findById("t1"))
                 .thenReturn(Optional.of(task));
 
@@ -188,6 +191,7 @@ class TaskServiceTest {
 
         assertEquals(TaskStatus.COMPLETED, result.getStatus());
         assertNotNull(result.getActualDate());
+        verify(outboxService).genEvent(any(), any(), any());
     }
 
     // ----- TASK TO BACKLOG -----
@@ -206,6 +210,7 @@ class TaskServiceTest {
         assertNull(result.getPlannedDate());
         assertNull(result.getSprint());
         assertEquals(TaskStatus.CREATED, result.getStatus());
+        verify(outboxService).genEvent(any(), any(), any());
     }
 
     @Test
@@ -225,6 +230,7 @@ class TaskServiceTest {
         assertNull(result.getPlannedDate());
         assertNull(result.getSprint());
         assertEquals(TaskStatus.CREATED, result.getStatus());
+        verify(outboxService).genEvent(any(), any(), any());
     }
 
     @Test
@@ -244,6 +250,7 @@ class TaskServiceTest {
         assertNotNull(result.getPlannedDate());
         assertNotNull(result.getActualDate());
         assertNotNull(result.getSprint());
+        verify(outboxService).genEvent(any(), any(), any());
     }
 
     @Test
@@ -281,7 +288,8 @@ class TaskServiceTest {
         Task result = taskService.deleteTask("t1");
 
         verify(taskRepository).findById("t1");
-        verify(taskRepository).deleteById("t1");
+        verify(taskRepository).delete(task);
+        verify(outboxService).genEvent(any(), any(), any());
 
         assertEquals("t1", result.getId());
     }
@@ -296,13 +304,15 @@ class TaskServiceTest {
                 () -> taskService.deleteTask("t1"));
 
         verify(taskRepository).findById("t1");
-        verify(taskRepository, never()).deleteById(any());
+        verify(taskRepository, never()).delete(any());
     }
 
     // ----- CHANGE TASK -----
     @Test
     void changeTask_shouldUpdateFields() {
         Task task = new Task();
+        task.setTitle("old");
+        task.setDescription("oldDesc");
         when(taskRepository.findById("t1"))
                 .thenReturn(Optional.of(task));
 

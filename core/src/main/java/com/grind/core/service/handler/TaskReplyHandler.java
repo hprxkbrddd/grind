@@ -118,8 +118,8 @@ public class TaskReplyHandler {
                     CoreMessageType.TASK_CHANGED,
                     service.changeTask(
                             req.taskId(),
-                            req.description(),
-                            req.title()
+                            req.title(),
+                            req.description()
                     ).mapDTO()
             );
         });

@@ -9,6 +9,7 @@ import com.grind.core.model.Sprint;
 import com.grind.core.model.Task;
 import com.grind.core.model.Track;
 import com.grind.core.repository.TrackRepository;
+import com.grind.core.service.kafka.OutboxService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,6 +37,8 @@ class TrackServiceTest {
     TrackRepository trackRepository;
     @Mock
     SprintService sprintService;
+    @Mock
+    OutboxService outboxService;
 
     @InjectMocks
     TrackService trackService;
@@ -141,6 +144,7 @@ class TrackServiceTest {
 
         verify(trackRepository).findById("t1");
         verify(trackRepository).deleteById("t1");
+        verify(outboxService).genEvents(anyList(), any(), any());
 
         assertEquals("t1", result.getId());
     }

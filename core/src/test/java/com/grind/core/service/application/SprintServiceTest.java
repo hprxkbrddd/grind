@@ -8,6 +8,7 @@ import com.grind.core.model.Track;
 import com.grind.core.repository.SprintRepository;
 import com.grind.core.repository.TaskRepository;
 import com.grind.core.repository.TrackRepository;
+import com.grind.core.service.kafka.OutboxService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,6 +22,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +39,8 @@ class SprintServiceTest {
     private TaskRepository taskRepository;
     @Mock
     private TrackRepository trackRepository;
+    @Mock
+    private OutboxService outboxService;
 
     @InjectMocks
     private SprintService sprintService;
@@ -155,6 +159,7 @@ class SprintServiceTest {
         // вне диапазона — в последний
         assertEquals(lastSprint, reassigned.get(2).getSprint());
 
+        verify(outboxService).genEvents(anyList(), any(), any());
         verify(sprintRepository).deleteAll(List.of(oldSprint));
     }
 
