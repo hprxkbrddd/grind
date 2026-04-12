@@ -41,6 +41,7 @@ public enum CoreMessageType {
     TASK_CHANGED,
     TASK_PLANNED,
     TASK_COMPLETED,
+    TASK_OVERDUE,
     TASK_AT_BACKLOG,
     TASK_DELETED,
 

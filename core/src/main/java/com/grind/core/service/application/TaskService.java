@@ -27,6 +27,7 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Provides task lifecycle operations, planning, and status updates.
@@ -191,6 +192,10 @@ public class TaskService {
     public List<Task> markOverdue() {
         List<Task> toMark = taskRepository.getOverdueWithStatus(LocalDate.now(), TaskStatus.PLANNED);
         toMark.forEach(t -> t.setStatus(TaskStatus.OVERDUE));
+        if (!toMark.isEmpty()) {
+            String traceId = UUID.randomUUID().toString();
+            outboxService.genEventsForTasks(toMark, CoreMessageType.TASK_OVERDUE, traceId);
+        }
         return toMark;
     }
 

@@ -7,6 +7,7 @@ import com.grind.core.dto.entity.TaskDTO;
 import com.grind.core.enums.CoreMessageType;
 import com.grind.core.enums.TaskStatus;
 import com.grind.core.model.OutboxEvent;
+import com.grind.core.model.Task;
 import com.grind.core.repository.OutboxRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -103,7 +104,7 @@ public class OutboxService {
      * @param traceId tracing identifier
      */
     public void genEvent(TaskDTO dto, CoreMessageType type, String traceId) {
-        outboxRepository.save(toOutbox(dto, type, traceId));
+        outboxRepository.save(toOutbox(dto, type, traceId, resolveAuthenticatedUserId()));
     }
 
     /**
@@ -116,14 +117,39 @@ public class OutboxService {
     public void genEvents(List<TaskDTO> dtoList, CoreMessageType type, String traceId) {
         outboxRepository.saveAll(
                 dtoList.stream()
-                        .map(dto -> toOutbox(dto, type, traceId))
+                        .map(dto -> toOutbox(dto, type, traceId, resolveAuthenticatedUserId()))
                         .toList()
         );
     }
 
-    private OutboxEvent toOutbox(TaskDTO dto, CoreMessageType type, String traceId) {
+    /**
+     * Stores multiple outbox events derived from managed task entities.
+     * Uses the task owner's user id when no request-scoped authentication exists,
+     * which is required for scheduled jobs like overdue marking.
+     *
+     * @param tasks   task entities
+     * @param type    core message type
+     * @param traceId tracing identifier
+     */
+    public void genEventsForTasks(List<Task> tasks, CoreMessageType type, String traceId) {
+        outboxRepository.saveAll(
+                tasks.stream()
+                        .map(task -> toOutbox(task.mapDTO(), type, traceId, resolveTaskUserId(task)))
+                        .toList()
+        );
+    }
 
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+    private OutboxEvent toOutbox(TaskDTO dto, CoreMessageType type, String traceId, String userId) {
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalStateException(
+                    "Could not resolve user id for outbox event " + type + " of task " + dto.id()
+            );
+        }
+        if (traceId == null || traceId.isBlank()) {
+            throw new IllegalStateException(
+                    "Could not resolve trace id for outbox event " + type + " of task " + dto.id()
+            );
+        }
         log.info(">>>>> USER ID: {}", userId);
 
         String sprintId = dto.sprint_id();
@@ -163,6 +189,20 @@ public class OutboxService {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize OutboxRecord", e);
         }
+    }
+
+    private String resolveAuthenticatedUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null ? null : authentication.getName();
+    }
+
+    private String resolveTaskUserId(Task task) {
+        if (task.getTrack() != null
+                && task.getTrack().getUserId() != null
+                && !task.getTrack().getUserId().isBlank()) {
+            return task.getTrack().getUserId();
+        }
+        return resolveAuthenticatedUserId();
     }
 
     private Long nextVersion(Long current) {

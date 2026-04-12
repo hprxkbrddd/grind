@@ -1,6 +1,7 @@
 package com.grind.core.service.application;
 
 import com.grind.core.enums.TaskStatus;
+import com.grind.core.enums.CoreMessageType;
 import com.grind.core.exception.SprintNotFoundException;
 import com.grind.core.exception.TaskNotFoundException;
 import com.grind.core.exception.TrackNotFoundException;
@@ -13,6 +14,7 @@ import com.grind.core.repository.TrackRepository;
 import com.grind.core.service.kafka.OutboxService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -267,6 +269,9 @@ class TaskServiceTest {
     void markOverdue_shouldMarkAll() {
         Task t = new Task();
         t.setStatus(TaskStatus.PLANNED);
+        Track track = new Track();
+        track.setUserId("user-1");
+        t.setTrack(track);
 
         when(taskRepository.getOverdueWithStatus(any(), eq(TaskStatus.PLANNED)))
                 .thenReturn(List.of(t));
@@ -274,6 +279,10 @@ class TaskServiceTest {
         List<Task> result = taskService.markOverdue();
 
         assertEquals(TaskStatus.OVERDUE, result.get(0).getStatus());
+        ArgumentCaptor<String> traceIdCaptor = ArgumentCaptor.forClass(String.class);
+        verify(outboxService).genEventsForTasks(anyList(), eq(CoreMessageType.TASK_OVERDUE), traceIdCaptor.capture());
+        assertNotNull(traceIdCaptor.getValue());
+        assertFalse(traceIdCaptor.getValue().isBlank());
     }
 
     // ----- DELETE TASK -----

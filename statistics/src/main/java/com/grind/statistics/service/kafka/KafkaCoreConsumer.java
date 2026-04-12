@@ -38,6 +38,7 @@ public class KafkaCoreConsumer {
             CoreMessageType.TASK_CREATED,
             CoreMessageType.TASK_DELETED,
             CoreMessageType.TASK_COMPLETED,
+            CoreMessageType.TASK_OVERDUE,
             CoreMessageType.TASK_PLANNED,
             CoreMessageType.TASK_AT_BACKLOG
     );
