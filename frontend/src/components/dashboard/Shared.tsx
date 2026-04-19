@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import type {
   DiagramDTO,
@@ -138,11 +139,15 @@ export function TaskList({
   title,
   tasks,
   onUseTask,
+  onCreateTask,
+  showCreateCard = false,
   emptyText = 'Список пуст',
 }: {
   title: string
   tasks: TaskDTO[]
   onUseTask: (task: TaskDTO) => void
+  onCreateTask?: () => void
+  showCreateCard?: boolean
   emptyText?: string
 }) {
   const [statusFilter, setStatusFilter] = useState<TaskStatusFilterValue>('ALL')
@@ -204,6 +209,20 @@ export function TaskList({
           </button>
         ))
       )}
+      {showCreateCard ? (
+        <button
+          className="flex w-full items-center justify-between rounded-2xl border border-dashed border-primary/25 bg-[linear-gradient(180deg,_rgba(255,255,255,0.96),_rgba(239,245,247,0.9))] px-5 py-4 text-left shadow-[0_16px_36px_rgba(31,54,61,0.06)] transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_20px_44px_rgba(31,54,61,0.1)]"
+          onClick={onCreateTask}
+          type="button"
+        >
+          <span className="text-base font-semibold text-slate-900">
+            Новая задача
+          </span>
+          <span className="text-primary">
+            <Plus className="h-10 w-10 stroke-[1.6]" />
+          </span>
+        </button>
+      ) : null}
     </div>
   )
 }

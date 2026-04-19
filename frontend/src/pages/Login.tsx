@@ -32,7 +32,7 @@ export function Login() {
       const state = location.state as NavigationState | null
 
       setAuth(session)
-      navigate(state?.from ?? '/home', { replace: true })
+      navigate(state?.from ?? '/home/workspace', { replace: true })
     } catch (submissionError) {
       setError(getApiErrorMessage(submissionError))
     } finally {
@@ -46,7 +46,7 @@ export function Login() {
         eyebrow="Sign In"
         icon={<KeyRound className="h-5 w-5" />}
         title="Вход в Grind"
-        description="Здесь начинается рабочая сессия: логин получает `access_token`, сохраняет его локально и открывает защищённый dashboard."
+        description="Здесь начинается рабочая сессия: логин получает `access_token`, сохраняет его локально и открывает защищённый workspace."
         tone="warm"
       >
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -111,9 +111,9 @@ export function Login() {
             Что дальше после логина
           </div>
           <p className="mt-2 leading-6">
-            Вы попадёте в dashboard, где можно загружать треки, создавать задачи,
-            планировать их по спринтам и смотреть статистику без переключения между
-            разными тестовыми страницами.
+            Вы попадёте в workspace, где можно загружать треки, создавать
+            задачи, планировать их по спринтам и переходить к статистике без
+            лишнего обходного экрана.
           </p>
         </div>
         <div className="mt-8 flex flex-wrap gap-3">

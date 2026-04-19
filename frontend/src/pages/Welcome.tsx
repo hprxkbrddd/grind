@@ -39,16 +39,16 @@ export function Welcome() {
             быстрый вход и регистрация
           </WelcomeChip>
           <WelcomeChip icon={<Sparkles className="h-4 w-4" />}>
-            живой dashboard по всем user endpoint’ам
+            живой workspace по всем user endpoint’ам
           </WelcomeChip>
           <WelcomeChip icon={<CloudSun className="h-4 w-4" />}>
             мягкий визуальный слой вместо сухой панели
           </WelcomeChip>
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link to={auth?.accessToken ? '/home' : '/login'}>
+          <Link to={auth?.accessToken ? '/home/workspace' : '/login'}>
             <ActionButton>
-              {auth?.accessToken ? 'Открыть dashboard' : 'Войти'}
+              {auth?.accessToken ? 'Открыть workspace' : 'Войти'}
               </ActionButton>
             </Link>
           {!auth?.accessToken ? (

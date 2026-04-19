@@ -2,6 +2,7 @@ package com.grind.gateway.service;
 
 import com.grind.gateway.dto.Body;
 import com.grind.gateway.dto.IdDTO;
+import com.grind.gateway.dto.statistics.DiagramRangeRequestDTO;
 import com.grind.gateway.enums.StatisticsMessageType;
 import com.grind.gateway.service.kafka.KafkaProducer;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,22 @@ public class StatisticsService {
         return kafkaProducer.requestReply(
                 IdDTO.of(trackId),
                 StatisticsMessageType.GET_STATS_PER_WEEK.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetTrackStatsPerDayInRange(DiagramRangeRequestDTO dto) {
+        return kafkaProducer.requestReply(
+                dto,
+                StatisticsMessageType.GET_STATS_PER_DAY_IN_RANGE.name(),
+                statReqTopic
+        );
+    }
+
+    public Body<?> callGetTrackStatsPerWeekInRange(DiagramRangeRequestDTO dto) {
+        return kafkaProducer.requestReply(
+                dto,
+                StatisticsMessageType.GET_STATS_PER_WEEK_IN_RANGE.name(),
                 statReqTopic
         );
     }

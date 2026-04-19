@@ -7,12 +7,13 @@ import {
   Route,
   Trash2,
 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { gatewayApi, getApiErrorMessage } from '../api/gateway'
 import { ActionButton } from '../components/app/ActionButton'
 import { Field } from '../components/app/Field'
 import { Panel } from '../components/app/Panel'
+import { CreateTaskDialog } from '../components/dashboard/CreateTaskDialog'
 import { SectionLayout } from '../components/dashboard/SectionLayout'
 import { StatsSummaryPanel } from '../components/dashboard/StatsSummaryPanel'
 import { TrackDailyTaskChart } from '../components/dashboard/TrackDailyTaskChart'
@@ -25,12 +26,21 @@ import {
 import { useAuth } from '../hooks/useAuth'
 import type {
   DiagramDTO,
+  CreateTaskRequestDTO,
+  DateRangeDTO,
   SprintWithCountDTO,
   TaskDTO,
   TrackActualStateStatsDTO,
   TrackStatus,
   TrackWithCountDTO,
 } from '../types/gateway'
+import {
+  addUtcDays,
+  formatIsoDate,
+  parseIsoDate,
+  startOfIsoWeek,
+  todayAsUtcDate,
+} from '../utils/date'
 import {
   workspaceSprintPath,
   workspaceTaskPath,
@@ -84,6 +94,47 @@ function inferSprintLength(sprints: SprintWithCountDTO[]) {
   return String(Math.max(1, Math.round((end - start) / 86_400_000) + 1))
 }
 
+function buildDefaultChartRange(track: TrackWithCountDTO): DateRangeDTO {
+  const trackStart = parseIsoDate(track.startDate)
+  const today = todayAsUtcDate()
+  const spanDays = Math.max(track.durationDays - 1, 0)
+
+  if (trackStart === null) {
+    const date = formatIsoDate(today)
+    return {
+      startDate: date,
+      endDate: date,
+    }
+  }
+
+  const visibleStart =
+    trackStart.getTime() > addUtcDays(today, -spanDays).getTime()
+      ? trackStart
+      : addUtcDays(today, -spanDays)
+
+  return {
+    startDate: formatIsoDate(visibleStart),
+    endDate: formatIsoDate(addUtcDays(visibleStart, spanDays)),
+  }
+}
+
+function buildQueryRange(range: DateRangeDTO, scale: 'day' | 'week'): DateRangeDTO {
+  const startDate = parseIsoDate(range.startDate)
+  const endDate = parseIsoDate(range.endDate)
+
+  if (startDate === null || endDate === null) {
+    return range
+  }
+
+  const from = scale === 'day' ? startDate : startOfIsoWeek(startDate)
+  const to = scale === 'day' ? endDate : startOfIsoWeek(endDate)
+
+  return {
+    startDate: formatIsoDate(addUtcDays(from, -1)),
+    endDate: formatIsoDate(addUtcDays(to, 1)),
+  }
+}
+
 export function TrackPage() {
   const { trackId } = useParams()
   const { auth } = useAuth()
@@ -100,16 +151,70 @@ export function TrackPage() {
   const [dayChartError, setDayChartError] = useState('')
   const [weekChartError, setWeekChartError] = useState('')
   const [trackStatsError, setTrackStatsError] = useState('')
+  const [createTaskError, setCreateTaskError] = useState('')
+  const [createTaskOpen, setCreateTaskOpen] = useState(false)
+  const [creatingTask, setCreatingTask] = useState(false)
+  const [diagramLoading, setDiagramLoading] = useState(false)
+  const [chartRange, setChartRange] = useState<DateRangeDTO | null>(null)
   const [trackLoading, setTrackLoading] = useState(false)
   const [actionBusy, setActionBusy] = useState<string | null>(null)
   const [editForm, setEditForm] = useState(initialEditForm)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const chartRangeRef = useRef<DateRangeDTO | null>(null)
 
-  const loadTrackPage = useCallback(async (id: string) => {
-    setTrackLoading(true)
-    setFeedback(null)
+  const applyChartRange = useCallback((range: DateRangeDTO | null) => {
+    chartRangeRef.current = range
+    setChartRange(range)
+  }, [])
+
+  const loadDiagramStats = useCallback(async (id: string, range: DateRangeDTO) => {
+    setDiagramLoading(true)
     setDayChartError('')
     setWeekChartError('')
+
+    try {
+      const [dayStatsResult, weekStatsResult] = await Promise.all([
+        gatewayApi.statistics.getPerDayInRange(
+          id,
+          buildQueryRange(range, 'day'),
+          accessToken,
+        )
+          .then((payload) => ({
+            payload,
+            error: '',
+          }))
+          .catch((error: unknown) => ({
+            payload: null,
+            error: normalizeStatsError(getApiErrorMessage(error)),
+          })),
+        gatewayApi.statistics.getPerWeekInRange(
+          id,
+          buildQueryRange(range, 'week'),
+          accessToken,
+        )
+          .then((payload) => ({
+            payload,
+            error: '',
+          }))
+          .catch((error: unknown) => ({
+            payload: null,
+            error: normalizeStatsError(getApiErrorMessage(error)),
+          })),
+      ])
+
+      applyChartRange(range)
+      setPerDayStats(dayStatsResult.payload)
+      setPerWeekStats(weekStatsResult.payload)
+      setDayChartError(dayStatsResult.error)
+      setWeekChartError(weekStatsResult.error)
+    } finally {
+      setDiagramLoading(false)
+    }
+  }, [accessToken, applyChartRange])
+
+  const loadTrackPage = useCallback(async (id: string, requestedRange?: DateRangeDTO | null) => {
+    setTrackLoading(true)
+    setFeedback(null)
     setTrackStatsError('')
 
     try {
@@ -118,31 +223,11 @@ export function TrackPage() {
         sprintPayload,
         taskPayload,
         trackStatsResult,
-        dayStatsResult,
-        weekStatsResult,
       ] = await Promise.all([
         gatewayApi.tracks.getById(id, accessToken),
         gatewayApi.tracks.getSprints(id, accessToken),
         gatewayApi.tasks.getByTrack(id, accessToken),
         gatewayApi.statistics.getTrackState(id, accessToken)
-          .then((payload) => ({
-            payload,
-            error: '',
-          }))
-          .catch((error: unknown) => ({
-            payload: null,
-            error: normalizeStatsError(getApiErrorMessage(error)),
-          })),
-        gatewayApi.statistics.getPerDay(id, accessToken)
-          .then((payload) => ({
-            payload,
-            error: '',
-          }))
-          .catch((error: unknown) => ({
-            payload: null,
-            error: normalizeStatsError(getApiErrorMessage(error)),
-          })),
-        gatewayApi.statistics.getPerWeek(id, accessToken)
           .then((payload) => ({
             payload,
             error: '',
@@ -157,15 +242,18 @@ export function TrackPage() {
       setSprints(sprintPayload)
       setTasks(taskPayload)
       setTrackStats(trackStatsResult.payload)
-      setPerDayStats(dayStatsResult.payload)
-      setPerWeekStats(weekStatsResult.payload)
       setTrackStatsError(trackStatsResult.error)
-      setDayChartError(dayStatsResult.error)
-      setWeekChartError(weekStatsResult.error)
+
+      const nextRange =
+        requestedRange !== undefined
+          ? requestedRange ?? buildDefaultChartRange(trackPayload)
+          : chartRangeRef.current ?? buildDefaultChartRange(trackPayload)
+      await loadDiagramStats(id, nextRange)
     } catch (error) {
       setTrackStats(null)
       setPerDayStats(null)
       setPerWeekStats(null)
+      applyChartRange(null)
       setFeedback({
         kind: 'error',
         message: getApiErrorMessage(error),
@@ -173,7 +261,23 @@ export function TrackPage() {
     } finally {
       setTrackLoading(false)
     }
-  }, [accessToken])
+  }, [accessToken, applyChartRange, loadDiagramStats])
+
+  const handleApplyChartRange = useCallback(async (range: DateRangeDTO) => {
+    if (!trackId) {
+      return
+    }
+
+    await loadDiagramStats(trackId, range)
+  }, [loadDiagramStats, trackId])
+
+  const handleResetChartRange = useCallback(async () => {
+    if (!trackId || !track) {
+      return
+    }
+
+    await loadDiagramStats(trackId, buildDefaultChartRange(track))
+  }, [loadDiagramStats, track, trackId])
 
   useEffect(() => {
     if (!accessToken || !trackId) {
@@ -190,9 +294,10 @@ export function TrackPage() {
     setTrackStatsError('')
     setDayChartError('')
     setWeekChartError('')
+    applyChartRange(null)
 
-    void loadTrackPage(trackId)
-  }, [accessToken, loadTrackPage, trackId])
+    void loadTrackPage(trackId, null)
+  }, [accessToken, applyChartRange, loadTrackPage, trackId])
 
   useEffect(() => {
     if (!track) {
@@ -271,6 +376,30 @@ export function TrackPage() {
     }
   }
 
+  const handleCreateTask = useCallback(async (payload: CreateTaskRequestDTO) => {
+    if (!trackId) {
+      return
+    }
+
+    setCreatingTask(true)
+    setCreateTaskError('')
+    setFeedback(null)
+
+    try {
+      await gatewayApi.tasks.create(payload, accessToken)
+      setCreateTaskOpen(false)
+      await loadTrackPage(trackId)
+      setFeedback({
+        kind: 'success',
+        message: 'Задача создана',
+      })
+    } catch (error) {
+      setCreateTaskError(getApiErrorMessage(error))
+    } finally {
+      setCreatingTask(false)
+    }
+  }, [accessToken, loadTrackPage, trackId])
+
   if (!accessToken || !trackId) {
     return null
   }
@@ -337,11 +466,14 @@ export function TrackPage() {
       <TrackDailyTaskChart
         dayStats={perDayStats}
         weekStats={perWeekStats}
-        loading={trackLoading}
+        tasks={tasks}
+        loading={trackLoading || diagramLoading}
         dayError={dayChartError}
         weekError={weekChartError}
-        rangeStart={track?.startDate}
-        rangeEnd={track?.targetDate}
+        rangeStart={chartRange?.startDate}
+        rangeEnd={chartRange?.endDate}
+        onApplyRange={handleApplyChartRange}
+        onResetRange={handleResetChartRange}
       />
 
       <StatsSummaryPanel
@@ -387,10 +519,33 @@ export function TrackPage() {
               title="Задачи"
               tasks={tasks}
               emptyText="В этом треке пока нет задач."
+              onCreateTask={() => {
+                setCreateTaskError('')
+                setCreateTaskOpen(true)
+              }}
+              showCreateCard
               onUseTask={(task) => navigate(workspaceTaskPath(task.id))}
             />
           </Panel>
         </section>
+      ) : null}
+
+      {createTaskOpen ? (
+        <CreateTaskDialog
+          busy={creatingTask}
+          error={createTaskError}
+          onClose={() => {
+            if (creatingTask) {
+              return
+            }
+
+            setCreateTaskError('')
+            setCreateTaskOpen(false)
+          }}
+          onSubmit={handleCreateTask}
+          trackId={trackId}
+          trackName={track?.name}
+        />
       ) : null}
 
       {isEditOpen ? (

@@ -1,8 +1,7 @@
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import { Login } from '../pages/Login'
 import { Register } from '../pages/Register'
 import { NotFound } from '../pages/NotFound'
-import { Home } from '../pages/Home'
 import { Layout } from '../layouts/Layout'
 import { Welcome } from '../pages/Welcome'
 import { Profile } from '../pages/Profile'
@@ -23,7 +22,10 @@ export function AppRouter() {
         <Route path="register" element={<Register />} />
         <Route path="unauthorized" element={<Unauthorized />} />
         <Route element={<RequireAuth />}>
-          <Route path="home" element={<Home />} />
+          <Route
+            path="home"
+            element={<Navigate to="/home/workspace" replace />}
+          />
           <Route path="home/workspace" element={<Workspace />} />
           <Route path="home/workspace/tracks/:trackId" element={<TrackPage />} />
           <Route

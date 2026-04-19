@@ -5,6 +5,7 @@ import type {
   ChangeTrackDTO,
   CreateTaskRequestDTO,
   CreateTrackRequestDTO,
+  DateRangeDTO,
   DiagramDTO,
   PlanTaskDateDTO,
   PlanTaskSprintDTO,
@@ -31,6 +32,21 @@ function authHeaders(accessToken: string) {
 
 async function getAuthorized<T>(path: string, accessToken: string) {
   const response = await axiosPrivate.get<T>(path, authHeaders(accessToken))
+  return response.data
+}
+
+async function getAuthorizedWithBody<T, B>(
+  path: string,
+  body: B,
+  accessToken: string,
+) {
+  const response = await axiosPrivate.request<T>({
+    url: path,
+    method: 'GET',
+    ...authHeaders(accessToken),
+    data: body,
+  })
+
   return response.data
 }
 
@@ -232,6 +248,20 @@ export const gatewayApi = {
     getPerWeek(trackId: string, accessToken: string) {
       return getAuthorized<DiagramDTO>(
         `/api/statistics/track/${trackId}/per-week`,
+        accessToken,
+      )
+    },
+    getPerDayInRange(trackId: string, range: DateRangeDTO, accessToken: string) {
+      return getAuthorizedWithBody<DiagramDTO, DateRangeDTO>(
+        `/api/statistics/track/${trackId}/per-day/range`,
+        range,
+        accessToken,
+      )
+    },
+    getPerWeekInRange(trackId: string, range: DateRangeDTO, accessToken: string) {
+      return getAuthorizedWithBody<DiagramDTO, DateRangeDTO>(
+        `/api/statistics/track/${trackId}/per-week/range`,
+        range,
         accessToken,
       )
     },

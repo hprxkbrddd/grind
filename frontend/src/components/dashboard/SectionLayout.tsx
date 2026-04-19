@@ -18,8 +18,8 @@ export function SectionLayout({
   title,
   description,
   icon,
-  backLabel = 'К dashboard',
-  backTo = '/home',
+  backLabel = 'К workspace',
+  backTo = '/home/workspace',
   actions,
   children,
 }: SectionLayoutProps) {

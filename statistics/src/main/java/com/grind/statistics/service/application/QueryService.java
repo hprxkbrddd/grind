@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -94,6 +95,56 @@ public class QueryService {
         }
 
         return new DiagramDTO(list);
+    }
+
+    public DiagramDTO getDiagramDataPerDayInRange(String trackId, LocalDate startDate, LocalDate endDate) {
+        if (isInvalidRange(startDate, endDate)) {
+            log.debug("Invalid day range for track {}. Falling back to non-range diagram query", trackId);
+            return getDiagramDataPerDay(trackId);
+        }
+
+        List<DiagramUnit> list = repository.requestSelect(
+                Q_STATS_PER_DAY_IN_RANGE,
+                Map.of(
+                        "param_track", trackId,
+                        "param_startDate", startDate.toString(),
+                        "param_endDate", endDate.toString()
+                ),
+                DiagramUnit.class
+        ).collectList().block();
+
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("track id is not in stats db");
+        }
+
+        return new DiagramDTO(list);
+    }
+
+    public DiagramDTO getDiagramDataPerWeekInRange(String trackId, LocalDate startDate, LocalDate endDate) {
+        if (isInvalidRange(startDate, endDate)) {
+            log.debug("Invalid week range for track {}. Falling back to non-range diagram query", trackId);
+            return getDiagramDataPerWeek(trackId);
+        }
+
+        List<DiagramUnit> list = repository.requestSelect(
+                Q_STATS_PER_WEEK_IN_RANGE,
+                Map.of(
+                        "param_track", trackId,
+                        "param_startDate", startDate.toString(),
+                        "param_endDate", endDate.toString()
+                ),
+                DiagramUnit.class
+        ).collectList().block();
+
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("track id is not in stats db");
+        }
+
+        return new DiagramDTO(list);
+    }
+
+    private boolean isInvalidRange(LocalDate startDate, LocalDate endDate) {
+        return startDate == null || endDate == null || startDate.isAfter(endDate);
     }
 
     public void postEvent(List<StatisticsEventDTO> batch) {

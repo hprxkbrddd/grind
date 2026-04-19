@@ -1,5 +1,7 @@
 package com.grind.statistics.service.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.grind.statistics.dto.request.DiagramRangeRequestDTO;
 import com.grind.statistics.dto.response.diagram.DiagramDTO;
 import com.grind.statistics.dto.response.sprint.SprintStatsDTO;
 import com.grind.statistics.dto.response.track.TrackActualStateStatsDTO;
@@ -25,6 +27,7 @@ public class StatisticsHandler {
     private final QueryService queryService;
     private final SynchronizationService synchronizationService;
     private final ActionReplyExecutor exec;
+    private final ObjectMapper objectMapper;
 
     public Reply<?> routeReply(StatisticsMessageType type, String payload) {
         switch (type) {
@@ -42,6 +45,12 @@ public class StatisticsHandler {
             }
             case GET_STATS_PER_DAY -> {
                 return handleGetStatsPerDay(payload);
+            }
+            case GET_STATS_PER_WEEK_IN_RANGE -> {
+                return handleGetStatsPerWeekInRange(payload);
+            }
+            case GET_STATS_PER_DAY_IN_RANGE -> {
+                return handleGetStatsPerDayInRange(payload);
             }
             case SYNC_DATABASES -> {
                 return handleSync();
@@ -102,6 +111,36 @@ public class StatisticsHandler {
                                 IdParser.run(payload)
                         )
                 )
+        );
+    }
+
+    private Reply<DiagramDTO> handleGetStatsPerWeekInRange(String payload) {
+        return exec.withErrorMapping(() -> {
+                    DiagramRangeRequestDTO request = objectMapper.readValue(payload, DiagramRangeRequestDTO.class);
+                    return Reply.ok(
+                            StatisticsMessageType.STATS_PER_WEEK_IN_RANGE,
+                            queryService.getDiagramDataPerWeekInRange(
+                                    request.trackId(),
+                                    request.startDate(),
+                                    request.endDate()
+                            )
+                    );
+                }
+        );
+    }
+
+    private Reply<DiagramDTO> handleGetStatsPerDayInRange(String payload) {
+        return exec.withErrorMapping(() -> {
+                    DiagramRangeRequestDTO request = objectMapper.readValue(payload, DiagramRangeRequestDTO.class);
+                    return Reply.ok(
+                            StatisticsMessageType.STATS_PER_DAY_IN_RANGE,
+                            queryService.getDiagramDataPerDayInRange(
+                                    request.trackId(),
+                                    request.startDate(),
+                                    request.endDate()
+                            )
+                    );
+                }
         );
     }
 

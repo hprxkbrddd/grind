@@ -1,67 +1,30 @@
-import { KanbanSquare, ListChecks, RefreshCw } from 'lucide-react'
+import { KanbanSquare, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { gatewayApi, getApiErrorMessage } from '../api/gateway'
 import { ActionButton } from '../components/app/ActionButton'
-import { Field } from '../components/app/Field'
-import { JsonView } from '../components/app/JsonView'
+import { CreateTrackDialog } from '../components/dashboard/CreateTrackDialog'
 import { Panel } from '../components/app/Panel'
-import { TrackHierarchy } from '../components/dashboard/TrackHierarchy'
 import { SectionLayout } from '../components/dashboard/SectionLayout'
+import { FriendlyNote } from '../components/dashboard/Shared'
 import {
-  ContextValue,
-  FormTitle,
-  FriendlyNote,
-  TaskList,
-  TrackList,
-  toNullableId,
-} from '../components/dashboard/Shared'
+  TrackOverviewGrid,
+  type TrackOverviewCardItem,
+} from '../components/dashboard/TrackOverviewGrid'
 import { useAuth } from '../hooks/useAuth'
-import type {
-  SprintWithCountDTO,
-  TaskDTO,
-  TrackDTO,
-  TrackStatus,
-  TrackWithCountDTO,
-} from '../types/gateway'
-import {
-  workspaceSprintPath,
-  workspaceTaskPath,
-  workspaceTrackPath,
-} from '../utils/workspaceRoutes'
+import type { CreateTrackRequestDTO } from '../types/gateway'
+import type { TrackWithCountDTO } from '../types/gateway'
+import { workspaceTrackPath } from '../utils/workspaceRoutes'
 
-const trackStatusOptions: Array<{ label: string; value: TrackStatus }> = [
-  { label: 'ACTIVE', value: 'ACTIVE' },
-  { label: 'COMPLETED', value: 'COMPLETED' },
-  { label: 'ARCHIVED', value: 'ARCHIVED' },
-]
-
-type Feedback =
-  | {
-      kind: 'success' | 'error'
-      message: string
-    }
-  | null
-
-const initialTrackForm = {
-  name: '',
-  description: '',
-  petId: '',
-  sprintLength: '14',
-  startDate: '',
-  targetDate: '',
-  messagePolicy: 'NONE',
-  status: 'ACTIVE' as TrackStatus,
+interface TrackCardStats {
+  sprintCount: number | null
+  completionPercent: number | null
 }
 
-const initialTaskForm = {
-  title: '',
-  description: '',
-  trackId: '',
-}
+function normalizeTrackStatsError(error: unknown) {
+  const message = getApiErrorMessage(error)
 
-function numeric(value: string) {
-  return Number.parseInt(value, 10)
+  return message === 'track id is not in stats db' ? '' : message
 }
 
 export function Workspace() {
@@ -69,760 +32,211 @@ export function Workspace() {
   const accessToken = auth?.accessToken ?? ''
   const navigate = useNavigate()
 
-  const [feedback, setFeedback] = useState<Feedback>(null)
-  const [busyKey, setBusyKey] = useState<string | null>(null)
-
-  const [selectedTrackId, setSelectedTrackId] = useState('')
-  const [selectedSprintId, setSelectedSprintId] = useState('')
-  const [selectedTaskId, setSelectedTaskId] = useState('')
-
-  const [trackLookupId, setTrackLookupId] = useState('')
-  const [taskLookupId, setTaskLookupId] = useState('')
-  const [tasksBySprintLookupId, setTasksBySprintLookupId] = useState('')
-
-  const [trackForm, setTrackForm] = useState(initialTrackForm)
-  const [taskForm, setTaskForm] = useState(initialTaskForm)
-
+  const [error, setError] = useState('')
+  const [createTrackError, setCreateTrackError] = useState('')
+  const [createTrackOpen, setCreateTrackOpen] = useState(false)
+  const [creatingTrack, setCreatingTrack] = useState(false)
+  const [metricsNotice, setMetricsNotice] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
   const [myTracks, setMyTracks] = useState<TrackWithCountDTO[]>([])
-  const [allTracks, setAllTracks] = useState<TrackWithCountDTO[]>([])
-  const [trackDetail, setTrackDetail] = useState<TrackWithCountDTO | null>(null)
-  const [trackSprints, setTrackSprints] = useState<SprintWithCountDTO[]>([])
-  const [allTasks, setAllTasks] = useState<TaskDTO[]>([])
-  const [trackTasks, setTrackTasks] = useState<TaskDTO[]>([])
-  const [sprintTasks, setSprintTasks] = useState<TaskDTO[]>([])
-  const [taskDetail, setTaskDetail] = useState<TaskDTO | null>(null)
-  const [createdTrack, setCreatedTrack] = useState<TrackDTO | null>(null)
-  const [mutatedTask, setMutatedTask] = useState<TaskDTO | null>(null)
-  const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null)
-  const [expandedSprintId, setExpandedSprintId] = useState<string | null>(null)
-  const [trackSprintsById, setTrackSprintsById] = useState<
-    Record<string, SprintWithCountDTO[] | undefined>
+  const [trackStatsById, setTrackStatsById] = useState<
+    Record<string, TrackCardStats>
   >({})
-  const [sprintTasksById, setSprintTasksById] = useState<
-    Record<string, TaskDTO[] | undefined>
-  >({})
-  const [loadingHierarchyTrackId, setLoadingHierarchyTrackId] = useState<
-    string | null
-  >(null)
-  const [loadingHierarchySprintId, setLoadingHierarchySprintId] = useState<
-    string | null
-  >(null)
 
-  const runAction = useCallback(async <T,>(
-    key: string,
-    action: () => Promise<T>,
-    onSuccess: (payload: T) => void,
-    successMessage: string,
-  ) => {
-    setBusyKey(key)
-    setFeedback(null)
-
-    try {
-      const payload = await action()
-      onSuccess(payload)
-      setFeedback({
-        kind: 'success',
-        message: successMessage,
-      })
-    } catch (error) {
-      setFeedback({
-        kind: 'error',
-        message: getApiErrorMessage(error),
-      })
-    } finally {
-      setBusyKey(null)
-    }
-  }, [])
-
-  const captureTrack = useCallback((
-    track: TrackWithCountDTO | TrackDTO,
-    sprintLengthHint?: string,
-  ) => {
-    setSelectedTrackId(track.id)
-    setTrackLookupId(track.id)
-    void sprintLengthHint
-    setTaskForm((current) => ({
-      ...current,
-      trackId: track.id,
-    }))
-  }, [])
-
-  const captureSprint = useCallback((sprint: SprintWithCountDTO) => {
-    setSelectedSprintId(sprint.id)
-    setTasksBySprintLookupId(sprint.id)
-  }, [])
-
-  const captureTask = useCallback((task: TaskDTO) => {
-    setSelectedTaskId(task.id)
-    setTaskLookupId(task.id)
-    setTaskForm((current) => ({
-      ...current,
-      trackId: task.track_id,
-    }))
-    setSelectedTrackId(task.track_id)
-    setTrackLookupId(task.track_id)
-
-    const sprintId = toNullableId(task.sprint_id)
-    if (sprintId) {
-      setSelectedSprintId(sprintId)
-      setTasksBySprintLookupId(sprintId)
-    }
-  }, [])
-
-  const clearSelectedTaskContext = useCallback(() => {
-    setSelectedTaskId('')
-    setTaskLookupId('')
-    setTaskDetail(null)
-  }, [])
-
-  const loadTrackBundle = useCallback(async (
-    trackId: string,
-    track?: TrackWithCountDTO,
-  ) => {
-    if (!trackId) {
+  const loadTrackCards = useCallback(async (tracks: TrackWithCountDTO[]) => {
+    if (!accessToken) {
       return
     }
 
-    setBusyKey('workspace-load')
-
-    try {
-      const [detail, sprints, tasks] = await Promise.all([
-        gatewayApi.tracks.getById(trackId, accessToken),
-        gatewayApi.tracks.getSprints(trackId, accessToken),
-        gatewayApi.tasks.getByTrack(trackId, accessToken),
-      ])
-
-      if (track) {
-        captureTrack(track)
-      } else {
-        captureTrack(detail)
-      }
-
-      setTrackDetail(detail)
-      setTrackSprints(sprints)
-      setTrackTasks(tasks)
-      setExpandedTrackId(trackId)
-      setExpandedSprintId(null)
-      setTrackSprintsById((current) => ({
-        ...current,
-        [trackId]: sprints,
-      }))
-
-      if (sprints.length > 0) {
-        captureSprint(sprints[0])
-        setSprintTasks([])
-      } else {
-        setSelectedSprintId('')
-        setTasksBySprintLookupId('')
-        setSprintTasks([])
-        setExpandedSprintId(null)
-      }
-
-      if (tasks.length > 0) {
-        captureTask(tasks[0])
-        setTaskDetail(tasks[0])
-      } else {
-        clearSelectedTaskContext()
-      }
-    } catch (error) {
-      setFeedback({
-        kind: 'error',
-        message: getApiErrorMessage(error),
-      })
-    } finally {
-      setBusyKey(null)
+    if (tracks.length === 0) {
+      setTrackStatsById({})
+      setMetricsNotice('')
+      return
     }
-  }, [accessToken, captureSprint, captureTask, captureTrack, clearSelectedTaskContext])
 
-  async function loadMine() {
-    await runAction(
-      'tracks-mine',
-      () => gatewayApi.tracks.getMine(accessToken),
-      (tracks) => {
-        setMyTracks(tracks)
-        setTrackSprintsById({})
-        setSprintTasksById({})
-        setExpandedTrackId(null)
-        setExpandedSprintId(null)
-        if (tracks.length > 0) {
-          void loadTrackBundle(tracks[0].id, tracks[0])
-        } else {
-          setSelectedTrackId('')
-          setSelectedSprintId('')
-          clearSelectedTaskContext()
-          setTrackDetail(null)
-          setTrackSprints([])
-          setTrackTasks([])
-          setSprintTasks([])
+    const cardResults = await Promise.all(
+      tracks.map(async (track) => {
+        const [sprintsResult, stateResult] = await Promise.all([
+          gatewayApi.tracks.getSprints(track.id, accessToken)
+            .then((sprints) => ({
+              sprintCount: sprints.length,
+              error: '',
+            }))
+            .catch((requestError: unknown) => ({
+              sprintCount: null,
+              error: getApiErrorMessage(requestError),
+            })),
+          gatewayApi.statistics.getTrackState(track.id, accessToken)
+            .then((state) => ({
+              completionPercent: state.completion_percent,
+              error: '',
+            }))
+            .catch((requestError: unknown) => {
+              const normalizedError = normalizeTrackStatsError(requestError)
+
+              return {
+                completionPercent: normalizedError ? null : 0,
+                error: normalizedError,
+              }
+            }),
+        ])
+
+        return {
+          trackId: track.id,
+          stats: {
+            sprintCount: sprintsResult.sprintCount,
+            completionPercent: stateResult.completionPercent,
+          },
+          hasMissingMetrics:
+            sprintsResult.error.length > 0 || stateResult.error.length > 0,
         }
-      },
-      'Мои треки обновлены',
+      }),
     )
-  }
 
-  async function toggleTrackHierarchy(track: TrackWithCountDTO) {
-    if (expandedTrackId === track.id) {
-      setExpandedTrackId(null)
-      setExpandedSprintId(null)
-      captureTrack(track)
+    setTrackStatsById(
+      Object.fromEntries(
+        cardResults.map(({ trackId, stats }) => [trackId, stats]),
+      ),
+    )
+    setMetricsNotice(
+      cardResults.some(({ hasMissingMetrics }) => hasMissingMetrics)
+        ? 'Для части треков не удалось загрузить все метрики. Недоступные значения помечены тире.'
+        : '',
+    )
+  }, [accessToken])
+
+  const loadMyTracks = useCallback(async () => {
+    if (!accessToken) {
       return
     }
 
-    setLoadingHierarchyTrackId(track.id)
+    setRefreshing(true)
+    setError('')
+    setMetricsNotice('')
+    setTrackStatsById({})
 
     try {
-      await loadTrackBundle(track.id, track)
+      const tracks = await gatewayApi.tracks.getMine(accessToken)
+      setMyTracks(tracks)
+
+      await loadTrackCards(tracks)
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError))
+      setMyTracks([])
+      setTrackStatsById({})
+      setMetricsNotice('')
     } finally {
-      setLoadingHierarchyTrackId(null)
+      setRefreshing(false)
     }
-  }
-
-  async function toggleSprintHierarchy(
-    track: TrackWithCountDTO,
-    sprint: SprintWithCountDTO,
-  ) {
-    captureTrack(track)
-    captureSprint(sprint)
-    setExpandedTrackId(track.id)
-
-    if (expandedSprintId === sprint.id) {
-      setExpandedSprintId(null)
-      return
-    }
-
-    setExpandedSprintId(sprint.id)
-
-    const cachedTasks = sprintTasksById[sprint.id]
-    if (cachedTasks) {
-      setSprintTasks(cachedTasks)
-      if (cachedTasks.length > 0) {
-        captureTask(cachedTasks[0])
-        setTaskDetail(cachedTasks[0])
-      } else {
-        clearSelectedTaskContext()
-      }
-      return
-    }
-
-    if (sprint.tasks === 0) {
-      setSprintTasks([])
-      setSprintTasksById((current) => ({
-        ...current,
-        [sprint.id]: [],
-      }))
-      clearSelectedTaskContext()
-      return
-    }
-
-    setLoadingHierarchySprintId(sprint.id)
-    setFeedback(null)
-
-    try {
-      const tasks = await gatewayApi.tasks.getBySprint(sprint.id, accessToken)
-      setSprintTasks(tasks)
-      setSprintTasksById((current) => ({
-        ...current,
-        [sprint.id]: tasks,
-      }))
-
-      if (tasks.length > 0) {
-        captureTask(tasks[0])
-        setTaskDetail(tasks[0])
-      } else {
-        clearSelectedTaskContext()
-      }
-    } catch (error) {
-      setFeedback({
-        kind: 'error',
-        message: getApiErrorMessage(error),
-      })
-    } finally {
-      setLoadingHierarchySprintId(null)
-    }
-  }
-
-  function resetTrackCreateForm() {
-    setTrackForm(initialTrackForm)
-  }
-
-  function resetTaskCreateForm() {
-    setTaskForm((current) => ({
-      ...initialTaskForm,
-      trackId: current.trackId,
-    }))
-  }
+  }, [accessToken, loadTrackCards])
 
   useEffect(() => {
     if (!accessToken) {
       return
     }
 
-    void runAction(
-      'tracks-mine',
-      () => gatewayApi.tracks.getMine(accessToken),
-      (tracks) => {
-        setMyTracks(tracks)
-        setTrackSprintsById({})
-        setSprintTasksById({})
-        setExpandedTrackId(null)
-        setExpandedSprintId(null)
-        if (tracks.length > 0) {
-          void loadTrackBundle(tracks[0].id, tracks[0])
-        } else {
-          setSelectedTrackId('')
-          setSelectedSprintId('')
-          clearSelectedTaskContext()
-          setTrackDetail(null)
-          setTrackSprints([])
-          setTrackTasks([])
-          setSprintTasks([])
-        }
-      },
-      'Мои треки обновлены',
-    )
-  }, [accessToken, clearSelectedTaskContext, loadTrackBundle, runAction])
+    void loadMyTracks()
+  }, [accessToken, loadMyTracks])
+
+  const handleCreateTrack = useCallback(async (payload: CreateTrackRequestDTO) => {
+    if (!accessToken) {
+      return
+    }
+
+    setCreatingTrack(true)
+    setCreateTrackError('')
+
+    try {
+      await gatewayApi.tracks.create(payload, accessToken)
+      setCreateTrackOpen(false)
+      await loadMyTracks()
+    } catch (requestError) {
+      setCreateTrackError(getApiErrorMessage(requestError))
+    } finally {
+      setCreatingTrack(false)
+    }
+  }, [accessToken, loadMyTracks])
 
   if (!accessToken) {
     return null
   }
 
+  const trackCards: TrackOverviewCardItem[] = myTracks.map((track) => ({
+    track,
+    sprintCount: trackStatsById[track.id]?.sprintCount ?? null,
+    completionPercent: trackStatsById[track.id]?.completionPercent ?? null,
+  }))
+
   return (
     <SectionLayout
       eyebrow="Workspace"
-      title="Мои треки и задачи"
-      description="Отдельный layout для повседневной работы. Теперь блок «Мои треки» разворачивается по цепочке трек → спринт → задача и ведёт на отдельные страницы сущностей."
+      title="Быстрый вход в треки"
+      description="На экране остался только список ваших треков с ключевыми метриками. Клик по карточке открывает страницу выбранного трека."
       icon={<KanbanSquare className="h-6 w-6" />}
       actions={
         <ActionButton
           type="button"
           variant="secondary"
-          busy={busyKey === 'tracks-mine' || busyKey === 'workspace-load'}
-          onClick={() => void loadMine()}
+          busy={refreshing}
+          onClick={() => void loadMyTracks()}
         >
           <RefreshCw className="h-4 w-4" />
-          Обновить данные
+          Обновить
         </ActionButton>
       }
     >
-      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <section className="mx-auto max-w-5xl">
         <Panel
-          eyebrow="Context"
+          eyebrow="Tracks"
           icon={<KanbanSquare className="h-5 w-5" />}
-          title="Текущий контекст"
-          description="Выбор трека, спринта или задачи продолжает подставляться в формы автоматически."
-          tone="warm"
+          title="Список треков"
+          description="Каждая карточка показывает количество спринтов, количество задач и процент завершения трека."
+          tone="cool"
         >
-          <div className="grid gap-4 sm:grid-cols-3">
-            <ContextValue label="Track" value={selectedTrackId || '—'} />
-            <ContextValue label="Sprint" value={selectedSprintId || '—'} />
-            <ContextValue label="Task" value={selectedTaskId || '—'} />
-          </div>
-          <div className="grid gap-3 lg:grid-cols-2">
-            <FriendlyNote
-              title="Что происходит автоматически"
-              text="После открытия layout загружаются ваши треки. При выборе трека сразу подтягиваются его детали, спринты и задачи."
-            />
-            <FriendlyNote
-              title="Что осталось вручную"
-              text="CRUD, lookup по ID и планирование остаются явными действиями, чтобы вы управляли изменениями осознанно."
-            />
-          </div>
-          {feedback ? (
-            <div
-              className={`rounded-2xl px-4 py-3 text-sm ${
-                feedback.kind === 'success'
-                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
-                  : 'border border-rose-200 bg-rose-50 text-rose-700'
-              }`}
-            >
-              {feedback.message}
+          <TrackOverviewGrid
+            title="Мои треки"
+            tracks={trackCards}
+            onCreateTrack={() => {
+              setCreateTrackError('')
+              setCreateTrackOpen(true)
+            }}
+            onOpenTrack={(trackId) => navigate(workspaceTrackPath(trackId))}
+          />
+
+          <FriendlyNote
+            title="Как теперь устроен workspace"
+            text="Страница больше не раскрывает древо сущностей. Она показывает обзор по трекам, а детальная работа со спринтами и задачами открывается уже внутри выбранного трека."
+          />
+
+          {error ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
+          {metricsNotice ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {metricsNotice}
             </div>
           ) : null}
         </Panel>
+      </section>
 
-        <Panel
-          eyebrow="Quick Data"
-          icon={<ListChecks className="h-5 w-5" />}
-          title="Мои треки"
-          description="Клик по треку открывает его спринты, клик по спринту открывает задачи. Для трека, спринта и задачи доступны отдельные страницы."
-          tone="cool"
-        >
-          <TrackHierarchy
-            title="Мои треки"
-            tracks={myTracks}
-            expandedTrackId={expandedTrackId}
-            expandedSprintId={expandedSprintId}
-            selectedTrackId={selectedTrackId}
-            selectedSprintId={selectedSprintId}
-            selectedTaskId={selectedTaskId}
-            sprintsByTrackId={trackSprintsById}
-            tasksBySprintId={sprintTasksById}
-            loadingTrackId={loadingHierarchyTrackId}
-            loadingSprintId={loadingHierarchySprintId}
-            onToggleTrack={(track) => {
-              void toggleTrackHierarchy(track)
-            }}
-            onToggleSprint={(track, sprint) => {
-              void toggleSprintHierarchy(track, sprint)
-            }}
-            onOpenTrackPage={(trackId) => navigate(workspaceTrackPath(trackId))}
-            onOpenSprintPage={(trackId, sprintId) =>
-              navigate(workspaceSprintPath(trackId, sprintId))
+      {createTrackOpen ? (
+        <CreateTrackDialog
+          busy={creatingTrack}
+          error={createTrackError}
+          onClose={() => {
+            if (creatingTrack) {
+              return
             }
-            onOpenTask={(task) => {
-              captureTask(task)
-              setTaskDetail(task)
-              navigate(workspaceTaskPath(task.id))
-            }}
-          />
-          <div className="grid gap-4 sm:grid-cols-3">
-            <ContextValue
-              label="Спринтов в track"
-              value={selectedTrackId ? String(trackSprints.length) : '—'}
-            />
-            <ContextValue
-              label="Задач в track"
-              value={selectedTrackId ? String(trackTasks.length) : '—'}
-            />
-            <ContextValue
-              label="Задач в sprint"
-              value={selectedSprintId ? String(sprintTasks.length) : '—'}
-            />
-          </div>
-          <FriendlyNote
-            title="Страницы сущностей"
-            text="У каждого трека и спринта теперь есть своя страница. На странице трека можно отдельно загрузить полный список задач этого трека."
-          />
-        </Panel>
-      </section>
 
-      <section className="grid gap-6 xl:grid-cols-2">
-        <Panel
-          eyebrow="Track API"
-          icon={<KanbanSquare className="h-5 w-5" />}
-          title="Треки"
-          description="В dashboard остаются создание треков, lookup и обзор всех треков. Редактирование и удаление перенесены на страницу конкретного трека."
-          tone="warm"
-        >
-          <div className="grid gap-3 md:grid-cols-2">
-            <ActionButton
-              type="button"
-              busy={busyKey === 'tracks-all'}
-              onClick={() =>
-                void runAction(
-                  'tracks-all',
-                  () => gatewayApi.tracks.getAll(accessToken),
-                  setAllTracks,
-                  'Загружены все треки',
-                )
-              }
-            >
-              Все треки
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant="secondary"
-              busy={busyKey === 'track-detail'}
-              onClick={() =>
-                void runAction(
-                  'track-detail',
-                  () => gatewayApi.tracks.getById(trackLookupId, accessToken),
-                  (payload) => {
-                    captureTrack(payload)
-                    setTrackDetail(payload)
-                  },
-                  'Детали трека загружены',
-                )
-              }
-              disabled={!trackLookupId}
-            >
-              Track by id
-            </ActionButton>
-          </div>
-
-          <Field
-            label="Track id"
-            hint="Для ручного lookup по конкретному id"
-            value={trackLookupId}
-            onChange={(event) => setTrackLookupId(event.target.value)}
-            placeholder="track-1"
-          />
-
-          <FormTitle title="Создать track" />
-          <div className="grid gap-3">
-            <Field
-              label="Name"
-              value={trackForm.name}
-              onChange={(event) =>
-                setTrackForm((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              required
-            />
-            <Field
-              as="textarea"
-              label="Description"
-              value={trackForm.description}
-              onChange={(event) =>
-                setTrackForm((current) => ({
-                  ...current,
-                  description: event.target.value,
-                }))
-              }
-              rows={3}
-            />
-            <div className="grid gap-3 md:grid-cols-2">
-              <Field
-                label="Pet id"
-                value={trackForm.petId}
-                onChange={(event) =>
-                  setTrackForm((current) => ({
-                    ...current,
-                    petId: event.target.value,
-                  }))
-                }
-              />
-              <Field
-                label="Sprint length"
-                type="number"
-                min="1"
-                value={trackForm.sprintLength}
-                onChange={(event) =>
-                  setTrackForm((current) => ({
-                    ...current,
-                    sprintLength: event.target.value,
-                  }))
-                }
-              />
-              <Field
-                label="Start date"
-                type="date"
-                value={trackForm.startDate}
-                onChange={(event) =>
-                  setTrackForm((current) => ({
-                    ...current,
-                    startDate: event.target.value,
-                  }))
-                }
-              />
-              <Field
-                label="Target date"
-                type="date"
-                value={trackForm.targetDate}
-                onChange={(event) =>
-                  setTrackForm((current) => ({
-                    ...current,
-                    targetDate: event.target.value,
-                  }))
-                }
-              />
-              <Field
-                label="Message policy"
-                value={trackForm.messagePolicy}
-                onChange={(event) =>
-                  setTrackForm((current) => ({
-                    ...current,
-                    messagePolicy: event.target.value,
-                  }))
-                }
-              />
-              <Field
-                as="select"
-                label="Status"
-                value={trackForm.status}
-                onChange={(event) =>
-                  setTrackForm((current) => ({
-                    ...current,
-                    status: event.target.value as TrackStatus,
-                  }))
-                }
-                options={trackStatusOptions}
-              />
-            </div>
-            <ActionButton
-              type="button"
-              busy={busyKey === 'track-create'}
-              onClick={() =>
-                void runAction(
-                  'track-create',
-                  () =>
-                    gatewayApi.tracks.create(
-                      {
-                        ...trackForm,
-                        sprintLength: numeric(trackForm.sprintLength),
-                      },
-                      accessToken,
-                    ),
-                  (payload) => {
-                    setCreatedTrack(payload)
-                    captureTrack(payload, trackForm.sprintLength)
-                    resetTrackCreateForm()
-                    void loadMine()
-                  },
-                  'Трек создан',
-                )
-              }
-            >
-              Создать track
-            </ActionButton>
-          </div>
-
-          <TrackList
-            title="Все треки"
-            tracks={allTracks}
-            onUseTrack={(track) => {
-              captureTrack(track)
-              void loadTrackBundle(track.id, track)
-            }}
-          />
-
-          <JsonView data={trackDetail} emptyText="Track detail ещё не запрошен." />
-          <JsonView
-            data={createdTrack}
-            emptyText="Последний результат создания track появится здесь."
-          />
-        </Panel>
-
-        <Panel
-          eyebrow="Task API"
-          icon={<ListChecks className="h-5 w-5" />}
-          title="Задачи"
-          description="В dashboard остаются создание задач, lookup и общий список. Редактирование, планирование и быстрые действия перенесены на страницу конкретной задачи."
-          tone="cool"
-        >
-          <div className="grid gap-3 md:grid-cols-2">
-            <ActionButton
-              type="button"
-              busy={busyKey === 'tasks-all'}
-              onClick={() =>
-                void runAction(
-                  'tasks-all',
-                  () => gatewayApi.tasks.getAll(accessToken),
-                  setAllTasks,
-                  'Загружены все задачи',
-                )
-              }
-            >
-              Все задачи
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant="secondary"
-              busy={busyKey === 'task-detail'}
-              onClick={() =>
-                void runAction(
-                  'task-detail',
-                  () => gatewayApi.tasks.getById(taskLookupId, accessToken),
-                  (payload) => {
-                    captureTask(payload)
-                    setTaskDetail(payload)
-                  },
-                  'Детали задачи загружены',
-                )
-              }
-              disabled={!taskLookupId}
-            >
-              Task by id
-            </ActionButton>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <Field
-              label="Task id"
-              value={taskLookupId}
-              onChange={(event) => setTaskLookupId(event.target.value)}
-              placeholder="task-1"
-            />
-            <Field
-              label="Sprint id"
-              value={tasksBySprintLookupId}
-              onChange={(event) => setTasksBySprintLookupId(event.target.value)}
-              placeholder="sprint-1"
-            />
-            <ActionButton
-              type="button"
-              variant="secondary"
-              busy={busyKey === 'tasks-by-sprint'}
-              onClick={() =>
-                void runAction(
-                  'tasks-by-sprint',
-                  () => gatewayApi.tasks.getBySprint(tasksBySprintLookupId, accessToken),
-                  setSprintTasks,
-                  'Задачи спринта загружены',
-                )
-              }
-              disabled={!tasksBySprintLookupId}
-            >
-              Tasks of sprint
-            </ActionButton>
-          </div>
-
-          <FormTitle title="Создать task" />
-          <div className="grid gap-3">
-            <Field
-              label="Title"
-              value={taskForm.title}
-              onChange={(event) =>
-                setTaskForm((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-            />
-            <Field
-              as="textarea"
-              label="Description"
-              value={taskForm.description}
-              onChange={(event) =>
-                setTaskForm((current) => ({
-                  ...current,
-                  description: event.target.value,
-                }))
-              }
-              rows={3}
-            />
-            <Field
-              label="Track id"
-              value={taskForm.trackId}
-              onChange={(event) =>
-                setTaskForm((current) => ({
-                  ...current,
-                  trackId: event.target.value,
-                }))
-              }
-            />
-            <ActionButton
-              type="button"
-              busy={busyKey === 'task-create'}
-              onClick={() =>
-                void runAction(
-                  'task-create',
-                  () => gatewayApi.tasks.create(taskForm, accessToken),
-                  (payload) => {
-                    setMutatedTask(payload)
-                    captureTask(payload)
-                    resetTaskCreateForm()
-                    void loadTrackBundle(payload.track_id)
-                  },
-                  'Задача создана',
-                )
-              }
-            >
-              Создать task
-            </ActionButton>
-          </div>
-
-          <TaskList title="Все задачи" tasks={allTasks} onUseTask={captureTask} />
-
-          <JsonView data={taskDetail} emptyText="Task detail ещё не запрошен." />
-          <JsonView
-            data={mutatedTask}
-            emptyText="Последний результат создания task появится здесь."
-          />
-        </Panel>
-      </section>
+            setCreateTrackError('')
+            setCreateTrackOpen(false)
+          }}
+          onSubmit={handleCreateTrack}
+        />
+      ) : null}
     </SectionLayout>
   )
 }

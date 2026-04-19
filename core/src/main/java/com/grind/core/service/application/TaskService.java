@@ -180,6 +180,7 @@ public class TaskService {
 
         task.setPlannedDate(null);
         task.setSprint(null);
+        task.setActualDate(null);
         task.setStatus(TaskStatus.CREATED);
 
         publishTaskEvent(task, CoreMessageType.TASK_AT_BACKLOG);
@@ -208,6 +209,7 @@ public class TaskService {
                         .orElseThrow(() -> new TaskNotFoundException(taskId));
         task.setSprint(null);
         task.setPlannedDate(null);
+        task.setActualDate(null);
         task.setStatus(TaskStatus.DELETED);
         publishTaskEvent(task, CoreMessageType.TASK_DELETED);
         taskRepository.delete(task);

@@ -1,4 +1,9 @@
-import { Compass, LayoutDashboard, LogIn, UserRoundPlus } from 'lucide-react'
+import {
+  Compass,
+  KanbanSquare,
+  LogIn,
+  UserRoundPlus,
+} from 'lucide-react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
 import { ActionButton } from '../components/app/ActionButton'
@@ -44,9 +49,9 @@ export function Layout() {
             </NavLink>
             {auth?.accessToken ? (
               <>
-                <NavLink to="/home" className={navLinkClass}>
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
+                <NavLink to="/home/workspace" className={navLinkClass}>
+                  <KanbanSquare className="h-4 w-4" />
+                  Workspace
                 </NavLink>
                 <NavLink to="/profile" className={navLinkClass}>
                   <Compass className="h-4 w-4" />

@@ -217,6 +217,74 @@ public class ClickhouseQueries {
             FORMAT JSONEachRow;
             """;
 
+    public static final String Q_STATS_PER_DAY_IN_RANGE = """
+            SELECT
+                day,
+                sum(planned)   AS planned_tasks,
+                sum(completed) AS completed_tasks
+            FROM
+            (
+                SELECT
+                    toDate(v.planned_date) AS day,
+                    uniqExact(v.task_id) AS planned,
+                    0 AS completed
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.planned_date IS NOT NULL
+                GROUP BY day
+                HAVING day > {startDate:DATE} AND day < {endDate:DATE}
+
+                UNION ALL
+
+                SELECT
+                    toDate(v.changed_at) AS day,
+                    0 AS planned,
+                    uniqExact(v.task_id) AS completed
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.task_status = 'COMPLETED'
+                GROUP BY day
+                HAVING day > {startDate:DATE} AND day < {endDate:DATE}
+            )
+            GROUP BY day
+            ORDER BY day
+            FORMAT JSONEachRow;
+            """;
+
+    public static final String Q_STATS_PER_WEEK_IN_RANGE = """
+            SELECT
+                day,
+                sum(planned)   AS planned_tasks,
+                sum(completed) AS completed_tasks
+            FROM
+            (
+                SELECT
+                    toStartOfWeek(toDate(v.planned_date)) AS day,
+                    uniqExact(v.task_id) AS planned,
+                    0 AS completed
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.planned_date IS NOT NULL
+                GROUP BY day
+                HAVING day > {startDate:DATE} AND day < {endDate:DATE}
+
+                UNION ALL
+
+                SELECT
+                    toStartOfWeek(toDate(v.changed_at)) AS day,
+                    0 AS planned,
+                    uniqExact(v.task_id) AS completed
+                FROM analytics.task_visible_state_v v
+                WHERE v.track_id = {track:UUID}
+                  AND v.task_status = 'COMPLETED'
+                GROUP BY day
+                HAVING day > {startDate:DATE} AND day < {endDate:DATE}
+            )
+            GROUP BY day
+            ORDER BY day
+            FORMAT JSONEachRow;
+            """;
+
     public static final String Q_TRACK_STATS_RAW = """
             SELECT
                 track_id,

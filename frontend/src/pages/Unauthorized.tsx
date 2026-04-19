@@ -5,12 +5,12 @@ export function Unauthorized() {
   return (
     <Panel
       title="Недостаточно прав"
-      description="Текущий frontend не использует admin-only endpoint’ы. Вернитесь в dashboard или выполните вход под другим пользователем."
+      description="Текущий frontend не использует admin-only endpoint’ы. Вернитесь в workspace или выполните вход под другим пользователем."
     >
       <div className="flex flex-wrap gap-3">
         <Link
           className="rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-white"
-          to="/home"
+          to="/home/workspace"
         >
           На главную
         </Link>

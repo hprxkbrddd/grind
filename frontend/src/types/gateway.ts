@@ -158,6 +158,11 @@ export interface DiagramDTO {
   diagram: DiagramUnitDTO[]
 }
 
+export interface DateRangeDTO {
+  startDate: string
+  endDate: string
+}
+
 export interface AuthSession {
   username: string
   accessToken: string
