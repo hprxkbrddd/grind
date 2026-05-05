@@ -23,6 +23,18 @@ services:
     volumes:
       - postgres_data_core:/var/lib/postgresql
 
+  postgres-template:
+    image: postgres:18
+    container_name: postgres-template
+    environment:
+      POSTGRES_DB: grind_template
+      POSTGRES_USER: grind_template
+      POSTGRES_PASSWORD: grind_template
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data_template:/var/lib/postgresql
+
   # KAFKA
   kafka:
     image: apache/kafka:latest
@@ -108,3 +120,4 @@ volumes:
   clickhouse_data:
   postgres_data:
   postgres_data_core:
+  postgres_data_template:

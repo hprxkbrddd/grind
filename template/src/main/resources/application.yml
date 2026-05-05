@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: template
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: core-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  datasource:
+    url: jdbc:postgresql://localhost:5434/grind_template
+    username: grind_template
+    password: grind_template
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: beans, health, info, mappings
+  endpoint:
+    beans:
+      enabled: true
+    health:
+      enabled: true
+    info:
+      enabled: true
+
+kafka:
+  outbox-batch-size: 5
+  topic:
+    core:
+      request:
+        task: 'core.request.task'
+        track: 'core.request.track'
+      event:
+        task: 'core.event.task'
+        track: 'core.event.track'
+      system:
+        request: 'core.system.request'
+        response: 'core.system.response'
+    statistics:
+      request: 'statistics.request'
+      event: 'statistics.event'
+    response: 'response'
+
+server:
+  port: 8086
+
+logging:
+  level:
+    org.hibernate.SQL: ERROR
+#    org.hibernate.type: TRACE
+#    com.progressapp: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
