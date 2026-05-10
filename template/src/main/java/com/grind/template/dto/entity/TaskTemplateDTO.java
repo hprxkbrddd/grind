@@ -1,4 +1,4 @@
-package com.grind.template.dto;
+package com.grind.template.dto.entity;
 
 public record TaskTemplateDTO(
         String id,

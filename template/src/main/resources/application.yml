@@ -45,23 +45,25 @@ management:
     info:
       enabled: true
 
-kafka:
-  outbox-batch-size: 5
-  topic:
-    core:
-      request:
-        task: 'core.request.task'
-        track: 'core.request.track'
-      event:
-        task: 'core.event.task'
-        track: 'core.event.track'
-      system:
-        request: 'core.system.request'
-        response: 'core.system.response'
-    statistics:
-      request: 'statistics.request'
-      event: 'statistics.event'
-    response: 'response'
+kafka.topic:
+  core:
+    request:
+      task: 'core.request.task'
+      track: 'core.request.track'
+    event:
+      task: 'core.event.task'
+      track: 'core.event.track'
+    system:
+      request: 'core.system.request'
+      response: 'core.system.response'
+  statistics:
+    request: 'statistics.request'
+    event: 'statistics.event'
+  template:
+    request: 'template.request'
+    event: 'template.event'
+  response: 'response'
+
 
 server:
   port: 8086

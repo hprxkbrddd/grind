@@ -1,5 +1,6 @@
 package com.grind.template.entity;
 
+import com.grind.template.dto.entity.TaskTemplateDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -45,4 +46,13 @@ public class TaskTemplate {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public TaskTemplateDTO mapDTO(){
+        return new TaskTemplateDTO(
+                this.id,
+                this.title,
+                this.description,
+                this.plannedDayOffset
+        );
+    }
 }

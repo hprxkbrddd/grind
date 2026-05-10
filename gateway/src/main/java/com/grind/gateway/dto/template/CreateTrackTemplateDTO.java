@@ -1,8 +1,8 @@
-package com.grind.template.dto;
+package com.grind.gateway.dto.template;
 
-import com.grind.template.enums.TrackDifficulty;
-import com.grind.template.enums.TrackSkillType;
-import com.grind.template.enums.TrackVisibility;
+import com.grind.gateway.enums.TrackDifficulty;
+import com.grind.gateway.enums.TrackSkillType;
+import com.grind.gateway.enums.TrackVisibility;
 
 import java.util.List;
 

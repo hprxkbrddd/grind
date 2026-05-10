@@ -1,5 +1,7 @@
 package com.grind.template.entity;
 
+import com.grind.template.dto.entity.TrackTemplateDTO;
+import com.grind.template.dto.entity.TrackTemplateFullDTO;
 import com.grind.template.enums.*;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -105,5 +107,35 @@ public class TrackTemplate {
         }
     }
 
+    public TrackTemplateDTO mapDTO(){
+        return new TrackTemplateDTO(
+                getId(),
+                getTitle(),
+                getDescription(),
+                getDurationDays(),
+                getSprintLength(),
+                getTaskTemplates().stream()
+                        .map(TaskTemplate::mapDTO)
+                        .collect(Collectors.toSet())
+        );
+    }
 
+    public TrackTemplateFullDTO mapFullDTO(){
+        return new TrackTemplateFullDTO(
+                mapDTO(),
+                getAuthorId(),
+                getEstimatedTimePerDayMinutes(),
+                getExpectedResult(),
+                getDifficulty(),
+                getSkillType(),
+                getCategory().getSlug(),
+                getTags().stream().map(Tag::getSlug).collect(Collectors.toSet()),
+                getVisibility(),
+                getStatus(),
+                getCreatedAt(),
+                getUpdatedAt(),
+                getPublishedAt(),
+                getVersion()
+        );
+    }
 }

@@ -1,4 +1,4 @@
-package com.grind.template.dto;
+package com.grind.template.dto.request;
 
 import com.grind.template.enums.TrackDifficulty;
 import com.grind.template.enums.TrackSkillType;

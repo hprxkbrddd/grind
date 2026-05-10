@@ -56,6 +56,9 @@ kafka.topic:
   statistics:
     request: 'statistics.request'
     event: 'statistics.event'
+  template:
+    request: 'template.request'
+    event: 'template.event'
   response: 'response'
 
 server:

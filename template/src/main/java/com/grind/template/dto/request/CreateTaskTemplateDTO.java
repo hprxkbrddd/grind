@@ -1,4 +1,4 @@
-package com.grind.template.dto;
+package com.grind.template.dto.request;
 
 public record CreateTaskTemplateDTO(
         String title,

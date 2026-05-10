@@ -16,4 +16,6 @@ public class TrackTemplateApplicationService {
     // TODO Keep this service independent from other microservices:
     // - do not directly create track/task records in external services here.
     // - expose enough structured data for an integration layer to create the concrete user track.
+    //
+    // TODO Add forkTemplate(String templateId, String userId)
 }
